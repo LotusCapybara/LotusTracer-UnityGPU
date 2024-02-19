@@ -1,0 +1,73 @@
+* text=auto
+# Unity files
+*.meta merge=unityyamlmerge -text
+*.unity merge=unityyamlmerge -text
+*.asset merge=unityyamlmerge -text
+*.prefab merge=unityyamlmerge -text
+# Image formats
+*.unitypackage filter=lfs diff=lfs merge=lfs eol=lf -text
+*.unity filter=lfs diff=lfs merge=lfs eol=lf -text
+*.psd filter=lfs diff=lfs merge=lfs eol=lf -text
+*.jpg filter=lfs diff=lfs merge=lfs eol=lf -text
+*.png filter=lfs diff=lfs merge=lfs eol=lf -text
+*.gif filter=lfs diff=lfs merge=lfs eol=lf -text
+*.bmp filter=lfs diff=lfs merge=lfs eol=lf -text
+*.tga filter=lfs diff=lfs merge=lfs eol=lf -text
+*.tif filter=lfs diff=lfs merge=lfs eol=lf -text
+*.tiff filter=lfs diff=lfs merge=lfs eol=lf -text
+*.iff filter=lfs diff=lfs merge=lfs eol=lf -text
+*.pict filter=lfs diff=lfs merge=lfs eol=lf -text
+*.dds filter=lfs diff=lfs merge=lfs eol=lf -text
+*.exr filter=lfs diff=lfs merge=lfs eol=lf -text
+*.xcf filter=lfs diff=lfs merge=lfs eol=lf -text
+# Audio formats
+*.mp3 filter=lfs diff=lfs merge=lfs eol=lf -text
+*.ogg filter=lfs diff=lfs merge=lfs eol=lf -text
+*.wav filter=lfs diff=lfs merge=lfs eol=lf -text
+*.aiff filter=lfs diff=lfs merge=lfs eol=lf -text
+*.aif filter=lfs diff=lfs merge=lfs eol=lf -text
+*.mod filter=lfs diff=lfs merge=lfs eol=lf -text
+*.it filter=lfs diff=lfs merge=lfs eol=lf -text
+*.s3m filter=lfs diff=lfs merge=lfs eol=lf -text
+*.xm filter=lfs diff=lfs merge=lfs eol=lf -text
+# Video formats
+*.mov filter=lfs diff=lfs merge=lfs eol=lf -text
+*.avi filter=lfs diff=lfs merge=lfs eol=lf -text
+*.asf filter=lfs diff=lfs merge=lfs eol=lf -text
+*.mpg filter=lfs diff=lfs merge=lfs eol=lf -text
+*.mpeg filter=lfs diff=lfs merge=lfs eol=lf -text
+*.mp4 filter=lfs diff=lfs merge=lfs eol=lf -text
+# 3D formats
+*.FBX filter=lfs diff=lfs merge=lfs eol=lf -text
+*.fbx filter=lfs diff=lfs merge=lfs eol=lf -text
+*.obj filter=lfs diff=lfs merge=lfs eol=lf -text
+*.max filter=lfs diff=lfs merge=lfs eol=lf -text
+*.blend filter=lfs diff=lfs merge=lfs eol=lf -text
+*.dae filter=lfs diff=lfs merge=lfs eol=lf -text
+*.mb filter=lfs diff=lfs merge=lfs eol=lf -text
+*.ma filter=lfs diff=lfs merge=lfs eol=lf -text
+*.3ds filter=lfs diff=lfs merge=lfs eol=lf -text
+*.dfx filter=lfs diff=lfs merge=lfs eol=lf -text
+*.c4d filter=lfs diff=lfs merge=lfs eol=lf -text
+*.lwo filter=lfs diff=lfs merge=lfs eol=lf -text
+*.lwo2 filter=lfs diff=lfs merge=lfs eol=lf -text
+*.abc filter=lfs diff=lfs merge=lfs eol=lf -text
+*.3dm filter=lfs diff=lfs merge=lfs eol=lf -text
+*.hdr filter=lfs diff=lfs merge=lfs eol=lf -text
+# Build
+*.dll filter=lfs diff=lfs merge=lfs eol=lf -text
+*.pdb filter=lfs diff=lfs merge=lfs eol=lf -text
+*.mdb filter=lfs diff=lfs merge=lfs eol=lf -text
+# Packaging
+*.zip filter=lfs diff=lfs merge=lfs eol=lf -text
+*.7z filter=lfs diff=lfs merge=lfs eol=lf -text
+*.gz filter=lfs diff=lfs merge=lfs eol=lf -text
+*.rar filter=lfs diff=lfs merge=lfs eol=lf -text
+*.tar filter=lfs diff=lfs merge=lfs eol=lf -text
+*.so filter=lfs diff=lfs merge=lfs eol=lf -text
+*.bundle filter=lfs diff=lfs merge=lfs eol=lf -text
+*.a filter=lfs diff=lfs merge=lfs eol=lf -text
+*.bytes filter=lfs diff=lfs merge=lfs eol=lf -text
+*.nupkg filter=lfs diff=lfs merge=lfs eol=lf -text
+*.onnx filter=lfs diff=lfs merge=lfs eol=lf -text
+*.onyx filter=lfs diff=lfs merge=lfs eol=lf -text
