@@ -1,4 +1,6 @@
 Assets/Resources/RenderScenes/
+Assets/DevScenes/
+Assets/DevScenes.meta
 
 
 # This .gitignore file should be placed at the root of your Unity project directory
