@@ -1,0 +1,90 @@
+#pragma kernel Kernel_CameraDebugTextures
+#pragma kernel Kernel_BVHDensity
+
+#include "../constants.cginc"
+#include "../tracingTypes.cginc"
+#include "../Functions/common.cginc"
+#include "../tracingVariables.cginc"
+#include "../Functions/intersection.cginc"
+#include "../BRDF/bsdf_functions.cginc"
+#include "../Functions/factories.cginc"
+#include "../BRDF/BxDF.cginc"
+
+
+RWTexture2D<float4> _TextureColorBuffer;
+RWTexture2D<float4> _TextureNormalBuffer;
+RWTexture2D<float4> _TextureRoughnessBuffer;
+RWTexture2D<float4> _TextureMetallicBuffer;
+RWTexture2D<float4> _TextureEmissiveBuffer;
+
+RWTexture2D<float4> _TextureBVHDensityBuffer;
+
+[numthreads(8,8,1)]
+void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
+{
+    int index = id.y * width + id.x;
+    RenderRay pathRay = _CameraRays[index];
+    pathRay.invDirection = 1.0 / pathRay.direction;
+    TriangleHitInfo hitInfo = CreateHitInfo();
+
+    float3 baseColor = MAGENTA;
+    float3 normalColor = MAGENTA;
+    float3 roughColor = MAGENTA;
+    float3 metallicColor = MAGENTA;
+    float3 emissiveColor = MAGENTA;
+    
+    int rand = 65465;
+    
+    bool foundHit = GetBounceHit(hitInfo, pathRay, INFINITY, false);
+
+    if(foundHit)
+    {
+        ScatteringData scattering_data = MakeScatteringData_FromHitInfo(rand, hitInfo);
+
+        baseColor = scattering_data.color;
+        
+        float3 normalMap = (scattering_data.WorldNormal + 1.0) * 0.5; 
+        normalColor = normalMap;
+
+        roughColor = scattering_data.roughness;
+        metallicColor = scattering_data.metallic;
+        emissiveColor = scattering_data.emissionPower;
+    }
+
+    _TextureColorBuffer[id.xy] = float4(baseColor.xyz, 1);
+    _TextureNormalBuffer[id.xy] = float4(normalColor.xyz, 1);
+    _TextureRoughnessBuffer[id.xy] = float4(roughColor.xyz, 1);
+    _TextureMetallicBuffer[id.xy] = float4(metallicColor.xyz, 1);
+    _TextureEmissiveBuffer[id.xy] = float4(emissiveColor.xyz, 1);
+}
+
+[numthreads(8,8,1)]
+void Kernel_BVHDensity (uint3 id : SV_DispatchThreadID)
+{
+    int index = id.y * width + id.x;
+    RenderRay pathRay = _CameraRays[index];
+    pathRay.invDirection = 1.0 / pathRay.direction;
+    TriangleHitInfo hitInfo = CreateHitInfo();;
+
+    float qtyHits = 0;
+    
+    for(int i = 0; i < treeNodesQty; i++)
+    {
+        BVH4Node node = _AccelTree[i];
+
+        if(DoesRayHitBounds(pathRay, node.bounds))
+        {
+            qtyHits++;
+        }
+    }
+
+    float3 color =  float3(0, 0, 0);
+    float divisor = 70.0;
+    color.x = max(0, qtyHits - divisor) / divisor;
+    qtyHits -= divisor;
+    color.y = max(0, qtyHits - divisor) / divisor;
+    qtyHits -= divisor;
+    color.z = max(0, qtyHits) / divisor;
+    
+    _TextureBVHDensityBuffer[id.xy] = float4(color.xyz, 1); 
+}

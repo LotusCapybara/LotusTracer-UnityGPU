@@ -1,0 +1,216 @@
+#pragma target 6.0
+
+#pragma kernel Kernel_MegaPathTrace
+#pragma kernel Kernel_AccumulateFinalTexture
+
+#include "../constants.cginc"
+#include "../tracingTypes.cginc"
+#include "../Functions/common.cginc"
+#include "../tracingVariables.cginc"
+#include "../BRDF/bsdf_functions.cginc"
+#include "../Functions/factories.cginc"
+#include "../Functions/intersection.cginc"
+#include "../BRDF/BxDF.cginc"
+#include "../Functions/nee_direct_lights.cginc"
+#include "../Functions/post_processing.cginc"
+
+[numthreads(8,8,1)]
+void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
+{
+    _SamplingBuffer[id.xy] = float4(0, 0, 0, 1);    
+
+    int index = id.y * width + id.x;
+    uint randState = id.x * someSeed + id.y * someSeed + iteration * someSeed + index;
+    
+    RenderRay pathRay = _CameraRays[index];
+    pathRay.direction.x += GetRandomMin1to1(randState) * 0.0001;
+    pathRay.direction.y += GetRandomMin1to1(randState) * 0.0001;
+    pathRay.direction.z += GetRandomMin1to1(randState) * 0.0001;
+    pathRay.direction = normalize(pathRay.direction);
+    
+    pathRay.invDirection = 1.0 / pathRay.direction;
+    
+    TriangleHitInfo hitInfo = CreateHitInfo();
+
+    float3 radiance = V_ZERO;
+    float3 throughput = V_ONE;
+
+    ScatteringData scatteringData;
+    
+    float3 bounceBSDF;
+    float bouncePDF = 1.0;
+    float rayDistance = INFINITY;
+    int insideMediumCounter = 0;
+    int volumeScattersCounter = 0;
+    float absorbDistance = 0;
+    
+    for(int b = 0; b < maxBounces; b++)
+    {
+        if (!GetBounceHit(hitInfo, pathRay, rayDistance, b == 0))
+        {
+            // todo gather light from environment cube map, if any            
+            break;
+        }        
+
+        // self emission
+        if(scatteringData.emissionPower > 0)
+        {
+            radiance += throughput * scatteringData.emissionPower * scatteringData.color;
+            break;
+        }               
+
+        // NEE: direct light
+        // we gather light from concrete lights that are affecting to this path point
+        // concrete lights are point light, spot light, direction light, etc        
+        float3 directLightVal;
+        float directLightPDF;
+        GetLightsNEE(randState, hitInfo, insideMediumCounter > 0, directLightVal, directLightPDF);
+        if(directLightPDF > 0)
+        {
+            float directMis = 1.0;
+            if(b > 0)
+            {
+                directMis = PowerHeuristic(bouncePDF, directLightPDF);
+            }
+            
+            radiance += directMis * throughput * directLightVal / directLightPDF;        
+        }                
+
+        // Note here on Emissive Materials MIS
+        // Some implementations seem to also add a direct sample towards emissive meshes/triangles
+        // I tried some implementations around that but I only managed to increase gpu memory size, noise
+        // and overall loss of performance. So the only 2 importance sampling methods I'm using are
+        // Direct Light and bounce BSDF on emissive materials
+        
+        bool mediumWasSampled = false;
+
+        // this part of code checks if the path is inside a scattering medium (like water, gelly.. basically translucent
+        // medium that allow light to pass through.
+        // some implementations do an internal for loop here to loop the internal scattering until it gets out and then
+        // the path continues "outside" the medium as normal. However, other implementations use the same path iterations
+        // instead. I think this approach is more friendly for GPU calculation. Imagine having 1 path in the gpu wave
+        // entering a medium and bouncing 15 times while the rest of the threads are useless. I guess a wave front
+        // path tracer could mitigate this by having a dedicated kernel for volumetric scattering? 
+        if(insideMediumCounter > 0)
+        {
+            // the inner march step distance is calculated in different ways by differents implementations
+            // I've seen some log versions, fully manual/user controller, fixed steps.. and so on
+            // this one seem fine and fast for now?
+            float scatterDistance = scatteringData.maxScatteringDistance / scatteringData.mediumDensity;
+            mediumWasSampled = scatterDistance < hitInfo.distance;
+        
+            if(mediumWasSampled)
+            {
+                absorbDistance += scatterDistance;
+
+                // beer's law absorption. I'm using medium density as coefficient, which is not great but ¯\_(ツ)_/¯
+                throughput *= exp(- scatteringData.mediumDensity * absorbDistance);
+                pathRay.origin = pathRay.direction * scatterDistance;
+        
+                float3 scatterDir = Sample_PhaseHG(randState, pathRay.direction, scatteringData.scatteringDirection);
+                pathRay.direction = scatterDir;
+                
+                bouncePDF = Evaluate_PhaseHG(dot(-pathRay.direction, scatterDir), scatteringData.scatteringDirection);
+
+                b--;
+                volumeScattersCounter++;
+                if(volumeScattersCounter > MAX_MEDIUM_SCATTERS)
+                    break;
+            }          
+        }
+        
+
+        // if no medium direction was sampled, it means that we might have exited the medium (or we never entered in first place)
+        // so this path is "in the vacuum" which means we can try to sample hits to surface using common BSDF sampling and evaluation
+        if(! mediumWasSampled)
+        {
+            // Sample next bounce
+            scatteringData = MakeScatteringData_FromHitInfo(randState, hitInfo);
+            
+            bool validSample = GetBSDF_Sample(randState, scatteringData);
+            if(!validSample)
+                break;
+
+            GetBSDF_F(randState, scatteringData, bounceBSDF, bouncePDF);
+
+            // this means we found and invalid path sample and we should terminate this path
+            if(bouncePDF <= 0)
+                break;
+
+            throughput *=  bounceBSDF / bouncePDF;
+
+            pathRay.direction = scatteringData.sampleData.L;
+            pathRay.origin  = hitInfo.position + pathRay.direction * 2.0 * EPSILON;
+            // we use the inverse of the direction in some intersection calculation
+            pathRay.invDirection = 1.0 / pathRay.direction;
+
+            if(scatteringData.mediumDensity > 0)
+            {
+                // this is a clunky way of checking if the ray is currently inside a medium
+                // we stack and de-stack entering and exiting dense mediums
+                if(!scatteringData.isReflection)
+                {
+                    insideMediumCounter++;
+                }
+                else
+                {
+                    insideMediumCounter--;
+                    insideMediumCounter = max(insideMediumCounter, 0);
+
+                    if(insideMediumCounter <= 0)
+                    {
+                        absorbDistance = 0;
+                        volumeScattersCounter = 0;
+                    }                        
+                }    
+            }
+            else
+            {
+                insideMediumCounter = 0;
+                absorbDistance = 0;
+                volumeScattersCounter = 0;
+            }            
+            
+        }                
+            
+        // this is called Russian Roulette. If the throughput of a ray becomes too low, we randomly
+        // stop paths to avoid calculating more bounces that are likely really dim. Pay attention to the "likely" part.
+        // What happens if a path throughput is really dim at this point but then next event carry enough energy to make it
+        // relevant again? that's we use random cuts here instead of always stopping the path. We can say this is a 
+        // heuristic estimation
+        if(b > 5)
+        {
+            // q would be "the probabilities of continuing the path"
+            float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
+            if (GetRandom0to1(randState) > q)
+                break;
+
+            // like we do with all contributions, we should divide by the current probability
+            // we do this to "balance" probabilities with the ones we terminated. If we didnt' do this
+            // we would be introducing bias towards the paths that were continued
+            throughput /= q;
+        }        
+    }
+
+    
+    _SamplingBuffer[id.xy] = float4( radiance.xyz , 1) ;
+}
+
+
+[numthreads(8,8,1)]
+void Kernel_AccumulateFinalTexture (uint3 id : SV_DispatchThreadID)
+{
+    float iterationWeight = 1.0 / (iteration + 1.0);
+  
+    _SamplingBuffer[id.xy] = _SamplingBufferPrev[id.xy] * (1.0 - iterationWeight) + (_SamplingBuffer[id.xy] * iterationWeight);
+    _SamplingBufferPrev[id.xy] = _SamplingBuffer[id.xy];
+    
+    
+    // ldr for rendering with the color space you expect to see on screen
+
+    // todo: re add aces after being "sure" models are fine
+    // float4 finalColor =  ACESFilter(_SamplingBuffer[id.xy]);
+
+    float4 finalColor =  _SamplingBuffer[id.xy];    
+    _LDRFinalBuffer[id.xy] = finalColor;
+}
