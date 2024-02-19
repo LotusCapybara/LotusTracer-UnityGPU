@@ -17,6 +17,9 @@ namespace CapyTracerCore.Core
         public List<TextureData> metalTextureDatas = new();
         public List<TextureAtlasData> metalAtlases = new();
         
+        public List<TextureData> emissionTextureDatas = new();
+        public List<TextureAtlasData> emissionAtlases = new();
+        
         public List<Texture> GetAlbedoCanvasTextures()
         {
             List<Texture> maps = new List<Texture>();
@@ -75,5 +78,21 @@ namespace CapyTracerCore.Core
         
             return maps;
         }
+        
+        public List<Texture> GetEmissionCanvasTextures()
+        {
+            List<Texture> maps = new List<Texture>();
+        
+            for (int i = 0; i < emissionAtlases.Count; i++)
+            {
+                var texture = new Texture2D(4096, 4096, AtlasFormats.EMISSION, false);
+                texture.LoadImage(emissionAtlases[i].texture);
+                
+                maps.Add(texture);
+            }
+        
+            return maps;
+        }
+        
     }
 }

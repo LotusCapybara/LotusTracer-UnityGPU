@@ -29,6 +29,10 @@ Texture2DArray<float4> _AtlasesMetallic;
 SamplerState sampler_AtlasesMetallic;
 StructuredBuffer<TextureData> _MapDatasMetallic;
 
+Texture2DArray<float4> _AtlasesEmission;
+SamplerState sampler_AtlasesEmission;
+StructuredBuffer<TextureData> _MapDatasEmission;
+
 RWTexture2D<float4> _DebugTexture;
 
 // sampling buffers using linear space

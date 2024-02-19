@@ -114,7 +114,17 @@ ScatteringData MakeScatteringData(
 
         data.metallic *= _AtlasesMetallic
             .SampleLevel(sampler_AtlasesMetallic, float3(targetUV.x, targetUV.y, atlasIndex) , 0).rgb;
-    }   
+    }
+
+    if(data.emissionPower > 0 && mat.emissionMapIndex >= 0)
+    {        
+        TextureData texture_data = _MapDatasEmission[mat.emissionMapIndex];
+        float2 targetUV = PackedUV(texture_data, textureUV);        
+        int atlasIndex = texture_data.atlasIndex;
+        
+        data.emissionPower *= _AtlasesEmission
+            .SampleLevel(sampler_AtlasesEmission, float3(targetUV.x, targetUV.y, atlasIndex) , 0).rgb;
+    }
     
     // if(mat.emissiveIntensity >= 0 && data.emissionPower > 0)
     //     data.color = _MapsEmission.SampleLevel(sampler_MapsEmission, float3(uv.x, uv.y, mat.emissionMapIndex) , 0).rgb;

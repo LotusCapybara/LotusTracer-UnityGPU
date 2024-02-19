@@ -45,6 +45,10 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
 
         _shader.SetTexture(_kernelIds[KERNEL_DEBUG_TEXTURES], "_AtlasesMetallic", _scene.textureArrayMetallic);
         SetBuffer(KERNEL_DEBUG_TEXTURES, BuffersNames.MAP_DATA_METALLIC);
+        
+        _shader.SetTexture(_kernelIds[KERNEL_DEBUG_TEXTURES], "_AtlasesEmission", _scene.textureArrayEmission);
+        SetBuffer(KERNEL_DEBUG_TEXTURES, BuffersNames.MAP_DATA_EMISSION);
+        
 
         // buffers for each kernel
         foreach (var kvpKernels in _kernelIds)

@@ -22,6 +22,9 @@ namespace CapyTracerCore.Core
         public Texture2DArray textureArrayMetallic;
         public TextureData[] textureDataMetallic;
         
+        public Texture2DArray textureArrayEmission;
+        public TextureData[] textureDataEmission;
+        
         public RenderCamera renderCamera;
 
         public SerializedScene serializedScene;
@@ -64,6 +67,9 @@ namespace CapyTracerCore.Core
             
             textureArrayMetallic = CreateTextureArray(4096, 4096, textures.GetMetallicCanvasTextures(), AtlasFormats.ROUGHNESS);
             textureDataMetallic = textures.metalTextureDatas.ToArray();
+            
+            textureArrayEmission = CreateTextureArray(4096, 4096, textures.GetEmissionCanvasTextures(), AtlasFormats.EMISSION);
+            textureDataEmission = textures.emissionTextureDatas.ToArray();
         }
 
         public void UpdateCameraRays()

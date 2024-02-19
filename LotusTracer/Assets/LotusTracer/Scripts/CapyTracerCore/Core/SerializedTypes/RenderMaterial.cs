@@ -11,6 +11,7 @@ namespace CapyTracerCore.Core
         public static TextureFormat NORMAL = TextureFormat.RGB24;
         public static TextureFormat ROUGHNESS = TextureFormat.RGB24;
         public static TextureFormat METALLIC = TextureFormat.RGB24;
+        public static TextureFormat EMISSION = TextureFormat.RGB24;
     }
     
     // this was in serialized from the Unity Scene into the .dat file
@@ -41,6 +42,9 @@ namespace CapyTracerCore.Core
         
         public int metalMapIndex;
         public int metalMapCanvasIndex;
+        
+        public int emissionMapIndex;
+        public int emissionMapCanvasIndex;
         
         public float ior;
         

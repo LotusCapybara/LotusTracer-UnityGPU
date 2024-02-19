@@ -70,6 +70,8 @@ struct RenderMaterial
     int roughMapCanvasIndex;
     int metalMapIndex;
     int metalMapCanvasIndex;
+    int emissionMapIndex;
+    int emissionMapCanvasIndex;
     float ior;
 };
 

@@ -20,6 +20,7 @@ public static class SceneExport_GenerateMaterials
         List<Texture2D> texturesNormals = new List<Texture2D>();
         List<Texture2D> texturesRough = new List<Texture2D>();
         List<Texture2D> texturesMetallic = new List<Texture2D>();
+        List<Texture2D> texturesEmission = new List<Texture2D>();
         
         scene.materials = new SerializedMaterial[unityMaterials.Count];
         for (int m = 0; m < scene.materials.Length; m++)
@@ -39,6 +40,10 @@ public static class SceneExport_GenerateMaterials
             Texture metalMap = unityMaterials[m].HasTexture("_MetallicMap") ? unityMaterials[m].GetTexture("_MetallicMap") : null;
             if (metalMap != null && !texturesMetallic.Contains(metalMap))
                 texturesMetallic.Add(metalMap as Texture2D);
+            
+            Texture emissionMap = unityMaterials[m].HasTexture("_EmissionMap") ? unityMaterials[m].GetTexture("_EmissionMap") : null;
+            if (emissionMap != null && !texturesEmission.Contains(emissionMap))
+                texturesEmission.Add(emissionMap as Texture2D);
             
             Color baseColor = unityMaterials[m].GetColor("_BaseColor");
             Color emissionColor = unityMaterials[m].GetColor("_EmissionColor");
@@ -71,6 +76,8 @@ public static class SceneExport_GenerateMaterials
                 roughMapCanvasIndex = -1,
                 metalMapIndex = metalMap == null ? -1 : texturesMetallic.IndexOf(metalMap as Texture2D),
                 metalMapCanvasIndex = -1,
+                emissionMapIndex = emissionMap == null ? -1 : texturesEmission.IndexOf(emissionMap as Texture2D),
+                emissionMapCanvasIndex = -1,
                 ior = ior,
                 transmissionPower = transmissionPower,
                 mediumDensity = mediumDensity,
@@ -109,6 +116,13 @@ public static class SceneExport_GenerateMaterials
         sceneTextures.metalAtlases = packerMetal.atlases;
         sceneTextures.metalTextureDatas = packerMetal.GetDatasAsStruct();
         
+        // emission atlases
+        TexturePacker packerEmission = new TexturePacker(AtlasFormats.EMISSION);
+        packerEmission.RegisterTextures(texturesEmission);
+        packerEmission.PackTextures();
+        sceneTextures.emissionAtlases = packerEmission.atlases;
+        sceneTextures.emissionTextureDatas = packerEmission.GetDatasAsStruct();
+        
         for (int m = 0; m < scene.materials.Length; m++)
         {
             var mat = scene.materials[m];
@@ -117,6 +131,7 @@ public static class SceneExport_GenerateMaterials
             mat.normalMapCanvasIndex = packerNormals.GetAtlasIndexForTextureId(mat.normalMapIndex);
             mat.roughMapCanvasIndex = packerRough.GetAtlasIndexForTextureId(mat.roughMapIndex);
             mat.metalMapCanvasIndex = packerMetal.GetAtlasIndexForTextureId(mat.metalMapIndex);
+            mat.emissionMapCanvasIndex = packerEmission.GetAtlasIndexForTextureId(mat.emissionMapIndex);
 
             scene.materials[m] = mat;
         }

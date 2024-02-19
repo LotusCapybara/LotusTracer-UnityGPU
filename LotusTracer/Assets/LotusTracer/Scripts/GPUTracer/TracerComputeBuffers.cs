@@ -17,6 +17,7 @@ public class BuffersNames
     public const string MAP_DATA_NORMAL = "_MapDatasNormal";
     public const string MAP_DATA_ROUGHNESS = "_MapDatasRoughness";
     public const string MAP_DATA_METALLIC = "_MapDatasMetallic";
+    public const string MAP_DATA_EMISSION = "_MapDatasEmission";
 }
 
 public class TracerComputeBuffers
@@ -57,6 +58,7 @@ public class TracerComputeBuffers
         CreateAtlasDataBuffer(BuffersNames.MAP_DATA_NORMAL, renderScene.textureDataNormal);
         CreateAtlasDataBuffer(BuffersNames.MAP_DATA_ROUGHNESS, renderScene.textureDataRoughness);
         CreateAtlasDataBuffer(BuffersNames.MAP_DATA_METALLIC, renderScene.textureDataMetallic);
+        CreateAtlasDataBuffer(BuffersNames.MAP_DATA_EMISSION, renderScene.textureDataEmission);
 
     }
 
