@@ -126,10 +126,6 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
         data.emissionPower *= _AtlasesEmission
             .SampleLevel(sampler_AtlasesEmission, float3(targetUV.x, targetUV.y, atlasIndex) , 0).rgb;
     }
-    
-    // if(mat.emissiveIntensity >= 0 && data.emissionPower > 0)
-    //     data.color = _MapsEmission.SampleLevel(sampler_MapsEmission, float3(uv.x, uv.y, mat.emissionMapIndex) , 0).rgb;
-    //
 
     // I found that materials with roughness 0 have an infinitesimally small highlight, so they
     // look black (because they look black-ish in the parts where they don't reflect light)

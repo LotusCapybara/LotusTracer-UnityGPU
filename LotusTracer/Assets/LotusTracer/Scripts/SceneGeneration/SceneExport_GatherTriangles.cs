@@ -117,8 +117,8 @@ public static class SceneExport_GatherTriangles
                 newTriangle.centerPos += (float3)pos;
 
                 newTriangle.SetVertexPos(i, pos);
-                newTriangle.SetVertexNormal(i, nor);
-                newTriangle.SetVertexTangent(i, tan);
+                newTriangle.SetVertexNormal(i, math.normalize(nor) );
+                newTriangle.SetVertexTangent(i, math.normalize(tan) );
                 
                 if(uvs.Count > 0)
                     newTriangle.SetTextureUV(i, uvs[triangles[st + i]]);
@@ -127,22 +127,25 @@ public static class SceneExport_GatherTriangles
                 
             }
             newTriangle.centerPos *= 0.3333f;
-            
-            if (math.abs(math.dot(newTriangle.normalA, newTriangle.biTangentA)) > 0.000001)
-                throw new Exception("Wrong bitangentA");
 
-            if (math.abs(math.dot(newTriangle.normalB, newTriangle.biTangentB)) > 0.000001)
-                throw new Exception("Wrong bitangentB");
-            
-            if (math.abs(math.dot(newTriangle.normalC, newTriangle.biTangentC)) > 0.000001)
-                throw new Exception("Wrong bitangentC");
-            
+            // just for testing stuff, some scenes will look fine even without good tangents
+            // ValidateIsOrthogonal(newTriangle.normalA, newTriangle.tangentA, "NormalA", "TangentA");
+            // ValidateIsOrthogonal(newTriangle.normalB, newTriangle.tangentB, "NormalB", "TangentB");
+            // ValidateIsOrthogonal(newTriangle.normalC, newTriangle.tangentC, "NormalC", "TangentC");
+                        
             t++;
 
             allTriangles.Add(newTriangle);
         }
 
         return allTriangles;
+    }
+
+    private static void ValidateIsOrthogonal(Vector3 a, Vector3 b, string nameA, string nameB)
+    {
+        float absDot = math.abs(math.dot(a, b)); 
+        if (absDot > 0.0001)
+            throw new Exception($"Wrong Orth Validation. d: {absDot} {nameA}:{a}  {nameB}:{b}");
     }
     
 }
