@@ -54,6 +54,8 @@ namespace CapyTracerCore.Core
             mat.roughMapCanvasIndex = reader.ReadInt32();
             mat.metalMapIndex = reader.ReadInt32();
             mat.metalMapCanvasIndex = reader.ReadInt32();
+            mat.emissionMapIndex = reader.ReadInt32();
+            mat.emissionMapCanvasIndex = reader.ReadInt32();
             mat.ior = reader.ReadSingle();
             return mat;
         }

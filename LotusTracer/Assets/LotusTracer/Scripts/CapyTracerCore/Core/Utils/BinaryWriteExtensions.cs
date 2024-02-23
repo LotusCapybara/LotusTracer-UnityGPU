@@ -46,6 +46,8 @@ namespace CapyTracerCore.Core
             writer.Write(mat.roughMapCanvasIndex);
             writer.Write(mat.metalMapIndex);
             writer.Write(mat.metalMapCanvasIndex);
+            writer.Write(mat.emissionMapIndex);
+            writer.Write(mat.emissionMapCanvasIndex);
             writer.Write(mat.ior);
         }
         

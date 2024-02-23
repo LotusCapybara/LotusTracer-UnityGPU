@@ -81,7 +81,7 @@ public static class SceneExport_GenerateMaterials
                 transmissionPower = transmissionPower,
                 mediumDensity = mediumDensity,
                 scatteringDirection = scatteringDirection,
-                maxScatteringDistance = scatteringDirection
+                maxScatteringDistance = maxScatteringDistance
             };
             
             scene.materials[m] = renderMaterial;
