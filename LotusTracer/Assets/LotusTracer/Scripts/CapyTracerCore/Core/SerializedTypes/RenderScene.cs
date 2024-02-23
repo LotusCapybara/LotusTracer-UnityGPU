@@ -56,19 +56,19 @@ namespace CapyTracerCore.Core
             // create scene textureDatas
             RenderSceneTextures textures = Resources.Load<RenderSceneTextures>($"RenderScenes/{sceneName}_textures");
 
-            textureArrayAlbedo = CreateTextureArray(4096, 4096, textures.GetAlbedoCanvasTextures(), AtlasFormats.ALBEDO);
+            textureArrayAlbedo = CreateTextureArray(4096, 4096, textures.GetAlbedoCanvasTextures(), AtlasFormats.FULL_COLOR);
             textureDataAlbedo = textures.albedoTextureDatas.ToArray();
             
-            textureArrayNormal = CreateTextureArray(4096, 4096, textures.GetNormalCanvasTextures(), AtlasFormats.NORMAL);
+            textureArrayNormal = CreateTextureArray(4096, 4096, textures.GetNormalCanvasTextures(), AtlasFormats.FLOAT_COLOR);
             textureDataNormal = textures.normalTextureDatas.ToArray();
             
-            textureArrayRoughness = CreateTextureArray(4096, 4096, textures.GetRoughnessCanvasTextures(), AtlasFormats.ROUGHNESS);
+            textureArrayRoughness = CreateTextureArray(4096, 4096, textures.GetRoughnessCanvasTextures(), AtlasFormats.R_CHANNEL_ONLY);
             textureDataRoughness = textures.roughTextureDatas.ToArray();
             
-            textureArrayMetallic = CreateTextureArray(4096, 4096, textures.GetMetallicCanvasTextures(), AtlasFormats.METALLIC);
+            textureArrayMetallic = CreateTextureArray(4096, 4096, textures.GetMetallicCanvasTextures(), AtlasFormats.R_CHANNEL_ONLY);
             textureDataMetallic = textures.metalTextureDatas.ToArray();
             
-            textureArrayEmission = CreateTextureArray(4096, 4096, textures.GetEmissionCanvasTextures(), AtlasFormats.EMISSION);
+            textureArrayEmission = CreateTextureArray(4096, 4096, textures.GetEmissionCanvasTextures(), AtlasFormats.R_CHANNEL_ONLY);
             textureDataEmission = textures.emissionTextureDatas.ToArray();
         }
 

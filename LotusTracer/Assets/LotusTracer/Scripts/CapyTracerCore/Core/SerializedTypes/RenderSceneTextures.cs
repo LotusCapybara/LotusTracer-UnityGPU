@@ -26,7 +26,7 @@ namespace CapyTracerCore.Core
 
             for (int i = 0; i < albedoAtlases.Count; i++)
             {
-                var texture = new Texture2D(4096, 4096, AtlasFormats.ALBEDO, false);
+                var texture = new Texture2D(4096, 4096, AtlasFormats.FULL_COLOR, false);
                 texture.LoadRawTextureData(albedoAtlases[i].texture);
                 maps.Add(texture);
             }
@@ -40,7 +40,7 @@ namespace CapyTracerCore.Core
         
             for (int i = 0; i < normalAtlases.Count; i++)
             {
-                var texture = new Texture2D(4096, 4096, AtlasFormats.NORMAL, false);
+                var texture = new Texture2D(4096, 4096, AtlasFormats.FLOAT_COLOR, false);
 
                 Color[] colors = new Color[4096 * 4096];
 
@@ -69,7 +69,7 @@ namespace CapyTracerCore.Core
         
             for (int i = 0; i < roughAtlases.Count; i++)
             {
-                var texture = new Texture2D(4096, 4096, AtlasFormats.ROUGHNESS, false);
+                var texture = new Texture2D(4096, 4096, AtlasFormats.R_CHANNEL_ONLY, false);
                 texture.LoadRawTextureData(roughAtlases[i].texture);
                 
                 maps.Add(texture);
@@ -84,7 +84,7 @@ namespace CapyTracerCore.Core
         
             for (int i = 0; i < metalAtlases.Count; i++)
             {
-                var texture = new Texture2D(4096, 4096, AtlasFormats.METALLIC, false);
+                var texture = new Texture2D(4096, 4096, AtlasFormats.R_CHANNEL_ONLY, false);
                 texture.LoadRawTextureData(metalAtlases[i].texture);
                 
                 maps.Add(texture);
@@ -99,7 +99,7 @@ namespace CapyTracerCore.Core
         
             for (int i = 0; i < emissionAtlases.Count; i++)
             {
-                var texture = new Texture2D(4096, 4096, AtlasFormats.EMISSION, false);
+                var texture = new Texture2D(4096, 4096, AtlasFormats.R_CHANNEL_ONLY, false);
                 texture.LoadRawTextureData(emissionAtlases[i].texture);
                 
                 maps.Add(texture);

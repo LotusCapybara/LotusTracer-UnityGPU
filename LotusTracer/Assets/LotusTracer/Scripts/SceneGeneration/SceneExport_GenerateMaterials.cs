@@ -88,31 +88,31 @@ public static class SceneExport_GenerateMaterials
         }
 
         // albedo atlases
-        TexturePacker packerAlbedos = new TexturePacker(AtlasFormats.ALBEDO);
+        TexturePacker packerAlbedos = new TexturePacker(AtlasFormats.FULL_COLOR);
         packerAlbedos.PackTextures(texturesAlbedo);
         sceneTextures.albedoAtlases = packerAlbedos.atlases;
         sceneTextures.albedoTextureDatas = packerAlbedos.GetDatasAsStruct();
 
         // normal atlases
-        TexturePacker packerNormals = new TexturePacker(AtlasFormats.NORMAL);
+        TexturePacker packerNormals = new TexturePacker(AtlasFormats.FLOAT_COLOR);
         packerNormals.PackTextures(texturesNormals);
         sceneTextures.normalAtlases = packerNormals.atlases;
         sceneTextures.normalTextureDatas = packerNormals.GetDatasAsStruct();
         
         // rough atlases
-        TexturePacker packerRough = new TexturePacker(AtlasFormats.ROUGHNESS);
+        TexturePacker packerRough = new TexturePacker(AtlasFormats.R_CHANNEL_ONLY);
         packerRough.PackTextures(texturesRough);
         sceneTextures.roughAtlases = packerRough.atlases;
         sceneTextures.roughTextureDatas = packerRough.GetDatasAsStruct();
 
         // metallic atlases
-        TexturePacker packerMetal = new TexturePacker(AtlasFormats.METALLIC);
+        TexturePacker packerMetal = new TexturePacker(AtlasFormats.R_CHANNEL_ONLY);
         packerMetal.PackTextures(texturesMetallic);
         sceneTextures.metalAtlases = packerMetal.atlases;
         sceneTextures.metalTextureDatas = packerMetal.GetDatasAsStruct();
         
         // emission atlases
-        TexturePacker packerEmission = new TexturePacker(AtlasFormats.EMISSION);
+        TexturePacker packerEmission = new TexturePacker(AtlasFormats.R_CHANNEL_ONLY);
         packerEmission.PackTextures(texturesEmission);
         sceneTextures.emissionAtlases = packerEmission.atlases;
         sceneTextures.emissionTextureDatas = packerEmission.GetDatasAsStruct();

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CapyTracerCore.Core;
 using UnityEngine;
 
 public class TexturePacker
@@ -143,8 +144,8 @@ public class TexturePacker
 
         foreach (var atlas in atlases)
         {
-            // Color[] atlasPixels = new Color[(_atlasWidth * _atlasHeight)];
-            byte[] atlasPixelBytes = new byte[(_atlasWidth * _atlasHeight) * 4];
+            int channelsQty = AtlasFormats.s_channelsByFormat[_format]; 
+            byte[] atlasPixelBytes = new byte[(_atlasWidth * _atlasHeight) * channelsQty];
             
 
             foreach (var tId in atlas.textureIds)
@@ -161,12 +162,18 @@ public class TexturePacker
                         int targetX = x + textureData.x;
                         int targetY = y + textureData.y;
                         int targetIndex = targetY * _atlasWidth + targetX;
-                        targetIndex *= 4;
+                        targetIndex *= channelsQty;
 
                         atlasPixelBytes[targetIndex] = (byte)(texturePixels[pixelIndex].r * 255);
-                        atlasPixelBytes[targetIndex + 1] = (byte)(texturePixels[pixelIndex].g * 255);
-                        atlasPixelBytes[targetIndex + 2] = (byte)(texturePixels[pixelIndex].b * 255);
-                        atlasPixelBytes[targetIndex + 3] = (byte)(255);
+                        
+                        if(channelsQty > 1)
+                            atlasPixelBytes[targetIndex + 1] = (byte)(texturePixels[pixelIndex].g * 255);
+                        
+                        if(channelsQty > 2)
+                            atlasPixelBytes[targetIndex + 2] = (byte)(texturePixels[pixelIndex].b * 255);
+                        
+                        if(channelsQty > 3)
+                            atlasPixelBytes[targetIndex + 3] = (byte)(255);
                     }
                 }
             }
@@ -203,20 +210,23 @@ public class TexturePacker
     
     public void GenerateDebugFiles(string setName)
     {
+        int channelsQty = AtlasFormats.s_channelsByFormat[_format]; 
+        
         for (int i = 0; i < atlases.Count; i++)
         {
             Texture2D texture = new Texture2D(_atlasWidth, _atlasHeight, TextureFormat.RGBA32, false);
 
             int size = _atlasWidth * _atlasHeight;
-            Color[] colors = new Color[size];
-
+            Color[] colors = new Color[size]; 
+            
             for (int p = 0; p < size; p ++)
             {
-                colors[p] = new Color(
-                    atlases[i].texture[p * 4] / 255f, 
-                    atlases[i].texture[p * 4 + 1] / 255f, 
-                    atlases[i].texture[p * 4 + 2] / 255f, 
-                    atlases[i].texture[p * 4 + 3] / 255f);
+                float r = channelsQty > 0 ? atlases[i].texture[p * channelsQty] / 255f : 0f;
+                float g = channelsQty > 1 ? atlases[i].texture[p * channelsQty + 1] / 255f : 0f;
+                float b = channelsQty > 2 ? atlases[i].texture[p * channelsQty + 2] / 255f : 0f;
+                float a = channelsQty > 3 ? atlases[i].texture[p * channelsQty + 3] / 255f : 1f;
+                
+                colors[p] = new Color(r, g, b, a);
             }
             
             texture.LoadRawTextureData(atlases[i].texture);
