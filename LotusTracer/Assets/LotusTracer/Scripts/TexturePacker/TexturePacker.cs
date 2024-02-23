@@ -3,10 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CapyTracerCore.Core;
+using UnityEditor;
 using UnityEngine;
 
 public class TexturePacker
 {
+    private Dictionary<TextureFormat, TextureImporterFormat> s_formatToFormat =
+        new()
+        {
+            { TextureFormat.RGBA32 , TextureImporterFormat.RGBA32}, 
+            { TextureFormat.RGB24 , TextureImporterFormat.RGB24}, 
+            { TextureFormat.RGBAFloat , TextureImporterFormat.RGBAFloat},
+            { TextureFormat.R8 , TextureImporterFormat.R8}
+        };
+    
     private List<Texture2D> _originalTextures = new();
     private int _atlasWidth;
     private int _atlasHeight;
@@ -16,8 +26,13 @@ public class TexturePacker
 
     private TextureFormat _format;
 
-    public TexturePacker(TextureFormat format)
+    private string _setName;
+    private bool _isNormal;
+    
+    public TexturePacker(TextureFormat format, string setName, bool isNormal)
     {
+        _setName = setName;
+        _isNormal = isNormal;
         _atlasWidth = 4096;
         _atlasHeight = 4096;
         _format = format;
@@ -142,10 +157,10 @@ public class TexturePacker
             }
         }
 
+        atlasIndex = 0;
         foreach (var atlas in atlases)
         {
-            int channelsQty = AtlasFormats.s_channelsByFormat[_format]; 
-            byte[] atlasPixelBytes = new byte[(_atlasWidth * _atlasHeight) * channelsQty];
+            Color[] pixels = new Color[_atlasWidth * _atlasHeight];
             
 
             foreach (var tId in atlas.textureIds)
@@ -162,23 +177,44 @@ public class TexturePacker
                         int targetX = x + textureData.x;
                         int targetY = y + textureData.y;
                         int targetIndex = targetY * _atlasWidth + targetX;
-                        targetIndex *= channelsQty;
 
-                        atlasPixelBytes[targetIndex] = (byte)(texturePixels[pixelIndex].r * 255);
-                        
-                        if(channelsQty > 1)
-                            atlasPixelBytes[targetIndex + 1] = (byte)(texturePixels[pixelIndex].g * 255);
-                        
-                        if(channelsQty > 2)
-                            atlasPixelBytes[targetIndex + 2] = (byte)(texturePixels[pixelIndex].b * 255);
-                        
-                        if(channelsQty > 3)
-                            atlasPixelBytes[targetIndex + 3] = (byte)(255);
+                        pixels[targetIndex] = texturePixels[pixelIndex];
                     }
                 }
             }
+
+            Texture2D atlasTxt = new Texture2D(_atlasWidth, _atlasHeight, _format, false);
+            atlasTxt.SetPixels(pixels);
+            atlasTxt.Apply();
+
+            string jpgPath = SceneExporter.SCENES_PATH_BASE + $"/{_setName}_{atlasIndex}.jpg";
+            string textAsstPath =  $"Assets/Resources/RenderScenes/{SceneExporter.SCENE_NAME}/{_setName}_{atlasIndex}.jpg";
             
-            atlas.texture = atlasPixelBytes;
+            File.WriteAllBytes(jpgPath, atlasTxt.EncodeToJPG());
+            AssetDatabase.Refresh();
+
+            AssetDatabase.ImportAsset(jpgPath, ImportAssetOptions.ForceUpdate);
+            
+            TextureImporter importer = AssetImporter.GetAtPath(textAsstPath) as TextureImporter;
+            
+            TextureImporterPlatformSettings importerPlatSettings = new TextureImporterPlatformSettings();
+            importerPlatSettings.format = s_formatToFormat[_format];
+            importerPlatSettings.textureCompression = TextureImporterCompression.Uncompressed;
+            importerPlatSettings.maxTextureSize = 4096;
+
+            TextureImporterSettings importerSettings = new TextureImporterSettings();
+            importer.ReadTextureSettings(importerSettings);
+            importerSettings.mipmapEnabled = false;
+            importerSettings.textureType = _isNormal ? TextureImporterType.NormalMap : TextureImporterType.Default;
+            importerSettings.filterMode = FilterMode.Bilinear;
+
+            
+            importer.SetTextureSettings(importerSettings);
+            importer.SetPlatformTextureSettings(importerPlatSettings);
+            importer.SaveAndReimport();
+            
+            atlas.resourcePath = $"RenderScenes/{SceneExporter.SCENE_NAME}/{_setName}_{atlasIndex}";
+            atlasIndex++;
         }
     }
 
@@ -208,29 +244,29 @@ public class TexturePacker
         return debugText;
     }
     
-    public void GenerateDebugFiles(string setName)
-    {
-        int channelsQty = AtlasFormats.s_channelsByFormat[_format]; 
-        
-        for (int i = 0; i < atlases.Count; i++)
-        {
-            Texture2D texture = new Texture2D(_atlasWidth, _atlasHeight, TextureFormat.RGBA32, false);
-
-            int size = _atlasWidth * _atlasHeight;
-            Color[] colors = new Color[size]; 
-            
-            for (int p = 0; p < size; p ++)
-            {
-                float r = channelsQty > 0 ? atlases[i].texture[p * channelsQty] / 255f : 0f;
-                float g = channelsQty > 1 ? atlases[i].texture[p * channelsQty + 1] / 255f : 0f;
-                float b = channelsQty > 2 ? atlases[i].texture[p * channelsQty + 2] / 255f : 0f;
-                float a = channelsQty > 3 ? atlases[i].texture[p * channelsQty + 3] / 255f : 1f;
-                
-                colors[p] = new Color(r, g, b, a);
-            }
-            
-            texture.LoadRawTextureData(atlases[i].texture);
-            File.WriteAllBytes(SceneExporter.DEBUG_DUMP_DIRECTORY + $"/{setName}_{i}.jpg", texture.EncodeToJPG());
-        }
-    }
+    // public void GenerateDebugFiles(string setName)
+    // {
+    //     int channelsQty = AtlasFormats.s_channelsByFormat[_format]; 
+    //     
+    //     for (int i = 0; i < atlases.Count; i++)
+    //     {
+    //         Texture2D texture = new Texture2D(_atlasWidth, _atlasHeight, TextureFormat.RGBA32, false);
+    //
+    //         int size = _atlasWidth * _atlasHeight;
+    //         Color[] colors = new Color[size]; 
+    //         
+    //         for (int p = 0; p < size; p ++)
+    //         {
+    //             float r = channelsQty > 0 ? atlases[i].texture[p * channelsQty] / 255f : 0f;
+    //             float g = channelsQty > 1 ? atlases[i].texture[p * channelsQty + 1] / 255f : 0f;
+    //             float b = channelsQty > 2 ? atlases[i].texture[p * channelsQty + 2] / 255f : 0f;
+    //             float a = channelsQty > 3 ? atlases[i].texture[p * channelsQty + 3] / 255f : 1f;
+    //             
+    //             colors[p] = new Color(r, g, b, a);
+    //         }
+    //         
+    //         texture.SetPixels(colors);
+    //         File.WriteAllBytes(SceneExporter.SCENES_PATH_BASE + $"/{setName}_{i}.jpg", texture.EncodeToJPG());
+    //     }
+    // }
 }

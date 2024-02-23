@@ -88,31 +88,31 @@ public static class SceneExport_GenerateMaterials
         }
 
         // albedo atlases
-        TexturePacker packerAlbedos = new TexturePacker(AtlasFormats.FULL_COLOR);
+        TexturePacker packerAlbedos = new TexturePacker(AtlasFormats.FULL_COLOR, "albedo", false);
         packerAlbedos.PackTextures(texturesAlbedo);
         sceneTextures.albedoAtlases = packerAlbedos.atlases;
         sceneTextures.albedoTextureDatas = packerAlbedos.GetDatasAsStruct();
 
         // normal atlases
-        TexturePacker packerNormals = new TexturePacker(AtlasFormats.FLOAT_COLOR);
+        TexturePacker packerNormals = new TexturePacker(AtlasFormats.NORMAL, "normal", true);
         packerNormals.PackTextures(texturesNormals);
         sceneTextures.normalAtlases = packerNormals.atlases;
         sceneTextures.normalTextureDatas = packerNormals.GetDatasAsStruct();
         
         // rough atlases
-        TexturePacker packerRough = new TexturePacker(AtlasFormats.R_CHANNEL_ONLY);
+        TexturePacker packerRough = new TexturePacker(AtlasFormats.R_CHANNEL_ONLY, "rough", false);
         packerRough.PackTextures(texturesRough);
         sceneTextures.roughAtlases = packerRough.atlases;
         sceneTextures.roughTextureDatas = packerRough.GetDatasAsStruct();
 
         // metallic atlases
-        TexturePacker packerMetal = new TexturePacker(AtlasFormats.R_CHANNEL_ONLY);
+        TexturePacker packerMetal = new TexturePacker(AtlasFormats.R_CHANNEL_ONLY, "metal", false);
         packerMetal.PackTextures(texturesMetallic);
         sceneTextures.metalAtlases = packerMetal.atlases;
         sceneTextures.metalTextureDatas = packerMetal.GetDatasAsStruct();
         
         // emission atlases
-        TexturePacker packerEmission = new TexturePacker(AtlasFormats.R_CHANNEL_ONLY);
+        TexturePacker packerEmission = new TexturePacker(AtlasFormats.R_CHANNEL_ONLY, "emission", false);
         packerEmission.PackTextures(texturesEmission);
         sceneTextures.emissionAtlases = packerEmission.atlases;
         sceneTextures.emissionTextureDatas = packerEmission.GetDatasAsStruct();
@@ -144,7 +144,7 @@ public static class SceneExport_GenerateMaterials
             AssetDatabase.DeleteAsset($"Assets/Resources/RenderScenes/{sceneContainer.name}_textures.asset");
         }
 
-        string assetPath = $"Assets/Resources/RenderScenes/{sceneContainer.name}_textures.asset"; 
+        string assetPath = $"Assets/Resources/RenderScenes/{sceneContainer.name}/{sceneContainer.name}_textures.asset"; 
         AssetDatabase.CreateAsset(sceneTextures, assetPath);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -156,11 +156,11 @@ public static class SceneExport_GenerateMaterials
         if (generateDebugInfo)
         {
             // generate textures that show how the atlases were generated
-            packerAlbedos.GenerateDebugFiles("albedo");
-            packerNormals.GenerateDebugFiles("normal");
-            packerRough.GenerateDebugFiles("rough");
-            packerMetal.GenerateDebugFiles("metal");
-            packerEmission.GenerateDebugFiles("emission");
+            // packerAlbedos.GenerateDebugFiles("albedo");
+            // packerNormals.GenerateDebugFiles("normal");
+            // packerRough.GenerateDebugFiles("rough");
+            // packerMetal.GenerateDebugFiles("metal");
+            // packerEmission.GenerateDebugFiles("emission");
             
             // dump log file with information of generated atlases
             string atlasText = "";
@@ -171,7 +171,7 @@ public static class SceneExport_GenerateMaterials
             atlasText +=  packerMetal.GetDebugText("metal");
             atlasText +=  packerEmission.GetDebugText("emission");
             
-            File.WriteAllText(SceneExporter.DEBUG_DUMP_DIRECTORY + "Atlases.txt", atlasText);
+            File.WriteAllText(SceneExporter.SCENES_PATH_BASE + "Atlases.txt", atlasText);
             
             // dump log file with information of generated materials
             string materialsText = "";
@@ -192,7 +192,7 @@ public static class SceneExport_GenerateMaterials
                 materialsText += "----------------\n\n";
             }
             
-            File.WriteAllText(SceneExporter.DEBUG_DUMP_DIRECTORY + "Materials.txt", materialsText);
+            File.WriteAllText(SceneExporter.SCENES_PATH_BASE + "Materials.txt", materialsText);
             
             
         }

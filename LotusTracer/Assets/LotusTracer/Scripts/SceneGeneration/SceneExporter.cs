@@ -2,12 +2,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using CapyTracerCore.Core;
+using UnityEditor;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 public class SceneExporter : MonoBehaviour
 {
-    public static string DEBUG_DUMP_DIRECTORY = Application.dataPath + "/DebugTemp/";
+    public static string SCENES_PATH_BASE;
+    public static string SCENE_NAME;  
     
     public int bvhMaxDepth = 60;
     public int bvhMaxNodeTriangles = 3;
@@ -16,11 +18,14 @@ public class SceneExporter : MonoBehaviour
     
     private void CreateSceneAsset()
     {
-        if (Directory.Exists(DEBUG_DUMP_DIRECTORY))
-            Directory.Delete(DEBUG_DUMP_DIRECTORY, true);
-
-        Directory.CreateDirectory(DEBUG_DUMP_DIRECTORY);
+        SCENE_NAME = gameObject.name;
+        SCENES_PATH_BASE = Application.dataPath + $"/Resources/RenderScenes/{gameObject.name}/";
         
+        if (Directory.Exists(SCENES_PATH_BASE))
+            Directory.Delete(SCENES_PATH_BASE, true);
+        
+        AssetDatabase.Refresh();
+        Directory.CreateDirectory(SCENES_PATH_BASE);
         
         Stopwatch sw = Stopwatch.StartNew();
         

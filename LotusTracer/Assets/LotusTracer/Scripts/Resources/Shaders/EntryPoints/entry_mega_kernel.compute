@@ -107,13 +107,20 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                 absorbDistance += scatterDistance;
 
                 // beer's law absorption. I'm using medium density as coefficient, which is not great but ¯\_(ツ)_/¯
-                throughput *= exp(- bounceData.mediumDensity * absorbDistance);
+                
+
+                
                 pathRay.origin = pathRay.direction * scatterDistance;
         
                 float3 scatterDir = Sample_PhaseHG(randState, pathRay.direction, bounceData.scatteringDirection);
                 pathRay.direction = scatterDir;
                 
                 bouncePDF = Evaluate_PhaseHG(dot(-pathRay.direction, scatterDir), bounceData.scatteringDirection);
+
+                if(bouncePDF <= 0)
+                    break;
+
+                throughput *= exp(- bounceData.mediumDensity * absorbDistance);
 
                 b--;
                 volumeScattersCounter++;

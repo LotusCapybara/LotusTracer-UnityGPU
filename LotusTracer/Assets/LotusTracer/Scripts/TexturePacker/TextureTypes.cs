@@ -6,7 +6,6 @@ using UnityEngine.Serialization;
 [Serializable]
 public class TextureDataManaged 
 {
-    [FormerlySerializedAs("index")]
     public int originalIndex;
     public int atlasIndex;
     public int x;
@@ -45,5 +44,6 @@ public class TextureAtlasData
 {
     public List<int> textureIds = new();
     public List<TextureDataManaged> textureDatas = new();
-    public byte[] texture;
+    [FormerlySerializedAs("resourceName")]
+    public string resourcePath;
 }

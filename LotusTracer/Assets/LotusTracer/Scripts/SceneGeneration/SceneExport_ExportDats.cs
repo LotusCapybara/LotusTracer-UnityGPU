@@ -1,13 +1,12 @@
 using System.IO;
 using CapyTracerCore.Core;
 using UnityEditor;
-using UnityEngine;
 
 public static class SceneExport_ExportDats
 {
     public static void Export(SerializedScene scene, string sceneName)
     {
-        using (FileStream fileStream = new FileStream(Application.dataPath + $"/Resources/RenderScenes/{sceneName}.dat", FileMode.Create))
+        using (FileStream fileStream = new FileStream(SceneExporter.SCENES_PATH_BASE + $"{sceneName}.dat", FileMode.Create))
         {
             using (BinaryWriter writer = new BinaryWriter(fileStream))
             {

@@ -36,7 +36,7 @@ namespace CapyTracerCore.Core
             this.maxBounces = maxBounces;
             totalPixels = width * height;
 
-            string scenePath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}.dat");
+            string scenePath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.dat");
             serializedScene = SceneExporter.DeserializeScene(scenePath);
 
             for (int m = 0; m < serializedScene.materials.Length; m++)
@@ -54,12 +54,12 @@ namespace CapyTracerCore.Core
             UpdateCameraRays();
             
             // create scene textureDatas
-            RenderSceneTextures textures = Resources.Load<RenderSceneTextures>($"RenderScenes/{sceneName}_textures");
+            RenderSceneTextures textures = Resources.Load<RenderSceneTextures>($"RenderScenes/{sceneName}/{sceneName}_textures");
 
             textureArrayAlbedo = CreateTextureArray(4096, 4096, textures.GetAlbedoCanvasTextures(), AtlasFormats.FULL_COLOR);
             textureDataAlbedo = textures.albedoTextureDatas.ToArray();
             
-            textureArrayNormal = CreateTextureArray(4096, 4096, textures.GetNormalCanvasTextures(), AtlasFormats.FLOAT_COLOR);
+            textureArrayNormal = CreateTextureArray(4096, 4096, textures.GetNormalCanvasTextures(), AtlasFormats.NORMAL);
             textureDataNormal = textures.normalTextureDatas.ToArray();
             
             textureArrayRoughness = CreateTextureArray(4096, 4096, textures.GetRoughnessCanvasTextures(), AtlasFormats.R_CHANNEL_ONLY);

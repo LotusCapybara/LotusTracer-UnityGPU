@@ -7,14 +7,9 @@ namespace CapyTracerCore.Core
 {
     public static class AtlasFormats
     {
-        public static TextureFormat FULL_COLOR = TextureFormat.RGB24;
-        public static TextureFormat FLOAT_COLOR = TextureFormat.RGBAFloat;
+        public static TextureFormat FULL_COLOR = TextureFormat.RGBA32;
+        public static TextureFormat NORMAL = TextureFormat.RGBAFloat;
         public static TextureFormat R_CHANNEL_ONLY = TextureFormat.R8;
-
-        public static Dictionary<TextureFormat, int> s_channelsByFormat = new()
-        {
-            { FULL_COLOR, 3 }, {FLOAT_COLOR, 4}, {R_CHANNEL_ONLY, 1}
-        };
     }
     
     // this was in serialized from the Unity Scene into the .dat file
