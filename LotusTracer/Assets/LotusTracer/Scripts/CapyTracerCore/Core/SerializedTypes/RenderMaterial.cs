@@ -1,17 +1,16 @@
 ﻿using System.Runtime.InteropServices;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace CapyTracerCore.Core
 {
     public static class AtlasFormats
     {
-        public static TextureFormat ALBEDO = TextureFormat.RGB24;
-        public static TextureFormat NORMAL = TextureFormat.RGB24;
-        public static TextureFormat ROUGHNESS = TextureFormat.RGB24;
-        public static TextureFormat METALLIC = TextureFormat.RGB24;
-        public static TextureFormat EMISSION = TextureFormat.RGB24;
+        public static TextureFormat ALBEDO = TextureFormat.RGBA32;
+        public static TextureFormat NORMAL = TextureFormat.RGBAFloat;
+        public static TextureFormat ROUGHNESS = TextureFormat.RGBA32;
+        public static TextureFormat METALLIC = TextureFormat.RGBA32;
+        public static TextureFormat EMISSION = TextureFormat.RGBA32;
     }
     
     // this was in serialized from the Unity Scene into the .dat file

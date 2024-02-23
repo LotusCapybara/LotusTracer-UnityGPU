@@ -49,9 +49,9 @@ void Kernel_TestSampleCosineWeighted (uint3 id : SV_DispatchThreadID)
     {
         _SampleDirections0[i] = RandomDirectionInHemisphereCosWeighted(rand);
         
-        _SampleDirections1[i] = ToWorld(_UpDirection, _SampleDirections0[i]);
-
-        _SampleDirections2[i] = ToLocal(_UpDirection, _SampleDirections1[i]);
+        // _SampleDirections1[i] = ToWorld(_UpDirection, _SampleDirections0[i]);
+        //
+        // _SampleDirections2[i] = ToLocal(_UpDirection, _SampleDirections1[i]);
     }
 }
 

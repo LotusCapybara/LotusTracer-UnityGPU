@@ -27,7 +27,7 @@ namespace CapyTracerCore.Core
             for (int i = 0; i < albedoAtlases.Count; i++)
             {
                 var texture = new Texture2D(4096, 4096, AtlasFormats.ALBEDO, false);
-                texture.LoadImage(albedoAtlases[i].texture);
+                texture.LoadRawTextureData(albedoAtlases[i].texture);
                 maps.Add(texture);
             }
 
@@ -41,8 +41,22 @@ namespace CapyTracerCore.Core
             for (int i = 0; i < normalAtlases.Count; i++)
             {
                 var texture = new Texture2D(4096, 4096, AtlasFormats.NORMAL, false);
-                texture.LoadImage(normalAtlases[i].texture);
+
+                Color[] colors = new Color[4096 * 4096];
+
+                for (int p = 0; p < 4096 * 4096; p ++)
+                {
+                    colors[p] = new Color(
+                        normalAtlases[i].texture[p * 4] / 255f, 
+                        normalAtlases[i].texture[p * 4 + 1] / 255f, 
+                        normalAtlases[i].texture[p * 4 + 2] / 255f, 
+                        normalAtlases[i].texture[p * 4 + 3] / 255f);
+                    
+                    // colors[p] = new Color(0.5f, 0.5f, 1f, 1f);
+                }
                 
+                texture.SetPixels(colors);
+                texture.Apply();
                 maps.Add(texture);
             }
         
@@ -56,7 +70,7 @@ namespace CapyTracerCore.Core
             for (int i = 0; i < roughAtlases.Count; i++)
             {
                 var texture = new Texture2D(4096, 4096, AtlasFormats.ROUGHNESS, false);
-                texture.LoadImage(roughAtlases[i].texture);
+                texture.LoadRawTextureData(roughAtlases[i].texture);
                 
                 maps.Add(texture);
             }
@@ -71,7 +85,7 @@ namespace CapyTracerCore.Core
             for (int i = 0; i < metalAtlases.Count; i++)
             {
                 var texture = new Texture2D(4096, 4096, AtlasFormats.METALLIC, false);
-                texture.LoadImage(metalAtlases[i].texture);
+                texture.LoadRawTextureData(metalAtlases[i].texture);
                 
                 maps.Add(texture);
             }
@@ -86,7 +100,7 @@ namespace CapyTracerCore.Core
             for (int i = 0; i < emissionAtlases.Count; i++)
             {
                 var texture = new Texture2D(4096, 4096, AtlasFormats.EMISSION, false);
-                texture.LoadImage(emissionAtlases[i].texture);
+                texture.LoadRawTextureData(emissionAtlases[i].texture);
                 
                 maps.Add(texture);
             }

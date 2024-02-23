@@ -30,7 +30,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
     
     pathRay.invDirection = 1.0 / pathRay.direction;
     
-    TriangleHitInfo hitInfo = CreateHitInfo();
+    TriangleHitInfo hitInfo = (TriangleHitInfo) 0;
 
     float3 radiance = V_ZERO;
     float3 throughput = V_ONE;
@@ -125,7 +125,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         if(! mediumWasSampled)
         {
             // Sample next bounce
-            scatteringData = MakeScatteringData_FromHitInfo(randState, hitInfo);
+            scatteringData = MakeScatteringData(randState, hitInfo);
             
             bool validSample = GetBSDF_Sample(randState, scatteringData);
             if(!validSample)

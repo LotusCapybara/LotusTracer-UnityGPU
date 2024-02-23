@@ -107,20 +107,6 @@ struct TriangleHitInfo
     float2 textureUV;
 };
 
-TriangleHitInfo CreateHitInfo()
-{
-    TriangleHitInfo hit_info;
-    hit_info.distance = 0;
-    hit_info.normal = 0;
-    hit_info.position = 0;
-    hit_info.backRayDirection = 0;
-    hit_info.materialIndex = 0;
-    hit_info.textureUV = (float2) 0;
-    hit_info.triangleIndex = 0;
-
-    return hit_info;
-}
-
 struct SampleData
 {
     float3 L;
@@ -152,6 +138,8 @@ struct ScatteringData
 {
     float3 surfacePoint;
     float3 WorldNormal;
+    float3 WorldTangent;
+    float3 WorldBiTangent;
     
     float3 V;    
 

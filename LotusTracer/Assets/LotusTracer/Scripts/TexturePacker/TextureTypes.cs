@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [Serializable]
 public class TextureDataManaged 
 {
-    public int index;
+    [FormerlySerializedAs("index")]
+    public int originalIndex;
     public int atlasIndex;
     public int x;
     public int y;
@@ -16,7 +18,7 @@ public class TextureDataManaged
     {
         return new TextureData
         {
-            index = this.index,
+            index = this.originalIndex,
             atlasIndex = this.atlasIndex,
             x = this.x,
             y = this.y,
@@ -42,5 +44,6 @@ public struct TextureData
 public class TextureAtlasData
 {
     public List<int> textureIds = new();
+    public List<TextureDataManaged> textureDatas = new();
     public byte[] texture;
 }

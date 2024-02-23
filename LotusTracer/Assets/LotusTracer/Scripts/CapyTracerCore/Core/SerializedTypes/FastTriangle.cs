@@ -33,11 +33,6 @@ namespace CapyTracerCore.Core
         // --------------x : is invisible light bouncer
         // -------------x: 
         public int flags;
-
-        public void SetIsInvisibleLightBouncer()
-        {
-            flags |= 0b1;
-        }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetVertexPos(int index, float3 value)
@@ -92,24 +87,28 @@ namespace CapyTracerCore.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetVertexTangent(int index, float4 value)
         {
+            if (math.isnan(value.w) || value.w == 0)
+                throw new Exception("Tangent has wrong w");
+
+            float crossSign = value.w > 0 ? 1 : -1;
             if (index == 0)
             {
                 tangentA = value.xyz;
-                biTangentA = math.cross(normalA, tangentA);
+                biTangentA = math.normalize( crossSign * math.cross(normalA, tangentA.xyz));
                 return;
             }
         
             if (index == 1)
             {
                 tangentB = value.xyz;
-                biTangentB = math.cross(normalB, tangentB.xyz);
+                biTangentB = math.normalize( crossSign * math.cross(normalB, tangentB.xyz));
                 return;
             }
         
             if (index == 2)
             {
                 tangentC = value.xyz;
-                biTangentC = math.cross(normalC, tangentC.xyz);
+                biTangentC = math.normalize( crossSign * math.cross(normalC, tangentC.xyz));
                 return;
             }
         

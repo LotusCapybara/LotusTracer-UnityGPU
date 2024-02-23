@@ -100,60 +100,28 @@ void CreateCoordinateSystem(in float3 normal, inout float3 tangent, inout float3
     biTangent = normalize( cross(normal, tangent) );
 }
 
-float3 ToWorld(float3 normal, float3 v)
+float3 ToWorld(float3 T, float3 B, float3 N, float3 v)
 {
-    float3 tangent, bitangent;
-    CreateCoordinateSystem(normal, tangent, bitangent);
-
-    return normalize( v.x * tangent + v.z * bitangent + v.y * normal);
+    return normalize( v.x * T + v.z * B + v.y * N);
 }
 
-float3 ToWorldTBN(float3 T, float3 B, float3 N, float3 v)
+float3 ToLocal(float3 T, float3 B, float3 N, float3 v)
 {
-    return normalize( v.x * B + v.y * N + v.z * T);
-}
-
-float3 ToWorld2(float3 normal, float3 v, float3 tangent, float3 bitangent)
-{
-    return normalize( v.x * bitangent + v.y * normal + v.z * tangent);
-}
-
-
-float3 ToLocal(float3 normal, float3 v)
-{
-    float3 tangent, bitangent;
-    CreateCoordinateSystem(normal, tangent, bitangent);
-    
-    return normalize( float3(dot(v, bitangent), dot(v, normal), dot(v, tangent)));
-}
-
-float3 NormalMapToWorld( float3 T, float3 B, float3 N, float3 normalFromMap)
-{
-    float3x3 TBN = float3x3(T, B, N);
-    return normalize( mul(TBN, normalFromMap) );
+    return normalize( float3(dot(v, T), dot(v, N), dot(v, B)));
 }
 
 void ScatteringToWorld(inout ScatteringData data)
 {
-    data.V = ToWorld(data.WorldNormal, data.V);
-    data.sampleData.L = ToWorld(data.WorldNormal, data.sampleData.L);
-    data.sampleData.H = ToWorld(data.WorldNormal, data.sampleData.H);
+    data.V = ToWorld(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.V);
+    data.sampleData.L = ToWorld(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.sampleData.L);
+    data.sampleData.H = ToWorld(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.sampleData.H);
 }
 
 void ScatteringToLocal(inout ScatteringData data)
 {
-    data.V = ToLocal(data.WorldNormal, data.V);
-    data.sampleData.L = ToLocal(data.WorldNormal, data.sampleData.L);
-    data.sampleData.H = ToLocal(data.WorldNormal, data.sampleData.H);
-}
-
-
-float3 UnpackNormalRGB(float3 packedNormal, float3 scale = 1.0)
-{
-    float3 normal;
-    normal.xyz = packedNormal.rgb * 2.0 - 1.0;
-    normal.xy *= scale;
-    return normal;
+    data.V = ToLocal(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.V);
+    data.sampleData.L = ToLocal(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.sampleData.L);
+    data.sampleData.H = ToLocal(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.sampleData.H);
 }
 
 // ---------------------------------- math / bsdf utils

@@ -9,11 +9,10 @@ using UnityEngine;
 
 public static class SceneExport_GenerateMaterials
 {
-    public static void Export(SerializedScene scene, GameObject sceneContainer, List<Material> unityMaterials)
+    public static void Export(SerializedScene scene, GameObject sceneContainer, List<Material> unityMaterials, bool generateDebugInfo)
     {
-        // todo: it would be nice to create some atlassing of all these texture
-        // it could be 1 atlas per type
-        // todo important we need to be able to handle different texture sizes....
+        // todo: packing mono atlases would be nice, for instance
+        // rgba = rough, metallic, emissive, something
         RenderSceneTextures sceneTextures = ScriptableObject.CreateInstance<RenderSceneTextures>();
         
         List<Texture2D> texturesAlbedo = new List<Texture2D>();
@@ -90,48 +89,52 @@ public static class SceneExport_GenerateMaterials
 
         // albedo atlases
         TexturePacker packerAlbedos = new TexturePacker(AtlasFormats.ALBEDO);
-        packerAlbedos.RegisterTextures(texturesAlbedo);
-        packerAlbedos.PackTextures();
+        packerAlbedos.PackTextures(texturesAlbedo);
         sceneTextures.albedoAtlases = packerAlbedos.atlases;
         sceneTextures.albedoTextureDatas = packerAlbedos.GetDatasAsStruct();
 
         // normal atlases
         TexturePacker packerNormals = new TexturePacker(AtlasFormats.NORMAL);
-        packerNormals.RegisterTextures(texturesNormals);
-        packerNormals.PackTextures();
+        packerNormals.PackTextures(texturesNormals);
         sceneTextures.normalAtlases = packerNormals.atlases;
         sceneTextures.normalTextureDatas = packerNormals.GetDatasAsStruct();
         
         // rough atlases
         TexturePacker packerRough = new TexturePacker(AtlasFormats.ROUGHNESS);
-        packerRough.RegisterTextures(texturesRough);
-        packerRough.PackTextures();
+        packerRough.PackTextures(texturesRough);
         sceneTextures.roughAtlases = packerRough.atlases;
         sceneTextures.roughTextureDatas = packerRough.GetDatasAsStruct();
 
         // metallic atlases
         TexturePacker packerMetal = new TexturePacker(AtlasFormats.METALLIC);
-        packerMetal.RegisterTextures(texturesMetallic);
-        packerMetal.PackTextures();
+        packerMetal.PackTextures(texturesMetallic);
         sceneTextures.metalAtlases = packerMetal.atlases;
         sceneTextures.metalTextureDatas = packerMetal.GetDatasAsStruct();
         
         // emission atlases
         TexturePacker packerEmission = new TexturePacker(AtlasFormats.EMISSION);
-        packerEmission.RegisterTextures(texturesEmission);
-        packerEmission.PackTextures();
+        packerEmission.PackTextures(texturesEmission);
         sceneTextures.emissionAtlases = packerEmission.atlases;
         sceneTextures.emissionTextureDatas = packerEmission.GetDatasAsStruct();
         
         for (int m = 0; m < scene.materials.Length; m++)
         {
             var mat = scene.materials[m];
-
+            
             mat.albedoMapCanvasIndex = packerAlbedos.GetAtlasIndexForTextureId(mat.albedoMapIndex);
+            mat.albedoMapIndex = packerAlbedos.GetTextureIndexInsideAtlasFromOriginalIndex(mat.albedoMapIndex);
+            
             mat.normalMapCanvasIndex = packerNormals.GetAtlasIndexForTextureId(mat.normalMapIndex);
+            mat.normalMapIndex = packerNormals.GetTextureIndexInsideAtlasFromOriginalIndex(mat.normalMapIndex);
+            
             mat.roughMapCanvasIndex = packerRough.GetAtlasIndexForTextureId(mat.roughMapIndex);
+            mat.roughMapIndex = packerRough.GetTextureIndexInsideAtlasFromOriginalIndex(mat.roughMapIndex);
+            
             mat.metalMapCanvasIndex = packerMetal.GetAtlasIndexForTextureId(mat.metalMapIndex);
+            mat.metalMapIndex = packerMetal.GetTextureIndexInsideAtlasFromOriginalIndex(mat.metalMapIndex);
+            
             mat.emissionMapCanvasIndex = packerEmission.GetAtlasIndexForTextureId(mat.emissionMapIndex);
+            mat.emissionMapIndex = packerEmission.GetTextureIndexInsideAtlasFromOriginalIndex(mat.emissionMapIndex);
 
             scene.materials[m] = mat;
         }
@@ -145,5 +148,53 @@ public static class SceneExport_GenerateMaterials
         AssetDatabase.CreateAsset(sceneTextures, assetPath);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+
+        // it's a bit annoying to make this method so big due additional debug generation but
+        // otherwise I'd need to rethink this class and see how to inject into the debug generator the data
+        // I think it's fine like this
+
+        if (generateDebugInfo)
+        {
+            // generate textures that show how the atlases were generated
+            packerAlbedos.GenerateDebugFiles("albedo");
+            packerNormals.GenerateDebugFiles("normal");
+            packerRough.GenerateDebugFiles("rough");
+            packerMetal.GenerateDebugFiles("metal");
+            packerEmission.GenerateDebugFiles("emission");
+            
+            // dump log file with information of generated atlases
+            string atlasText = "";
+
+            atlasText +=  packerAlbedos.GetDebugText("albedo");
+            atlasText +=  packerNormals.GetDebugText("normal");
+            atlasText +=  packerRough.GetDebugText("rough");
+            atlasText +=  packerMetal.GetDebugText("metal");
+            atlasText +=  packerEmission.GetDebugText("emission");
+            
+            File.WriteAllText(SceneExporter.DEBUG_DUMP_DIRECTORY + "Atlases.txt", atlasText);
+            
+            // dump log file with information of generated materials
+            string materialsText = "";
+            
+            materialsText += $"Total Materials: {scene.materials.Length}\n\n";
+
+            for (int m = 0; m < scene.materials.Length; m++)
+            {
+                var mat = scene.materials[m];
+                
+                materialsText += $"Mat: {m}   { unityMaterials[m].name }\n";
+                materialsText += $"Canvas Albedo: {mat.albedoMapCanvasIndex}\n";
+                materialsText += $"Canvas Normal: {mat.normalMapCanvasIndex}\n";
+                materialsText += $"Canvas Rough: {mat.roughMapCanvasIndex}\n";
+                materialsText += $"Canvas Metal: {mat.metalMapCanvasIndex}\n";
+                materialsText += $"Canvas Emission: {mat.emissionMapCanvasIndex}\n";
+                
+                materialsText += "----------------\n\n";
+            }
+            
+            File.WriteAllText(SceneExporter.DEBUG_DUMP_DIRECTORY + "Materials.txt", materialsText);
+            
+            
+        }
     }
 }

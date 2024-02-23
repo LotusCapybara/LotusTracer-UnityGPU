@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
 public class TexturePacker
 {
-    private List<Texture2D> _textures = new();
+    private List<Texture2D> _originalTextures = new();
     private int _atlasWidth;
     private int _atlasHeight;
 
@@ -35,30 +36,45 @@ public class TexturePacker
 
     public int GetAtlasIndexForTextureId(int textureId)
     {
+        if (textureId < 0)
+            return -1;
+        
         foreach (var textureData in allTextureDatas)
         {
-            if (textureData.index == textureId)
+            if (textureData.originalIndex == textureId)
                 return textureData.atlasIndex;
         }
 
-        return -1;
+        throw new Exception("texture not found");
     }
-
-    public void RegisterTextures(List<Texture2D> textures)
+    
+    public int GetTextureIndexInsideAtlasFromOriginalIndex(int originalIndex)
     {
-        _textures.AddRange(textures);
+        if (originalIndex < 0)
+            return -1;
+        
+        foreach (var textureData in allTextureDatas)
+        {
+            if (textureData.originalIndex == originalIndex)
+                return allTextureDatas.IndexOf(textureData);
+        }
+
+        throw new Exception("texture not found");
     }
+    
 
-    public void PackTextures()
+
+    public void PackTextures(List<Texture2D> textures)
     {
+        _originalTextures.AddRange(textures);
         allTextureDatas = new List<TextureDataManaged>();
 
-        for (int i = 0; i < _textures.Count; i++)
+        for (int i = 0; i < _originalTextures.Count; i++)
         {
             TextureDataManaged dataManaged = new TextureDataManaged();
-            dataManaged.index = i;
-            dataManaged.width = _textures[i].width;
-            dataManaged.height = _textures[i].height;
+            dataManaged.originalIndex = i;
+            dataManaged.width = _originalTextures[i].width;
+            dataManaged.height = _originalTextures[i].height;
 
             allTextureDatas.Add(dataManaged);
         }
@@ -81,7 +97,7 @@ public class TexturePacker
         {
             List<TextureDataManaged> packedDatas = new List<TextureDataManaged>();
 
-            foreach (var textureData in datasToPack)
+            foreach (TextureDataManaged textureData in datasToPack)
             {
                 // loop to the start of the row if the size went out of the canvas width
                 if ((xPos + textureData.width) > _atlasWidth)
@@ -107,9 +123,10 @@ public class TexturePacker
                 packedDatas.Add(textureData);
             }
 
-            foreach (var textureData in packedDatas)
+            foreach (TextureDataManaged textureData in packedDatas)
             {
-                currentAtlas.textureIds.Add(textureData.index);
+                currentAtlas.textureIds.Add(textureData.originalIndex);
+                currentAtlas.textureDatas.Add(textureData);
                 datasToPack.Remove(textureData);
             }
 
@@ -126,32 +143,84 @@ public class TexturePacker
 
         foreach (var atlas in atlases)
         {
-            Color[] atlasPixels = new Color[(_atlasWidth * _atlasHeight) * 3];
-
+            // Color[] atlasPixels = new Color[(_atlasWidth * _atlasHeight)];
+            byte[] atlasPixelBytes = new byte[(_atlasWidth * _atlasHeight) * 4];
+            
 
             foreach (var tId in atlas.textureIds)
             {
-                var texturePixels = _textures[tId].GetPixels();
+                var texturePixels = _originalTextures[tId].GetPixels();
 
-                var textureData = allTextureDatas.First(d => d.index == tId);
+                var textureData = allTextureDatas.First(d => d.originalIndex == tId);
 
                 for (int y = 0; y < textureData.height; y++)
                 {
                     for (int x = 0; x < textureData.width; x++)
                     {
-                        int pixelIndex = y * textureData.height + x;
+                        int pixelIndex = y * textureData.width + x;
                         int targetX = x + textureData.x;
                         int targetY = y + textureData.y;
                         int targetIndex = targetY * _atlasWidth + targetX;
+                        targetIndex *= 4;
 
-                        atlasPixels[targetIndex] = texturePixels[pixelIndex];
+                        atlasPixelBytes[targetIndex] = (byte)(texturePixels[pixelIndex].r * 255);
+                        atlasPixelBytes[targetIndex + 1] = (byte)(texturePixels[pixelIndex].g * 255);
+                        atlasPixelBytes[targetIndex + 2] = (byte)(texturePixels[pixelIndex].b * 255);
+                        atlasPixelBytes[targetIndex + 3] = (byte)(255);
                     }
                 }
             }
+            
+            atlas.texture = atlasPixelBytes;
+        }
+    }
 
-            Texture2D texture = new Texture2D(_atlasWidth, _atlasHeight, _format, false);
-            texture.SetPixels(atlasPixels);
-            atlas.texture = texture.EncodeToJPG();
+    public string GetDebugText(string setName)
+    {
+        string debugText = $"---------- {setName}  ----------\n";
+        debugText += $"Total Atlases: {atlases.Count}\n";
+        debugText += $"Textures: {atlases.Count}\n";
+        
+        for (int i = 0; i < atlases.Count; i++)
+        {
+            debugText += $"{i}:\n";
+            
+            foreach (var textureId in atlases[i].textureIds)
+            {
+                debugText += $" - {_originalTextures[textureId].name}   {_originalTextures[textureId].format} \n";
+            }
+            
+            foreach (var textureData in atlases[i].textureDatas)
+            {
+                debugText += $" - at:{textureData.atlasIndex} oi:{textureData.originalIndex} x:{textureData.x} y:{textureData.y} w:{textureData.width} h:{textureData.height} \n";
+            }
+        }
+
+        debugText += "\n\n";
+        
+        return debugText;
+    }
+    
+    public void GenerateDebugFiles(string setName)
+    {
+        for (int i = 0; i < atlases.Count; i++)
+        {
+            Texture2D texture = new Texture2D(_atlasWidth, _atlasHeight, TextureFormat.RGBA32, false);
+
+            int size = _atlasWidth * _atlasHeight;
+            Color[] colors = new Color[size];
+
+            for (int p = 0; p < size; p ++)
+            {
+                colors[p] = new Color(
+                    atlases[i].texture[p * 4] / 255f, 
+                    atlases[i].texture[p * 4 + 1] / 255f, 
+                    atlases[i].texture[p * 4 + 2] / 255f, 
+                    atlases[i].texture[p * 4 + 3] / 255f);
+            }
+            
+            texture.LoadRawTextureData(atlases[i].texture);
+            File.WriteAllBytes(SceneExporter.DEBUG_DUMP_DIRECTORY + $"/{setName}_{i}.jpg", texture.EncodeToJPG());
         }
     }
 }

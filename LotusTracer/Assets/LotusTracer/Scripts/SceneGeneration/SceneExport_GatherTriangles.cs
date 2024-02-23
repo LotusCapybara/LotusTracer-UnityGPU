@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,28 +30,29 @@ public static class SceneExport_GatherTriangles
                     outUnityMaterials.Add(meshRendererMaterial);
             }
             
-            var meshDef = meshes[m].GetComponent<MeshFilter>().sharedMesh;
+            Vector3 transformPos = meshes[m].transform.position;
+            Vector3 transformScale = meshes[m].transform.lossyScale;
+            Quaternion transformRotation = meshes[m].transform.rotation;
 
+            var meshDef = meshes[m].GetComponent<MeshFilter>().sharedMesh;
+            bool isInvisibleLightBouncer = meshes[m].GetComponent<InvisibleLightBouncer>() != null;    
+
+            Vector3[] verticesA = meshDef.vertices;
+            Vector3[] normalsA = meshDef.normals;
+            Vector4[] tangentsA = meshDef.tangents;
+            
             for (int subMesh = 0; subMesh < meshDef.subMeshCount; subMesh++)
             {
-                Vector3 transformPos = meshes[m].transform.position;
-                Vector3 transformScale = meshes[m].transform.lossyScale;
-                Quaternion transformRotation = meshes[m].transform.rotation;
-                Vector3[] verticesA = meshDef.vertices;
-                Vector3[] normalsA = meshDef.normals;
-                Vector4[] tangentsA = meshDef.tangents;
+                List<Vector2> subMeshUvs = new List<Vector2>();
+                meshDef.GetUVs(0, subMeshUvs);
                 
-                List<Vector2> uvs = new List<Vector2>();
-                meshDef.GetUVs(0, uvs);
                 int materialIndex =  (ushort)outUnityMaterials.FindIndex(mat => mat.name == meshes[m].sharedMaterials[subMesh].name);
                 int[] triangles = meshDef.GetTriangles(subMesh);
-
-                bool isInvisibleLightBouncer = meshes[m].GetComponent<InvisibleLightBouncer>() != null;                     
                 
                 allTasks.Add(
                     Task.Run(() => GetTrianglesForMesh(
                         transformPos, transformScale, transformRotation,
-                        verticesA, normalsA, tangentsA, triangles, uvs, materialIndex, isInvisibleLightBouncer
+                        verticesA, normalsA, tangentsA, triangles, subMeshUvs, materialIndex, isInvisibleLightBouncer
                         )
                     ));
             }
@@ -86,7 +88,7 @@ public static class SceneExport_GatherTriangles
             newTriangle.flags = 0;
 
             if(isInvisibleLightBouncer)
-                newTriangle.SetIsInvisibleLightBouncer();
+                newTriangle.flags |= 0b1;
             
             // copy position from unity triangle
             // copy normals from unity triangle
@@ -105,8 +107,9 @@ public static class SceneExport_GatherTriangles
 
                 // apply rotation
                 pos = transformRotation * pos;
-                nor = transformRotation * nor;
-                tan = transformRotation * tan;
+                nor = Vector3.Normalize( transformRotation * nor );
+                Vector3 tanDirection = Vector3.Normalize( transformRotation * tan );
+                tan = new Vector4(tanDirection.x, tanDirection.y, tanDirection.z, tan.w);
 
                 // apply translation
                 pos += transformPos;
@@ -124,7 +127,16 @@ public static class SceneExport_GatherTriangles
                 
             }
             newTriangle.centerPos *= 0.3333f;
+            
+            if (math.abs(math.dot(newTriangle.normalA, newTriangle.biTangentA)) > 0.000001)
+                throw new Exception("Wrong bitangentA");
 
+            if (math.abs(math.dot(newTriangle.normalB, newTriangle.biTangentB)) > 0.000001)
+                throw new Exception("Wrong bitangentB");
+            
+            if (math.abs(math.dot(newTriangle.normalC, newTriangle.biTangentC)) > 0.000001)
+                throw new Exception("Wrong bitangentC");
+            
             t++;
 
             allTriangles.Add(newTriangle);

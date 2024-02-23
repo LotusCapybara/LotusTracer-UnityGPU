@@ -66,7 +66,7 @@ static void GetLightsNEE(inout uint randState, in TriangleHitInfo hitInfo, bool 
         return;
 
 
-    ScatteringData data = MakeScatteringData_FromHitInfo(randState, hitInfo);
+    ScatteringData data = MakeScatteringData(randState, hitInfo);
 
     int lightIndex = (int)(GetRandom0to1(randState) * qtyDirectLights);
     lightIndex = clamp(lightIndex, 0, qtyDirectLights - 1);

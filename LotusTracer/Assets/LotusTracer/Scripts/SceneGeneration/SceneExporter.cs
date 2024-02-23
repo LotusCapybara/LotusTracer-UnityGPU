@@ -7,11 +7,21 @@ using Debug = UnityEngine.Debug;
 
 public class SceneExporter : MonoBehaviour
 {
+    public static string DEBUG_DUMP_DIRECTORY = Application.dataPath + "/DebugTemp/";
+    
     public int bvhMaxDepth = 60;
     public int bvhMaxNodeTriangles = 3;
+
+    public bool generateDebugInfo;
     
     private void CreateSceneAsset()
     {
+        if (Directory.Exists(DEBUG_DUMP_DIRECTORY))
+            Directory.Delete(DEBUG_DUMP_DIRECTORY, true);
+
+        Directory.CreateDirectory(DEBUG_DUMP_DIRECTORY);
+        
+        
         Stopwatch sw = Stopwatch.StartNew();
         
         SerializedScene scene = new SerializedScene();
@@ -31,7 +41,7 @@ public class SceneExporter : MonoBehaviour
         Debug.Log($"GatherTriangles: {sw.Elapsed.TotalSeconds}");
         sw.Restart();
         
-        SceneExport_GenerateMaterials.Export(scene, gameObject, unityMaterials);
+        SceneExport_GenerateMaterials.Export(scene, gameObject, unityMaterials, generateDebugInfo);
         
         sw.Stop();
         Debug.Log($"GenerateMaterials: {sw.Elapsed.TotalSeconds}");

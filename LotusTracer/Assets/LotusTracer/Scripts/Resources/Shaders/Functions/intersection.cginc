@@ -159,19 +159,24 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
     {
         // Sample the normal map
         TextureData texture_data = _MapDatasNormal[normalMapIndex];
-               
-        float2 packedUV = PackedUV(texture_data, hitInfo.textureUV);
-        int atlasIndex = texture_data.atlasIndex;     
-               
-        // Sample the normal map
-        float3 mapNormal = _AtlasesNormal
-                    .SampleLevel(sampler_AtlasesNormal, float3(packedUV.x, packedUV.y, atlasIndex) , 0).rgb;
+        float2 targetUV = PackedUV(texture_data, hitInfo.textureUV);        
+        int atlasIndex = texture_data.atlasIndex;
 
-        mapNormal = normalize(2.0 * mapNormal - 1.0); 
-        mapNormal.xyz = mapNormal.xzy;
+        float3 packednormal = _AtlasesNormal
+            .SampleLevel(sampler_AtlasesNormal, float3(targetUV.x, targetUV.y, atlasIndex) , 0).rgb;
 
-        hitInfo.normal = ToWorld(hitInfo.normal, mapNormal);
+        // remapping from 0to1 to -1 to 1. This is how normal maps usually work
+        packednormal.xyz = packednormal.xyz * 2.0 - 1.0;
+
+        // coordinates transformation (textures have z up, and they are right handed)
+        packednormal.xyz = float3(packednormal.y, -packednormal.z, packednormal.x);
+
+        // tangent space of map to world space of triangle hit
+        float3x3 tbn = float3x3(hitInfo.tangent, hitInfo.biTangent, hitInfo.normal);        
+        hitInfo.normal = mul(packednormal, tbn);
     }
+
+    hitInfo.normal = normalize(hitInfo.normal);
     
     return true;
 }

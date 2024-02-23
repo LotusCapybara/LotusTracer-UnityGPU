@@ -65,7 +65,7 @@ namespace CapyTracerCore.Core
             textureArrayRoughness = CreateTextureArray(4096, 4096, textures.GetRoughnessCanvasTextures(), AtlasFormats.ROUGHNESS);
             textureDataRoughness = textures.roughTextureDatas.ToArray();
             
-            textureArrayMetallic = CreateTextureArray(4096, 4096, textures.GetMetallicCanvasTextures(), AtlasFormats.ROUGHNESS);
+            textureArrayMetallic = CreateTextureArray(4096, 4096, textures.GetMetallicCanvasTextures(), AtlasFormats.METALLIC);
             textureDataMetallic = textures.metalTextureDatas.ToArray();
             
             textureArrayEmission = CreateTextureArray(4096, 4096, textures.GetEmissionCanvasTextures(), AtlasFormats.EMISSION);
@@ -86,8 +86,8 @@ namespace CapyTracerCore.Core
         private Texture2DArray CreateTextureArray(int w, int h, List<Texture> fromTextures, TextureFormat format)
         {
             if (fromTextures.Count == 0)
-            {
-                fromTextures.Add(new Texture2D(w, h, format, false));
+            {                
+                fromTextures.Add(GetEmptyTexture(w, h, format));
             }
         
             var textureArray = new Texture2DArray(w, h, fromTextures.Count, format, false, false);
@@ -100,5 +100,19 @@ namespace CapyTracerCore.Core
 
             return textureArray;
         }
+
+        private Texture2D GetEmptyTexture(int w, int h, TextureFormat format)
+        {
+            var emptyTexture = new Texture2D(w, h, format, false);
+            var pixels = emptyTexture.GetPixels();
+
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = Color.black;
+            }
+                                        
+            return emptyTexture;
+        }
+        
     }
 }

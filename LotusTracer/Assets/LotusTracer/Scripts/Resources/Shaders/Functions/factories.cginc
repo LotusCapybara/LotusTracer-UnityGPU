@@ -21,7 +21,7 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
     // to execute full diffuse probability
     // Also, I found that allowing specular sampling in pure diffuse materials introduce more fireflies, while
     // gaining basically nothing in terms of quality
-    if(data.roughness <= 0 && data.metallic <= 0)
+    if(data.roughness >=1 && data.metallic <= 0)
     {
         prob.prDiffuse = 1.0;
         prob.prSpecular = 0;
@@ -48,10 +48,9 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
 }
 
 
-ScatteringData MakeScatteringData(
-    inout uint randState, in float3 wo, in float3 surfacePoint, in float3 worldNormal, bool isFrontFace, int matIndex, float2 textureUV)
+ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitInfo)
 {
-    RenderMaterial mat = _Materials[matIndex];
+    RenderMaterial mat = _Materials[hitInfo.materialIndex];
     
     ScatteringData data;
     data.isReflection = false;
@@ -60,11 +59,13 @@ ScatteringData MakeScatteringData(
     data.sampleData.refractF = 0;
     data.sampleData.refractH = V_ZERO;
     
-    data.surfacePoint = surfacePoint;    
-    data.V = wo;
+    data.surfacePoint = hitInfo.position;
+    data.V = hitInfo.backRayDirection;
     data.color = mat.color;    
     
-    data.WorldNormal = isFrontFace ? worldNormal : - worldNormal;
+    data.WorldNormal = hitInfo.isFrontFace ? hitInfo.normal : - hitInfo.normal;
+    data.WorldTangent = hitInfo.tangent;
+    data.WorldBiTangent = hitInfo.biTangent;
     data.roughness = mat.roughness;
     data.clearCoat = mat.clearCoat;
     data.clearCoatRoughness = data.clearCoat > 0 ? mat.clearCoatRoughness : 1.0;
@@ -84,12 +85,12 @@ ScatteringData MakeScatteringData(
     data.emissionPower = mat.emissiveIntensity;
     data.transmissionPower = data.mediumDensity >= 1 ? 0 : clamp(mat.transmissionPower, 0, 0.95);
     
-    data.eta = isFrontFace ? 1.0 / mat.ior  : mat.ior  / 1.0; 
+    data.eta = hitInfo.isFrontFace ? 1.0 / mat.ior  : mat.ior  / 1.0; 
     
     if(mat.albedoMapIndex >= 0)
     {        
         TextureData texture_data = _MapDatasAlbedo[mat.albedoMapIndex];
-        float2 targetUV = PackedUV(texture_data, textureUV);        
+        float2 targetUV = PackedUV(texture_data, hitInfo.textureUV);        
         int atlasIndex = texture_data.atlasIndex;
 
         data.color *= _AtlasesAlbedo
@@ -99,7 +100,7 @@ ScatteringData MakeScatteringData(
     if(mat.roughMapIndex >= 0)
     {        
         TextureData texture_data = _MapDatasRoughness[mat.roughMapIndex];
-        float2 targetUV = PackedUV(texture_data, textureUV);        
+        float2 targetUV = PackedUV(texture_data, hitInfo.textureUV);        
         int atlasIndex = texture_data.atlasIndex;
 
         data.roughness *= _AtlasesRoughness
@@ -109,7 +110,7 @@ ScatteringData MakeScatteringData(
     if(mat.metalMapIndex >= 0)
     {        
         TextureData texture_data = _MapDatasMetallic[mat.metalMapIndex];
-        float2 targetUV = PackedUV(texture_data, textureUV);        
+        float2 targetUV = PackedUV(texture_data, hitInfo.textureUV);        
         int atlasIndex = texture_data.atlasIndex;
 
         data.metallic *= _AtlasesMetallic
@@ -119,7 +120,7 @@ ScatteringData MakeScatteringData(
     if(data.emissionPower > 0 && mat.emissionMapIndex >= 0)
     {        
         TextureData texture_data = _MapDatasEmission[mat.emissionMapIndex];
-        float2 targetUV = PackedUV(texture_data, textureUV);        
+        float2 targetUV = PackedUV(texture_data, hitInfo.textureUV);        
         int atlasIndex = texture_data.atlasIndex;
         
         data.emissionPower *= _AtlasesEmission
@@ -161,11 +162,4 @@ ScatteringData MakeScatteringData(
     data.probs =  CreateProbabilities(randState, data);
     
     return data;
-}
-
-
-ScatteringData MakeScatteringData_FromHitInfo(inout uint randState, in TriangleHitInfo hitInfo)
-{
-    return MakeScatteringData(
-        randState, hitInfo.backRayDirection, hitInfo.position, hitInfo.normal, hitInfo.isFrontFace, hitInfo.materialIndex, hitInfo.textureUV);
 }
