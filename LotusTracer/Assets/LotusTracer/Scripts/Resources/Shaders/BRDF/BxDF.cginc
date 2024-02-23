@@ -1,9 +1,5 @@
-// Support functions
-// ReSharper disable All
 #include "..\BRDF\BXDF_Evaluation.cginc"
 #include "..\BRDF\BXDF_Sample.cginc"
-
-
 
 void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval, out float pdf)
 {
@@ -25,6 +21,7 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
         eval += data.sampleData.sampleReflectance * data.probs.weightDielectric;
         pdf  += data.sampleData.pdf * data.probs.prDiffuse;
     }
+    
     if(data.isReflection && data.probs.prSpecular > 0.0)
     {
         Evaluate_Specular(data);

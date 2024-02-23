@@ -34,8 +34,8 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
 
     float3 radiance = V_ZERO;
     float3 throughput = V_ONE;
-
-    ScatteringData scatteringData;
+    
+    ScatteringData bounceData;
     
     float3 bounceBSDF;
     float bouncePDF = 1.0;
@@ -53,18 +53,21 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         }        
 
         // self emission
-        if(scatteringData.emissionPower > 0)
+        if(bounceData.emissionPower > 0)
         {
-            radiance += throughput * scatteringData.emissionPower * scatteringData.color;
+            radiance += throughput * bounceData.emissionPower * bounceData.color;
             break;
         }               
 
+
+        bounceData = MakeScatteringData(randState, hitInfo);
+        
         // NEE: direct light
         // we gather light from concrete lights that are affecting to this path point
         // concrete lights are point light, spot light, direction light, etc        
         float3 directLightVal;
         float directLightPDF;
-        GetLightsNEE(randState, hitInfo, insideMediumCounter > 0, directLightVal, directLightPDF);
+        GetLightsNEE(randState, bounceData, insideMediumCounter > 0, directLightVal, directLightPDF);
         if(directLightPDF > 0)
         {
             float directMis = 1.0;
@@ -93,10 +96,10 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         // path tracer could mitigate this by having a dedicated kernel for volumetric scattering? 
         if(insideMediumCounter > 0)
         {
-            // the inner march step distance is calculated in different ways by differents implementations
+            // the inner march step distance is calculated in different ways by different implementations
             // I've seen some log versions, fully manual/user controller, fixed steps.. and so on
             // this one seem fine and fast for now?
-            float scatterDistance = scatteringData.maxScatteringDistance / scatteringData.mediumDensity;
+            float scatterDistance = bounceData.maxScatteringDistance / bounceData.mediumDensity;
             mediumWasSampled = scatterDistance < hitInfo.distance;
         
             if(mediumWasSampled)
@@ -104,13 +107,13 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                 absorbDistance += scatterDistance;
 
                 // beer's law absorption. I'm using medium density as coefficient, which is not great but ¯\_(ツ)_/¯
-                throughput *= exp(- scatteringData.mediumDensity * absorbDistance);
+                throughput *= exp(- bounceData.mediumDensity * absorbDistance);
                 pathRay.origin = pathRay.direction * scatterDistance;
         
-                float3 scatterDir = Sample_PhaseHG(randState, pathRay.direction, scatteringData.scatteringDirection);
+                float3 scatterDir = Sample_PhaseHG(randState, pathRay.direction, bounceData.scatteringDirection);
                 pathRay.direction = scatterDir;
                 
-                bouncePDF = Evaluate_PhaseHG(dot(-pathRay.direction, scatterDir), scatteringData.scatteringDirection);
+                bouncePDF = Evaluate_PhaseHG(dot(-pathRay.direction, scatterDir), bounceData.scatteringDirection);
 
                 b--;
                 volumeScattersCounter++;
@@ -124,14 +127,11 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         // so this path is "in the vacuum" which means we can try to sample hits to surface using common BSDF sampling and evaluation
         if(! mediumWasSampled)
         {
-            // Sample next bounce
-            scatteringData = MakeScatteringData(randState, hitInfo);
-            
-            bool validSample = GetBSDF_Sample(randState, scatteringData);
+            bool validSample = GetBSDF_Sample(randState, bounceData);
             if(!validSample)
                 break;
 
-            GetBSDF_F(randState, scatteringData, bounceBSDF, bouncePDF);
+            GetBSDF_F(randState, bounceData, bounceBSDF, bouncePDF);
 
             // this means we found and invalid path sample and we should terminate this path
             if(bouncePDF <= 0)
@@ -139,16 +139,16 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
 
             throughput *=  bounceBSDF / bouncePDF;
 
-            pathRay.direction = scatteringData.sampleData.L;
+            pathRay.direction = bounceData.sampleData.L;
             pathRay.origin  = hitInfo.position + pathRay.direction * 2.0 * EPSILON;
             // we use the inverse of the direction in some intersection calculation
             pathRay.invDirection = 1.0 / pathRay.direction;
 
-            if(scatteringData.mediumDensity > 0)
+            if(bounceData.mediumDensity > 0)
             {
                 // this is a clunky way of checking if the ray is currently inside a medium
                 // we stack and de-stack entering and exiting dense mediums
-                if(!scatteringData.isReflection)
+                if(!bounceData.isReflection)
                 {
                     insideMediumCounter++;
                 }
@@ -171,7 +171,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                 volumeScattersCounter = 0;
             }            
             
-        }                
+        }
             
         // this is called Russian Roulette. If the throughput of a ray becomes too low, we randomly
         // stop paths to avoid calculating more bounces that are likely really dim. Pay attention to the "likely" part.
@@ -189,7 +189,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
             // we do this to "balance" probabilities with the ones we terminated. If we didnt' do this
             // we would be introducing bias towards the paths that were continued
             throughput /= q;
-        }        
+        }
     }
 
     

@@ -57,7 +57,7 @@ float3 GetLightColorContribution(int lightIndex, in ScatteringData scatteringDat
     return _Lights[lightIndex].color * power;
 }
 
-static void GetLightsNEE(inout uint randState, in TriangleHitInfo hitInfo, bool comesFromMedium, out float3 radiance, out float pdf)
+static void GetLightsNEE(inout uint randState, in ScatteringData data, bool comesFromMedium, out float3 radiance, out float pdf)
 {
     radiance = V_ZERO;
     pdf = 0;
@@ -65,13 +65,10 @@ static void GetLightsNEE(inout uint randState, in TriangleHitInfo hitInfo, bool 
     if(qtyDirectLights <= 0)
         return;
 
-
-    ScatteringData data = MakeScatteringData(randState, hitInfo);
-
     int lightIndex = (int)(GetRandom0to1(randState) * qtyDirectLights);
     lightIndex = clamp(lightIndex, 0, qtyDirectLights - 1);
 
-    float3 surfacePoint = hitInfo.position + hitInfo.normal * EPSILON;
+    float3 surfacePoint = data.surfacePoint + data.WorldNormal * EPSILON;
     
     data.sampleData.L = normalize(_Lights[lightIndex].position - surfacePoint);
     data.sampleData.H = normalize(data.sampleData.L + data.V);
@@ -89,7 +86,7 @@ static void GetLightsNEE(inout uint randState, in TriangleHitInfo hitInfo, bool 
 
     if(comesFromMedium)
     {
-        float p = Sample_PhaseHG(randState, dot(hitInfo.backRayDirection, data.sampleData.L), data.scatteringDirection);
+        float p = Sample_PhaseHG(randState, dot(data.V, data.sampleData.L), data.scatteringDirection);
         lightBSDF = (float3) p;
         lightPDF = p;
     }
