@@ -2,6 +2,11 @@
 
 // ---------------------------------------------------
 
+inline float MaxComponent(in float3 v)
+{
+    return max(v.x, max(v.y, v.z));
+}
+
 float3 SLERP(float3 a, float3 b, float t)
 {
     return a * ( 1.0 - t ) + b * t;
@@ -97,7 +102,7 @@ void CreateCoordinateSystem(in float3 normal, inout float3 tangent, inout float3
 {
     float3 up = abs(normal.y) < 0.9999999 ? float3(0, 1, 0) : float3(1, 0, 0);
     tangent = normalize(cross(up, normal));
-    biTangent = normalize( cross(normal, tangent) );
+    biTangent = normalize( cross(normal, tangent) * -1);
 }
 
 float3 ToWorld(float3 T, float3 B, float3 N, float3 v)

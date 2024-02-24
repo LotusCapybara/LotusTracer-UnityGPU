@@ -175,6 +175,10 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
         float3x3 tbn = float3x3(hitInfo.tangent, hitInfo.biTangent, hitInfo.normal);        
         hitInfo.normal = mul(packednormal, tbn);
     }
+    else
+    {
+        CreateCoordinateSystem(hitInfo.normal, hitInfo.tangent, hitInfo.biTangent);
+    }
 
     hitInfo.normal = normalize(hitInfo.normal);
     

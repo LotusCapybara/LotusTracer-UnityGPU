@@ -185,10 +185,10 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         // What happens if a path throughput is really dim at this point but then next event carry enough energy to make it
         // relevant again? that's we use random cuts here instead of always stopping the path. We can say this is a 
         // heuristic estimation
-        if(b > 5)
+        if(b > 3)
         {
             // q would be "the probabilities of continuing the path"
-            float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
+            float q = min(MaxComponent(throughput) + 0.001, 0.99);
             if (GetRandom0to1(randState) > q)
                 break;
 
