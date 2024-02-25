@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,13 +6,22 @@ public class LotusTracerLitGUI : ShaderGUI
 {
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
     {
-        Material targetMat = materialEditor.target as Material;
+        Material[] targetMats = materialEditor.targets.Select(o => o as Material).ToArray();
 
         GUILayout.Label("Diffuse Model");
-        int diffuseModel = targetMat.GetInteger("_DiffuseModel");
-        diffuseModel = EditorGUILayout.Popup(diffuseModel, new string[] { "Lambert", "OrenNayar", "Disney" });
+        int diffuseModel = targetMats[0].GetInteger("_DiffuseModel");
         
-        targetMat.SetInteger("_DiffuseModel", diffuseModel);
+        EditorGUI.BeginChangeCheck();
+        
+        diffuseModel = EditorGUILayout.Popup(diffuseModel, new string[] { "Lambert", "OrenNayar", "Disney" });
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            foreach (var targetMat in targetMats)
+            {
+                targetMat.SetInteger("_DiffuseModel", diffuseModel);    
+            }
+        }
         
         base.OnGUI(materialEditor, properties);
     }
