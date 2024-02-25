@@ -112,25 +112,22 @@ struct SampleData
 {
     float3 L;
     float3 H;
-    float refractF;
-    float3 refractH;
 };
 
 struct SampleProbabilities
 {
-    float weightDielectric;
-    float weightMetallic;
-    float weightTransmission;    
-    
-    float prDiffuse;
-    float prSpecular;    
-    float prTransmission;
-    float prClearCoat;
+    float wDiffuseReflection;
+    float wSpecularReflection;
+    float wDiffuseTransmission;
+    float wSpecularTransmission;
+    float wClearCoat;
 
-    float prRangeDiffuse;
-    float prRangeSpecular;
-    float prRangeClearCoat;
-    float prRangeTransmission;    
+    float wRangeDiffuseReflection;
+    float wRangeSpecularReflection;
+    float wRangeDiffuseTransmission;
+    float wRangeSpecularTransmission;
+    float wRangeClearCoat;
+    
 };
 
 struct EvaluationVars

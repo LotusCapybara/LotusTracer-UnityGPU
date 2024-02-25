@@ -1,48 +1,28 @@
 
 
 SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData data)
-{   
+{
+    float baseLuminance = Luminance(data.color);
+    
     // weight of each of these models based on material properties
     SampleProbabilities prob;
-    
-    prob.weightDielectric   = (1.0 - data.metallic) * (1.0 - data.transmissionPower);  // diffuse and specular
-    prob.weightMetallic     = data.metallic;                                 // metallic specular
-    prob.weightTransmission = (1.0 - data.metallic) * data.transmissionPower;          // internal specular-opacity;   
 
-    prob.prDiffuse      = prob.weightDielectric * Luminance(data.color);
-    prob.prSpecular     = max(prob.weightDielectric, prob.weightMetallic) * Luminance(data.color);
-    prob.prTransmission = prob.weightTransmission;
-    prob.prClearCoat    = 0.25 * data.clearCoat;   // disney bsdf papers explain this 0.25 (or similar values)
+    prob.wDiffuseReflection  = baseLuminance * (1.0 - data.metallic) * (1.0 -  data.transmissionPower);
+    prob.wSpecularReflection  = Luminance(data.F0) * 8.0 * (1.0 - data.roughness); // magic number 8.0 to avoid fireflies?
+    prob.wDiffuseTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower * data.roughness;
+    prob.wSpecularTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower * (1.0 - data.roughness);
+    prob.wClearCoat = 0.05 * data.clearCoat;
 
-    // in reality, even roughness materials have specular probabilities and the specular sample will
-    // take roughness into account so the material will look rough
-    // however, I found that by doing this, I can gain some lil performance thanks to diffuse sampling and evaluation
-    // being cheaper to execute. So I can "safely" assume when roughness and metallic are 0, it's just the same
-    // to execute full diffuse probability
-    // Also, I found that allowing specular sampling in pure diffuse materials introduce more fireflies, while
-    // gaining basically nothing in terms of quality
-    if(data.roughness >=1 && data.metallic <= 0)
-    {
-        prob.prDiffuse = 1.0;
-        prob.prSpecular = 0;
-    }
+    float wTotal = prob.wDiffuseReflection + prob.wSpecularReflection + prob.wDiffuseTransmission +
+        prob.wSpecularTransmission +  prob.wClearCoat;
 
-    // normalization of probabilities. So basically all probabilities together sum up to 1.0
-    float normalInvPr = 1.0 /
-        (prob.prDiffuse + prob.prSpecular + prob.prTransmission + prob.prClearCoat);
+    float invWTotal = 1.0 / wTotal;
 
-    // normalization of all probabilities (all together sums up to 1)
-    prob.prDiffuse      *= normalInvPr;
-    prob.prSpecular     *= normalInvPr;    
-    prob.prTransmission *= normalInvPr;
-    prob.prClearCoat    *= normalInvPr;
-
-    // these are "ranges" of each probabilities from 0 to 1, so later they can be picked up
-    // doing a random 0 to 1
-    prob.prRangeDiffuse = prob.prDiffuse;
-    prob.prRangeSpecular = prob.prRangeDiffuse + prob.prSpecular;
-    prob.prRangeClearCoat = prob.prRangeSpecular + prob.prClearCoat;
-    prob.prRangeTransmission = prob.prRangeClearCoat + prob.prTransmission;   
+    prob.wRangeDiffuseReflection  = prob.wDiffuseReflection * invWTotal;
+    prob.wRangeSpecularReflection = prob.wRangeDiffuseReflection + prob.wSpecularReflection * invWTotal;
+    prob.wRangeDiffuseTransmission = prob.wRangeSpecularReflection + prob.wDiffuseTransmission * invWTotal;
+    prob.wRangeSpecularTransmission = prob.wRangeDiffuseTransmission + prob.wSpecularTransmission * invWTotal;
+    prob.wRangeClearCoat = 1.0;
     
     return prob;
 }
@@ -56,8 +36,6 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     data.isReflection = false;
     data.sampleData.L = (float) 0;
     data.sampleData.H = (float) 0;    
-    data.sampleData.refractF = 0;
-    data.sampleData.refractH = V_ZERO;
     
     data.surfacePoint = hitInfo.position;
     data.V = hitInfo.backRayDirection;
@@ -85,7 +63,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     data.emissionPower = mat.emissiveIntensity;
     data.transmissionPower = data.mediumDensity >= 1 ? 0 : clamp(mat.transmissionPower, 0, 0.95);
     
-    data.eta = hitInfo.isFrontFace ? 1.0 / mat.ior  : mat.ior  / 1.0; 
+    data.eta = dot(hitInfo.normal, hitInfo.backRayDirection) > 0 ? 1.0 / mat.ior  : mat.ior  / 1.0; 
     
     if(mat.albedoMapIndex >= 0)
     {        
@@ -132,7 +110,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     // I fixed it by doing this, but I might be doing something wrong in the cook-torrence formulae
     // also, clamping both rough and metallic to 0 and 1, since the shader allow to multiply up to 10 to add
     // more value to the maps
-    data.roughness = clamp(data.roughness, 0.001, 1);
+    data.roughness = clamp(data.roughness, EPSILON, 1.0);
     data.metallic = saturate(data.metallic);
 
     // I'll implement anisotropic materials at some point

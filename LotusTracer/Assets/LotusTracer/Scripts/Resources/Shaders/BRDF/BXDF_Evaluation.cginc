@@ -2,7 +2,7 @@ static void Evaluate_Diffuse_Lambert(inout float3 f, inout float pdf, inout Scat
 {
     f +=  data.color * ONE_OVER_PI * abs(ev.NoL);
     
-    pdf += ev.NoL * ONE_OVER_PI * data.probs.prDiffuse;
+    pdf += ev.NoL * ONE_OVER_PI;
 }
 
 static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
@@ -41,19 +41,14 @@ static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout Sc
     
     f += float3(0, 1, 0 ) * data.color * ONE_OVER_PI * ( A + B * dcos * sinalpha * tanbeta ) * abs_cos_theta_i;
     
-    pdf += ev.NoL * ONE_OVER_PI * data.probs.prDiffuse;
+    pdf += ev.NoL * ONE_OVER_PI;
 }
 
 // evaluate specular dielectric BRDF with micro facet reflections
-static void Evaluate_Specular(inout ScatteringData data)
+static void Evaluate_Specular(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
-    float NoL = data.sampleData.L.y;
-    float NoV = data.V.y;
-
-    if (NoL <= 0.0 || NoV <= 0.0)
+    if (ev.NoL <= 0.0 || ev.NoV <= 0.0)
         return;
-
-    float NoH = min(data.sampleData.H.y, 0.99);
     
     // evaluate fresnel term    
     float3 F = SchlickFresnel_V(data.F0, dot(data.sampleData.L, data.sampleData.H) );
@@ -61,8 +56,8 @@ static void Evaluate_Specular(inout ScatteringData data)
     float G1 = GGX_G1(data.V, data.ax, data.ay);
     float G2 = GGX_G1(data.sampleData.L, data.ax, data.ay);
     
-    // data.sampleData.sampleReflectance = D * F * G1 * G2 / ( 4.0 * abs(NoV) );    
-    // data.sampleData.pdf  = D * G1 / max(0.0001, 4.0 * NoV);
+    f += D * F * G1 * G2 / ( 4.0 * abs(ev.NoV) );    
+    pdf += D * G1 / max(0.0001, 4.0 * ev.NoV);
 }
 
 // evaluate specular dielectric BRDF with micro facet reflections
@@ -79,21 +74,28 @@ static void Evaluate_ClearCoat(inout ScatteringData data)
     // data.sampleData.pdf  = D * data.sampleData.H.y * jacobian;
 }
 
-static void Evaluate_Transmission(inout ScatteringData data)
+static void Evaluate_Transmission(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
-    if(data.isReflection)
-    {
-        Evaluate_Specular(data);
-        // data.sampleData.pdf *= data.sampleData.refractF;
-    }
-    else
-    {
-        // this implementation is garbage. It basically provides a linear/constant energy
-        // regardless of how the light enters the surface, but it's fine for a quick
-        // implementation....... I'll implement a proper one later on
-        // data.sampleData.sampleReflectance = pow(data.color, (float3) 0.5);
-        // data.sampleData.pdf  = 1.0 * (1.0 - data.sampleData.refractF);
-    }
+    float3 H = normalize(data.V + data.sampleData.L * data.eta);
+    
+    float sVoH = dot(data.V, H);
+    float sLoH = dot(data.sampleData.L, H);
+
+    float3 F = DielectricFresnel(dot(data.V, H),  data.eta, 1.0 / data.eta);
+    float srqtDenom = sVoH + data.eta * sLoH;
+    float t = data.eta / srqtDenom;
+    
+    float D = GGX_D(data.sampleData.H, data.ax, data.ay);
+    float G1 = GGX_G1(data.V, data.ax, data.ay);
+    float G2 = GGX_G1(data.sampleData.L, data.ax, data.ay);
+
+    f =  (V_ONE - F) * abs(D * G1 * G2 * t * t * sLoH * sVoH / ev.NoV);
+    f *= (1.0 - data.metallic) * data.transmissionPower;
+
+    float dwh_dwi = data.eta * data.eta * abs(dot(data.sampleData.L, H)) / (srqtDenom * srqtDenom);
+        
+    pdf =  D * G1 / max(0.0001, 4.0 * ev.NoV);
+    pdf *= dwh_dwi;  
 }
 
 

@@ -43,34 +43,20 @@ bool Sample_ClearCoat(inout uint randState, inout ScatteringData data)
     return true;
 }
 
-bool Sample_Transmission(inout uint randState, float sampleRand, inout ScatteringData data)
+bool Sample_Transmission(inout uint randState, inout ScatteringData data)
 {
     float3 facetH =  GetMicroFacetH(randState, data);
     if(facetH.y < 0)
-        facetH -= facetH;
+        facetH = -facetH;
 
-    float refractF = DielectricFresnel(abs(dot(data.V, facetH)), data.eta);
-
-    if(sampleRand < refractF )
-    {
-        data.sampleData.L = reflect(-data.V, facetH);
-
-        if(data.sampleData.L.y < 0)
-            data.sampleData.L = - data.sampleData.L;
-    }
-    else
-    {        
-        data.sampleData.L =
+    data.sampleData.L =
             data.eta == 1 ?
             - data.V :
             refract(-data.V, facetH, data.eta);
 
-        if(data.sampleData.L.y > 0)
-            data.sampleData.L = - data.sampleData.L;
-    }    
-
-    data.sampleData.refractF = refractF; 
-    data.sampleData.refractH = facetH; 
+    if(data.sampleData.L.y > 0)
+        data.sampleData.L = - data.sampleData.L;
+    
     data.sampleData.H = normalize(data.sampleData.L + data.V);
     
     return true;

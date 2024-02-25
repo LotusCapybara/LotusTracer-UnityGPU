@@ -8,7 +8,7 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     eval = 0;
     pdf = 0;
 
-    data.sampleData.H = normalize(data.sampleData.H + data.V);
+    data.sampleData.H = normalize(data.sampleData.L + data.V);    
     
     EvaluationVars ev;
     ev.NoL = data.sampleData.L.y;
@@ -16,9 +16,13 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     ev.NoH = data.sampleData.H.y;
     ev.VoH = dot(data.V, data.sampleData.H);
     ev.VoL = dot(data.V, data.sampleData.L);;
-    ev.FL = 1.0;// SchlickWeight(ev.NoL);
-    ev.FV = 1.0; //SchlickWeight(ev.NoV);
+    ev.FL = SchlickWeight(ev.NoL);
+    ev.FV = SchlickWeight(ev.NoV);
     ev.squareR = data.roughness * data.roughness;
+
+
+    float3 tempF;
+    float tempPDF;
     
     // eval will be divided by pdf later on (due the rendering equation)  
     // so you might think its dumb to multiply and divide by the same value (for instance probs.prClearCoat)
@@ -27,21 +31,52 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     // by skipping those factors, however I found too easy to forget things and make energy go crazy, so I opted
     // for not using implicit simplifications for now
     
-    if(data.isReflection && data.probs.prDiffuse > 0.0)
+    if(data.isReflection && data.probs.wDiffuseReflection > 0.0)
     {
+        tempF = tempPDF = 0;
+        
         if( ((data.flags >> 1) & 0x1)  == 1)
-            Evaluate_Diffuse_OrenNayar(eval, pdf, data, ev);
+            Evaluate_Diffuse_OrenNayar(tempF, tempPDF, data, ev);
         else 
-            Evaluate_Diffuse_Lambert(eval, pdf, data, ev);
+            Evaluate_Diffuse_Lambert(tempF, tempPDF, data, ev);
+
+        eval += tempF * data.probs.wDiffuseReflection;
+        pdf += tempPDF * data.probs.wDiffuseReflection;
     }
     
-    // if(data.isReflection && data.probs.prSpecular > 0.0)
+    if(data.isReflection && data.probs.wSpecularReflection > 0.0)
+    {
+        tempF = tempPDF = 0;
+        
+        Evaluate_Specular(tempF, tempPDF, data, ev);
+
+        eval += tempF *  data.probs.wSpecularReflection;
+        pdf += tempPDF * data.probs.wSpecularReflection;
+    }
+
+    if(!data.isReflection && data.probs.wSpecularTransmission > 0.0)
+    {
+        tempF = tempPDF = 0;
+        Evaluate_Transmission(tempF, tempPDF, data, ev);
+        eval += tempF *  data.probs.wSpecularTransmission;
+        pdf += tempPDF * data.probs.wSpecularTransmission;
+    }
+    
+    // if(data.probs.wDiffuseTransmission > 0.0)
     // {
-    //     Evaluate_Specular(data);
+    //     eval += float3(0.7, 0.7, 0.7);
+    //     pdf += ONE_OVER_PI;
     //     
-    //     eval += data.sampleData.sampleReflectance * max(data.probs.weightDielectric, data.probs.weightMetallic);
-    //     pdf  += data.sampleData.pdf * data.probs.prSpecular;
+    //     // note: some people multiply probabilities by the refraction fresnel
+    //     // however, since I'm modifying the probabilities themselves based on the fresnel
+    //     // I think it's already contemplated? It looks fine anyways, but might need to revisit
+    //     // tempF = tempPDF = 0;
+    //     // Evaluate_Transmission(tempF, tempPDF, data, ev);
+    //     // eval += tempF *  data.probs.weightTransmission;
+    //     // pdf += tempPDF * data.probs.prTransmission;
     // }
+
+
     //
     // if(data.isReflection && data.probs.prClearCoat > 0.0)
     // {
@@ -50,17 +85,7 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     //     pdf  += data.sampleData.pdf * data.probs.prClearCoat;
     // }
     //
-    // if(data.probs.prTransmission > 0.0)
-    // {
-    //     // note: some people multiply probabilities by the refraction fresnel
-    //     // however, since I'm modifying the probabilities themselves based on the fresnel
-    //     // I think it's already contemplated? It looks fine anyways, but might need to revisit
-    //     
-    //     Evaluate_Transmission(data);        
-    //     eval += data.sampleData.sampleReflectance * data.probs.weightTransmission;
-    //     pdf  += data.sampleData.pdf * data.probs.prTransmission;
-    // }
-
+    
     eval *= abs(data.sampleData.L.y); // N dot L from the Rendering equation
    
     
@@ -74,34 +99,27 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
     bool validSample = false;
 
     float randomSample = GetRandom0to1(randState);
-    if(randomSample < data.probs.prRangeDiffuse)
+    if(randomSample < data.probs.wRangeDiffuseReflection)
     {
         validSample = Sample_Diffuse(randState, data);
     }
-    // else if(randomSample < data.probs.prRangeSpecular)
-    // {
-    //     // same direction for both dielectric and metallic speculars
-    //     validSample = Sample_Specular(randState, data);
-    // }
-    // else if(randomSample < data.probs.prRangeClearCoat)
-    // {
-    //     validSample = Sample_ClearCoat(randState, data);
-    // }
-    // else if(randomSample < data.probs.prRangeTransmission)
-    // {
-    //     // this code rescales the random value that hit in the range of prRangeTransmission
-    //     // and remaps it to 0 to 1. this is used to calculate later inside Sample_Transmission
-    //     // if the ray is refractor or reflected. I was initially just using a new random value, since
-    //     // I thought this was just a way to avoid executing random generation code.
-    //     // However, after reading some more papers, I noticed that for this case, which is a non-uniform
-    //     // distribution, it's better to keep tha actual random we got before to avoid introducing
-    //     // bias and potentially weird results
-    //     float r = randomSample - data.probs.prRangeClearCoat / (data.probs.prRangeTransmission- data.probs.prRangeClearCoat);        
-    //     validSample = Sample_Transmission(randState, r, data);
-    // }
-    else
+    else if(randomSample < data.probs.wRangeSpecularReflection)
     {
-        validSample = Sample_Diffuse(randState, data);
+        // same direction for both dielectric and metallic speculars
+        validSample = Sample_Specular(randState, data);
+    }
+    else if(randomSample < data.probs.wRangeDiffuseTransmission)
+    {
+        validSample = Sample_Transmission(randState, data);
+    }
+    else if(randomSample < data.probs.wRangeSpecularTransmission)
+    {
+        
+        validSample = Sample_Transmission(randState, data);
+    }
+    else // clear coat
+    {
+        //validSample = Sample_ClearCoat(randState, data);
     }
 
     data.isReflection = data.sampleData.L.y * data.V.y > 0;

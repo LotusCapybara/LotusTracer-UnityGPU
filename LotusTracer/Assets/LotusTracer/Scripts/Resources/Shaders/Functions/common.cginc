@@ -34,20 +34,29 @@ float SchlickFresnel(float f0, float f90, float theta)
     return f0 + (f90 - f0) * pow(1.0 - theta, 5.0);
 }
 
-float DielectricFresnel(float cosThetaI, float eta)
+float DielectricFresnel(float cosThetaI, float etaI, float etaT)
 {
-    float sinThetaTSq = eta * eta * (1.0 - cosThetaI * cosThetaI);
+    const bool entering = cosThetaI > 0.0;
+    const float _etaI = entering ? etaI : etaT;
+    const float _etaT = entering ? etaT : etaI;
 
-    // Total internal reflection
-    if (sinThetaTSq > 1.0)
+    const float sinI = sqrt(saturate(1.0 -  cosThetaI * cosThetaI));
+    const float sinT = _etaI * sinI / _etaT;
+    if( sinT >= 1.0 )
         return 1.0;
+    if( !entering )
+        cosThetaI = -cosThetaI;
 
-    float cosThetaT = sqrt(max(1.0 - sinThetaTSq, 0.0));
+    const float cosT = sqrt( 1.0 - sinT * sinT );
 
-    float rs = (eta * cosThetaT - cosThetaI) / (eta * cosThetaT + cosThetaI);
-    float rp = (eta * cosThetaI - cosThetaT) / (eta * cosThetaI + cosThetaT);
+    const float t0 = _etaT * cosThetaI;
+    const float t1 = _etaI * cosT;
+    const float t2 = _etaI * cosThetaI;
+    const float t3 = _etaT * cosT;
 
-    return 0.5 * (rs * rs + rp * rp);
+    const float Rparl = ( t0 - t1 ) / ( t0 + t1 );
+    const float Rparp = ( t2 - t3 ) / ( t2 + t3 );
+    return ( Rparl * Rparl + Rparp * Rparp ) * 0.5;
 }
 
 
