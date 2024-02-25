@@ -73,6 +73,7 @@ struct RenderMaterial
     int emissionMapIndex;
     int emissionMapCanvasIndex;
     float ior;
+    int flags;
 };
 
 struct BoundsBox
@@ -111,8 +112,6 @@ struct SampleData
 {
     float3 L;
     float3 H;
-    float3 sampleReflectance;
-    float pdf;
     float refractF;
     float3 refractH;
 };
@@ -132,6 +131,18 @@ struct SampleProbabilities
     float prRangeSpecular;
     float prRangeClearCoat;
     float prRangeTransmission;    
+};
+
+struct EvaluationVars
+{
+    float NoL;
+    float NoV;
+    float NoH;
+    float VoH;
+    float VoL;
+    float FV; // fresnel of V
+    float FL; // fresnel of L
+    float squareR;
 };
 
 struct ScatteringData
@@ -159,6 +170,8 @@ struct ScatteringData
     float ax;
     float ay;
     float eta;
+
+    uint flags;
 
     bool isReflection; // reflection or refraction?
 

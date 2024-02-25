@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -58,6 +59,17 @@ public static class SceneExport_GenerateMaterials
             float scatteringDirection = unityMaterials[m].GetFloat("_ScatteringDirection");
             float maxScatteringDistance = unityMaterials[m].GetFloat("_MaxScatteringDistance");
             // int isThin = unityMaterials[m].GetInt("_IsThin");
+
+            int flags = 0;
+            
+            int diffuseModel = unityMaterials[m].GetInteger("_DiffuseModel");
+            flags |= (0b1 <<  diffuseModel );
+            
+            // Debug.LogError($"---- {unityMaterials[m].name} ----" );
+            // Debug.LogError($"total {flags}" );
+            // Debug.LogError($"lambert: { ((flags & 0b1) == 1).ToString() }   b { Convert.ToString(flags, 2) }" );
+            // Debug.LogError($"oren nayar: { (( (flags >> 1) & 0b1) == 1).ToString() } b { Convert.ToString(flags, 2) }" );
+            
             
             SerializedMaterial renderMaterial = new SerializedMaterial
             {
@@ -81,7 +93,8 @@ public static class SceneExport_GenerateMaterials
                 transmissionPower = transmissionPower,
                 mediumDensity = mediumDensity,
                 scatteringDirection = scatteringDirection,
-                maxScatteringDistance = maxScatteringDistance
+                maxScatteringDistance = maxScatteringDistance,
+                flags = flags
             };
             
             scene.materials[m] = renderMaterial;

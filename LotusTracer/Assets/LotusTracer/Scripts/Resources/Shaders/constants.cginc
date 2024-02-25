@@ -3,7 +3,7 @@
 #define EPSILON 1E-3
 #define ONE_OVER_360 1.0 / 360.0
 #define PI 3.14159265
-#define ONE_OVER_PI 1.0 / 3.14159265
+#define ONE_OVER_PI 0.3183098865
 #define INV_4_PI   0.07957747154
 
 #define V_ONE float3(1, 1, 1)

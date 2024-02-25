@@ -151,11 +151,9 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     // Renderers that use specular color usually do it for artistic freedom, such as Disney renderers
     data.F0 = lerp((float3)0.1, data.color, mat.metallic);
     
-    // default event, to be overriden if trasmit
-    data.sampleData.pdf = 0;
-    data.sampleData.sampleReflectance = 0;
-    
     data.probs =  CreateProbabilities(randState, data);
+
+    data.flags = mat.flags;
     
     return data;
 }

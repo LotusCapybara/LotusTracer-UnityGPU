@@ -15,11 +15,8 @@ float3 SLERP(float3 a, float3 b, float t)
 
 float SchlickWeight(float y)
 {
-    float m = saturate(1.0 - y);
-    float m2 = m * m;
-    return m2 * m2 * m;
+    return  pow(saturate(1.0 - y), 5.0);    
 }
-
 
 float SchlickR0FromEta( float rROI )
 {

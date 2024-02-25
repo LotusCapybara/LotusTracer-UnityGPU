@@ -45,6 +45,10 @@ namespace CapyTracerCore.Core
         public int emissionMapCanvasIndex;
         
         public float ior;
+
+        // from back to front (so watch this in inverse)
+        // bits: 0, 1, 2: for diffuse model (lambert, oren-nayar, disney)
+        public int flags;
         
         public void GenerateRuntime()
         {

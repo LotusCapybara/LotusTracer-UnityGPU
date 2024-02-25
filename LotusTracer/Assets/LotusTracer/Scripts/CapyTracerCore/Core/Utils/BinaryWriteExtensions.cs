@@ -49,6 +49,7 @@ namespace CapyTracerCore.Core
             writer.Write(mat.emissionMapIndex);
             writer.Write(mat.emissionMapCanvasIndex);
             writer.Write(mat.ior);
+            writer.Write(mat.flags);
         }
         
         public static void WriteBinary(this SerializedCamera cam, BinaryWriter writer)

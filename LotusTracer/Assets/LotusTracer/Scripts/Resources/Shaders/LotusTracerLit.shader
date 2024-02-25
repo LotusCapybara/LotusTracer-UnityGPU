@@ -5,6 +5,10 @@ Shader "LotusTracerLit"
 	Properties
 	{
 		[HideInInspector] _AlphaCutoff("Alpha Cutoff ", Range(0, 1)) = 0.5
+		
+		[HideInInspector] 
+		_DiffuseModel("DiffuseModel", Integer) = 1
+		
 		_AlbedoMap("AlbedoMap", 2D) = "white" {}
 		_NormalMap("NormalMap", 2D) = "bump" {}
 		_EmissionMap("EmissionMap", 2D) = "white" {}
@@ -321,6 +325,10 @@ Shader "LotusTracerLit"
 			float _MaxScatteringDistance;
 			float _IOR;
 			float _AnisoPower;
+
+
+			int _DiffuseModel;
+			
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -356,8 +364,6 @@ Shader "LotusTracerLit"
 			sampler2D _EmissionMap;
 			sampler2D _MetallicMap;
 			sampler2D _RoughnessMap;
-
-
 			
 			VertexOutput VertexFunction( VertexInput v  )
 			{
@@ -3341,7 +3347,7 @@ Shader "LotusTracerLit"
 		
 	}
 	
-	CustomEditor "UnityEditor.ShaderGraphLitGUI"
+	CustomEditor "LotusTracerLitGUI"
 	FallBack "Hidden/Shader Graph/FallbackError"
 	
 	Fallback Off
