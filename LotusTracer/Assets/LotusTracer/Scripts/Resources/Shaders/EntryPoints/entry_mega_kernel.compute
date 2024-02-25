@@ -52,6 +52,13 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
             break;
         }        
 
+        if(!hitInfo.isFrontFace && b == 0)
+        {
+            b--;
+            pathRay.origin = hitInfo.position + pathRay.direction * (EPSILON * 2.0);
+            continue;
+        }        
+        
         // self emission
         if(bounceData.emissionPower > 0)
         {
