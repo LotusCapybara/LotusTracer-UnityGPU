@@ -61,8 +61,13 @@ static void GetLightsNEE(inout uint randState, in ScatteringData data, bool come
 {
     radiance = V_ZERO;
     pdf = 0;
-    
+
     if(qtyDirectLights <= 0)
+        return;
+
+    // todo this is a hacky temporal thing because right now I'm not handling
+    // nee for glass and other transmisive materials pretty well
+    if(data.transmissionPower >= 0.9 && data.mediumDensity < 0.1)
         return;
 
     int lightIndex = (int)(GetRandom0to1(randState) * qtyDirectLights);
