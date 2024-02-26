@@ -9,23 +9,29 @@ using Debug = UnityEngine.Debug;
 public class SceneExporter : MonoBehaviour
 {
     public static string SCENES_PATH_BASE;
-    public static string SCENE_NAME;  
+    public static string SCENE_NAME;
+    public static bool s_ignoreReCreateTextures;
     
     public int bvhMaxDepth = 60;
     public int bvhMaxNodeTriangles = 3;
 
     public bool generateDebugInfo;
+    public bool ignoreReCreateTextures;
     
     private void CreateSceneAsset()
     {
+        s_ignoreReCreateTextures = ignoreReCreateTextures;
+        
         SCENE_NAME = gameObject.name;
         SCENES_PATH_BASE = Application.dataPath + $"/Resources/RenderScenes/{gameObject.name}/";
         
-        if (Directory.Exists(SCENES_PATH_BASE))
-            Directory.Delete(SCENES_PATH_BASE, true);
+        // if (Directory.Exists(SCENES_PATH_BASE))
+        //     Directory.Delete(SCENES_PATH_BASE, true);
         
         AssetDatabase.Refresh();
-        Directory.CreateDirectory(SCENES_PATH_BASE);
+        
+        if (!Directory.Exists(SCENES_PATH_BASE))
+            Directory.CreateDirectory(SCENES_PATH_BASE);
         
         Stopwatch sw = Stopwatch.StartNew();
         

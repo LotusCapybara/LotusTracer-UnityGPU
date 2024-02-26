@@ -183,35 +183,38 @@ public class TexturePacker
                 }
             }
 
-            Texture2D atlasTxt = new Texture2D(_atlasWidth, _atlasHeight, _format, false);
-            atlasTxt.SetPixels(pixels);
-            atlasTxt.Apply();
+            if (!SceneExporter.s_ignoreReCreateTextures)
+            {
+                Texture2D atlasTxt = new Texture2D(_atlasWidth, _atlasHeight, _format, false);
+                atlasTxt.SetPixels(pixels);
+                atlasTxt.Apply();
 
-            string jpgPath = SceneExporter.SCENES_PATH_BASE + $"/{_setName}_{atlasIndex}.jpg";
-            string textAsstPath =  $"Assets/Resources/RenderScenes/{SceneExporter.SCENE_NAME}/{_setName}_{atlasIndex}.jpg";
+                string jpgPath = SceneExporter.SCENES_PATH_BASE + $"/{_setName}_{atlasIndex}.jpg";
+                string textAsstPath =  $"Assets/Resources/RenderScenes/{SceneExporter.SCENE_NAME}/{_setName}_{atlasIndex}.jpg";
             
-            File.WriteAllBytes(jpgPath, atlasTxt.EncodeToJPG());
-            AssetDatabase.Refresh();
+                File.WriteAllBytes(jpgPath, atlasTxt.EncodeToJPG());
+                AssetDatabase.Refresh();
 
-            AssetDatabase.ImportAsset(jpgPath, ImportAssetOptions.ForceUpdate);
+                AssetDatabase.ImportAsset(jpgPath, ImportAssetOptions.ForceUpdate);
             
-            TextureImporter importer = AssetImporter.GetAtPath(textAsstPath) as TextureImporter;
+                TextureImporter importer = AssetImporter.GetAtPath(textAsstPath) as TextureImporter;
             
-            TextureImporterPlatformSettings importerPlatSettings = new TextureImporterPlatformSettings();
-            importerPlatSettings.format = s_formatToFormat[_format];
-            importerPlatSettings.textureCompression = TextureImporterCompression.Uncompressed;
-            importerPlatSettings.maxTextureSize = 4096;
+                TextureImporterPlatformSettings importerPlatSettings = new TextureImporterPlatformSettings();
+                importerPlatSettings.format = s_formatToFormat[_format];
+                importerPlatSettings.textureCompression = TextureImporterCompression.Uncompressed;
+                importerPlatSettings.maxTextureSize = 4096;
 
-            TextureImporterSettings importerSettings = new TextureImporterSettings();
-            importer.ReadTextureSettings(importerSettings);
-            importerSettings.mipmapEnabled = false;
-            importerSettings.textureType = _isNormal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-            importerSettings.filterMode = FilterMode.Bilinear;
+                TextureImporterSettings importerSettings = new TextureImporterSettings();
+                importer.ReadTextureSettings(importerSettings);
+                importerSettings.mipmapEnabled = false;
+                importerSettings.textureType = _isNormal ? TextureImporterType.NormalMap : TextureImporterType.Default;
+                importerSettings.filterMode = FilterMode.Bilinear;
 
             
-            importer.SetTextureSettings(importerSettings);
-            importer.SetPlatformTextureSettings(importerPlatSettings);
-            importer.SaveAndReimport();
+                importer.SetTextureSettings(importerSettings);
+                importer.SetPlatformTextureSettings(importerPlatSettings);
+                importer.SaveAndReimport();
+            }
             
             atlas.resourcePath = $"RenderScenes/{SceneExporter.SCENE_NAME}/{_setName}_{atlasIndex}";
             atlasIndex++;
