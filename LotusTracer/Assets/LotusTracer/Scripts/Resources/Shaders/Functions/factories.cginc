@@ -65,9 +65,12 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     data.scatteringDirection = clamp(mat.scatteringDirection, -0.95, 0.95);
     data.maxScatteringDistance = mat.maxScatteringDistance;
     data.emissionPower = mat.emissiveIntensity;
-    data.transmissionPower = mat.transmissionPower; 
-    
-    data.eta = dot(hitInfo.normal, hitInfo.backRayDirection) > 0 ? 1.0 / mat.ior  : mat.ior  / 1.0; 
+    data.transmissionPower = clamp(mat.transmissionPower, 0.05, 0.95); 
+
+    mat.ior = clamp(mat.ior, 1.0001, 2.0);
+    data.eta = dot(hitInfo.normal, hitInfo.backRayDirection) > 0 ? 1.0 / mat.ior  : mat.ior  / 1.0;
+    // data.isThin = mat.thi // todo: use material flags to check if it's thin
+    data.isThin  = false;
     
     if(mat.albedoMapIndex >= 0)
     {        

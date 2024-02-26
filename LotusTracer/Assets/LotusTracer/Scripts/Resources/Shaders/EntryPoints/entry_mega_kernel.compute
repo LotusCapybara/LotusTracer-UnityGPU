@@ -101,40 +101,39 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         // instead. I think this approach is more friendly for GPU calculation. Imagine having 1 path in the gpu wave
         // entering a medium and bouncing 15 times while the rest of the threads are useless. I guess a wave front
         // path tracer could mitigate this by having a dedicated kernel for volumetric scattering? 
-        // if(insideMediumCounter > 0)
-        // {
-        //     // the inner march step distance is calculated in different ways by different implementations
-        //     // I've seen some log versions, fully manual/user controller, fixed steps.. and so on
-        //     // this one seem fine and fast for now?
-        //     float scatterDistance = bounceData.maxScatteringDistance / bounceData.mediumDensity;
-        //     mediumWasSampled = scatterDistance < hitInfo.distance;
-        //
-        //     if(mediumWasSampled)
-        //     {
-        //         absorbDistance += scatterDistance;
-        //
-        //         // beer's law absorption. I'm using medium density as coefficient, which is not great but ¯\_(ツ)_/¯
-        //         
-        //
-        //         
-        //         pathRay.origin = pathRay.direction * scatterDistance;
-        //
-        //         float3 scatterDir = Sample_PhaseHG(randState, pathRay.direction, bounceData.scatteringDirection);
-        //         pathRay.direction = scatterDir;
-        //         
-        //         bouncePDF = Evaluate_PhaseHG(dot(-pathRay.direction, scatterDir), bounceData.scatteringDirection);
-        //
-        //         if(bouncePDF <= 0)
-        //             break;
-        //
-        //         throughput *= exp(- bounceData.mediumDensity * absorbDistance);
-        //
-        //         b--;
-        //         volumeScattersCounter++;
-        //         if(volumeScattersCounter > MAX_MEDIUM_SCATTERS)
-        //             break;
-        //     }          
-        // }
+        if(insideMediumCounter > 0)
+        {
+            // the inner march step distance is calculated in different ways by different implementations
+            // I've seen some log versions, fully manual/user controller, fixed steps.. and so on
+            // this one seem fine and fast for now?
+            float scatterDistance = bounceData.maxScatteringDistance / bounceData.mediumDensity;
+            mediumWasSampled = scatterDistance < hitInfo.distance;
+        
+            if(mediumWasSampled)
+            {
+                absorbDistance += scatterDistance;
+        
+                
+                pathRay.origin = pathRay.direction * scatterDistance;
+        
+                float3 scatterDir = Sample_PhaseHG(randState, pathRay.direction, bounceData.scatteringDirection);
+                pathRay.direction = scatterDir;
+                
+                bouncePDF = Evaluate_PhaseHG(dot(-pathRay.direction, scatterDir), bounceData.scatteringDirection);
+        
+                if(bouncePDF <= 0)
+                    break;
+
+                // beer's law absorption. I'm using medium density as coefficient, which is not great but ¯\_(ツ)_/¯
+                throughput *= bounceData.color;
+                throughput *= exp(- bounceData.mediumDensity * absorbDistance);
+        
+                b--;
+                volumeScattersCounter++;
+                if(volumeScattersCounter > MAX_MEDIUM_SCATTERS)
+                    break;
+            }          
+        }
         
 
         // if no medium direction was sampled, it means that we might have exited the medium (or we never entered in first place)
@@ -158,32 +157,32 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
             // we use the inverse of the direction in some intersection calculation
             pathRay.invDirection = 1.0 / pathRay.direction;
 
-            // if(bounceData.mediumDensity > 0)
-            // {
-            //     // this is a clunky way of checking if the ray is currently inside a medium
-            //     // we stack and de-stack entering and exiting dense mediums
-            //     if(!bounceData.isReflection)
-            //     {
-            //         insideMediumCounter++;
-            //     }
-            //     else
-            //     {
-            //         insideMediumCounter--;
-            //         insideMediumCounter = max(insideMediumCounter, 0);
-            //
-            //         if(insideMediumCounter <= 0)
-            //         {
-            //             absorbDistance = 0;
-            //             volumeScattersCounter = 0;
-            //         }                        
-            //     }    
-            // }
-            // else
-            // {
-            //     insideMediumCounter = 0;
-            //     absorbDistance = 0;
-            //     volumeScattersCounter = 0;
-            // }            
+            if(bounceData.mediumDensity > 0)
+            {
+                // this is a clunky way of checking if the ray is currently inside a medium
+                // we stack and de-stack entering and exiting dense mediums
+                if(!bounceData.isReflection)
+                {
+                    insideMediumCounter++;
+                }
+                else
+                {
+                    insideMediumCounter--;
+                    insideMediumCounter = max(insideMediumCounter, 0);
+            
+                    if(insideMediumCounter <= 0)
+                    {
+                        absorbDistance = 0;
+                        volumeScattersCounter = 0;
+                    }                        
+                }    
+            }
+            else
+            {
+                insideMediumCounter = 0;
+                absorbDistance = 0;
+                volumeScattersCounter = 0;
+            }            
             
         }
             

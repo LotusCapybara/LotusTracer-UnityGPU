@@ -172,6 +172,7 @@ struct ScatteringData
     uint flags;
 
     bool isReflection; // reflection or refraction?
+    bool isThin;
 
     SampleData sampleData;
     SampleProbabilities probs;
