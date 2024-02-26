@@ -39,7 +39,7 @@ static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout Sc
     float A = 1.0 - (sigma2 / (2.0 * (sigma2 + 0.33)));
     float B = 0.45 * sigma2 / (sigma2 + 0.09);
     
-    f += float3(0, 1, 0 ) * data.color * ONE_OVER_PI * ( A + B * dcos * sinalpha * tanbeta ) * abs_cos_theta_i;
+    f += data.color * ONE_OVER_PI * ( A + B * dcos * sinalpha * tanbeta ) * abs_cos_theta_i;
     
     pdf += ev.NoL * ONE_OVER_PI;
 }
