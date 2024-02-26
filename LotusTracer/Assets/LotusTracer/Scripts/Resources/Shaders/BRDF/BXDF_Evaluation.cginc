@@ -76,26 +76,33 @@ static void Evaluate_ClearCoat(inout ScatteringData data)
 
 static void Evaluate_Transmission(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
+    if(data.V.y * data.sampleData.L.y > 0)
+        return;
+    if(ev.NoV == 0)
+        return;
+    
     float3 H = normalize(data.V + data.sampleData.L * data.eta);
+    if(H.y < 0)
+        H = -H;
     
     float sVoH = dot(data.V, H);
     float sLoH = dot(data.sampleData.L, H);
 
     float3 F = DielectricFresnel(dot(data.V, H),  data.eta, 1.0 / data.eta);
     float srqtDenom = sVoH + data.eta * sLoH;
-    float t = data.eta / srqtDenom;
+    float t = (data.eta) / srqtDenom;
     
     float D = GGX_D(data.sampleData.H, data.ax, data.ay);
     float G1 = GGX_G1(data.V, data.ax, data.ay);
     float G2 = GGX_G1(data.sampleData.L, data.ax, data.ay);
 
-    f =  (V_ONE - F) * abs(D * G1 * G2 * t * t * sLoH * sVoH / ev.NoV);
+    f =  (V_ONE - F) * data.color * abs(D * G1 * G2 * t * t * sLoH * sVoH / ev.NoV);
     f *= (1.0 - data.metallic) * data.transmissionPower;
 
     float dwh_dwi = data.eta * data.eta * abs(dot(data.sampleData.L, H)) / (srqtDenom * srqtDenom);
         
     pdf =  D * G1 / max(0.0001, 4.0 * ev.NoV);
-    pdf *= dwh_dwi;  
+    pdf *= dwh_dwi;
 }
 
 

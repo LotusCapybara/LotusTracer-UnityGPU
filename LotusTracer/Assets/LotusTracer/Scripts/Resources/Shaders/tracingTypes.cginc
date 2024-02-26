@@ -122,6 +122,7 @@ struct SampleProbabilities
     float wSpecularTransmission;
     float wClearCoat;
 
+    float totalW;
     float wRangeDiffuseReflection;
     float wRangeSpecularReflection;
     float wRangeDiffuseTransmission;

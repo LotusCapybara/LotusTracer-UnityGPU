@@ -7,16 +7,20 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
     // weight of each of these models based on material properties
     SampleProbabilities prob;
 
+    
+    
     prob.wDiffuseReflection  = baseLuminance * (1.0 - data.metallic) * (1.0 -  data.transmissionPower);
     prob.wSpecularReflection  = Luminance(data.F0) * 8.0 * (1.0 - data.roughness); // magic number 8.0 to avoid fireflies?
-    prob.wDiffuseTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower * data.roughness;
-    prob.wSpecularTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower * (1.0 - data.roughness);
+    prob.wDiffuseTransmission = 0; //baseLuminance * (1.0 - data.metallic) * data.transmissionPower * data.roughness;
+    prob.wSpecularTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower;
     prob.wClearCoat = 0.05 * data.clearCoat;
 
-    float wTotal = prob.wDiffuseReflection + prob.wSpecularReflection + prob.wDiffuseTransmission +
+    
+    
+    prob.totalW = prob.wDiffuseReflection + prob.wSpecularReflection + prob.wDiffuseTransmission +
         prob.wSpecularTransmission +  prob.wClearCoat;
 
-    float invWTotal = 1.0 / wTotal;
+    float invWTotal = 1.0 / prob.totalW;
 
     prob.wRangeDiffuseReflection  = prob.wDiffuseReflection * invWTotal;
     prob.wRangeSpecularReflection = prob.wRangeDiffuseReflection + prob.wSpecularReflection * invWTotal;
@@ -61,7 +65,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     data.scatteringDirection = clamp(mat.scatteringDirection, -0.95, 0.95);
     data.maxScatteringDistance = mat.maxScatteringDistance;
     data.emissionPower = mat.emissiveIntensity;
-    data.transmissionPower = data.mediumDensity >= 1 ? 0 : clamp(mat.transmissionPower, 0, 0.95);
+    data.transmissionPower = mat.transmissionPower; 
     
     data.eta = dot(hitInfo.normal, hitInfo.backRayDirection) > 0 ? 1.0 / mat.ior  : mat.ior  / 1.0; 
     
@@ -127,7 +131,8 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     // implementing that at some point? That could include specular color. That's not realistic really, dielectric
     // materials don't have specular color and metallic materials have specific color for their materials.
     // Renderers that use specular color usually do it for artistic freedom, such as Disney renderers
-    data.F0 = lerp((float3)0.1, data.color, mat.metallic);
+    float minSpec = max(0.1,  SchlickR0FromEta(1.0 / data.eta));
+    data.F0 = lerp(minSpec * V_ONE, data.color, mat.metallic);
     
     data.probs =  CreateProbabilities(randState, data);
 

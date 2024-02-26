@@ -98,6 +98,9 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
     
     bool validSample = false;
 
+    if(data.probs.totalW <= 0)
+        return false;
+    
     float randomSample = GetRandom0to1(randState);
     if(randomSample < data.probs.wRangeDiffuseReflection)
     {
