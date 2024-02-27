@@ -52,7 +52,7 @@ namespace CapyTracerCore.Core
         
         public void GenerateRuntime()
         {
-            emissiveIntensity = math.clamp(emissiveIntensity, 0, 20);
+            emissiveIntensity = math.clamp(emissiveIntensity, 0, 100);
             
             // important to avoid crashes, ior can't be 0 since it's a divisor in some places
             ior = math.clamp(ior, 1f, 4f);

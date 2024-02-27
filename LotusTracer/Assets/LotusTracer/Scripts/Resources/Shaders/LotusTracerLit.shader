@@ -16,7 +16,7 @@ Shader "LotusTracerLit"
 		_RoughnessMap("RoughnessMap", 2D) = "white" {}
 		_BaseColor("BaseColor", Color) = (0,0,0,0)
 		_EmissionColor("EmissionColor", Color) = (0,0,0,0)
-		_EmissionPower("EmissionPower", Range( 0 , 10)) = 0
+		_EmissionPower("EmissionPower", Range( 0 , 100)) = 0
 		_MetallicPower("MetallicPower", Range( 0 , 10)) = 0
 		_RoughPower("RoughPower", Range( 0 , 10)) = 1
 		_CoatPower("CoatPower", Range( 0 , 1)) = 0
