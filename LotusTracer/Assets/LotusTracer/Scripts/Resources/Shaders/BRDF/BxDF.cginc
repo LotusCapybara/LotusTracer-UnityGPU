@@ -21,8 +21,8 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     ev.squareR = data.roughness * data.roughness;
 
 
-    float3 tempF;
-    float tempPDF;
+    float3 tempF = (float3) 0;
+    float tempPDF = 0;
     
     // eval will be divided by pdf later on (due the rendering equation)  
     // so you might think its dumb to multiply and divide by the same value (for instance probs.prClearCoat)
@@ -33,8 +33,6 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     
     if(data.isReflection && data.probs.wDiffuseReflection > 0.0)
     {
-        tempF = tempPDF = 0;
-        
         if( ((data.flags >> 1) & 0x1)  == 1)
             Evaluate_Diffuse_OrenNayar(tempF, tempPDF, data, ev);
         else 
@@ -46,8 +44,6 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     
     if(data.isReflection && data.probs.wSpecularReflection > 0.0)
     {
-        tempF = tempPDF = 0;
-        
         Evaluate_Specular(tempF, tempPDF, data, ev);
 
         eval += tempF *  data.probs.wSpecularReflection;
@@ -56,38 +52,27 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
 
     if(!data.isReflection && data.probs.wSpecularTransmission > 0.0)
     {
-        tempF = tempPDF = 0;
         Evaluate_Transmission(tempF, tempPDF, data, ev);
         eval += tempF *  data.probs.wSpecularTransmission;
         pdf += tempPDF * data.probs.wSpecularTransmission;
     }
     
-    // if(data.probs.wDiffuseTransmission > 0.0)
-    // {
-    //     eval += float3(0.7, 0.7, 0.7);
-    //     pdf += ONE_OVER_PI;
-    //     
-    //     // note: some people multiply probabilities by the refraction fresnel
-    //     // however, since I'm modifying the probabilities themselves based on the fresnel
-    //     // I think it's already contemplated? It looks fine anyways, but might need to revisit
-    //     // tempF = tempPDF = 0;
-    //     // Evaluate_Transmission(tempF, tempPDF, data, ev);
-    //     // eval += tempF *  data.probs.weightTransmission;
-    //     // pdf += tempPDF * data.probs.prTransmission;
-    // }
+    if(data.probs.wDiffuseTransmission > 0.0)
+    {
+        // todo implement
+    }
 
 
-    //
-    // if(data.isReflection && data.probs.prClearCoat > 0.0)
+    // todo: something is wrong with Clear Coat, it's "eating" energy
+    // can't find if it's negative values or some exception or what
+    // if( data.isReflection && data.probs.wClearCoat > 0.0)
     // {
-    //     Evaluate_ClearCoat(data);        
-    //     eval += data.sampleData.sampleReflectance * data.probs.prClearCoat;
-    //     pdf  += data.sampleData.pdf * data.probs.prClearCoat;
-    // }
-    //
+    //     Evaluate_ClearCoat(tempF, tempPDF, data, ev);        
+    //     eval += tempF * data.probs.wClearCoat;
+    //     pdf  += tempPDF * data.probs.wClearCoat;
+    // }    
     
-    eval *= abs(data.sampleData.L.y); // N dot L from the Rendering equation
-   
+    eval *= abs(data.sampleData.L.y); // N dot L from the Rendering equation   
     
     ScatteringToWorld(data);
 }
@@ -116,13 +101,12 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
         validSample = Sample_Transmission(randState, data);
     }
     else if(randomSample < data.probs.wRangeSpecularTransmission)
-    {
-        
+    {        
         validSample = Sample_Transmission(randState, data);
     }
     else // clear coat
     {
-        //validSample = Sample_ClearCoat(randState, data);
+        validSample = Sample_ClearCoat(randState, data);
     }
 
     data.isReflection = data.sampleData.L.y * data.V.y > 0;

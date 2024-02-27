@@ -13,9 +13,7 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
     prob.wSpecularReflection  = Luminance(data.F0) * 8.0 * (1.0 - data.roughness); // magic number 8.0 to avoid fireflies?
     prob.wDiffuseTransmission = 0; //baseLuminance * (1.0 - data.metallic) * data.transmissionPower * data.roughness;
     prob.wSpecularTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower;
-    prob.wClearCoat = 0.05 * data.clearCoat;
-
-    
+    prob.wClearCoat = 0.05 * data.clearCoat;    
     
     prob.totalW = prob.wDiffuseReflection + prob.wSpecularReflection + prob.wDiffuseTransmission +
         prob.wSpecularTransmission +  prob.wClearCoat;

@@ -2,7 +2,7 @@ static void Evaluate_Diffuse_Lambert(inout float3 f, inout float pdf, inout Scat
 {
     f +=  data.color * ONE_OVER_PI * abs(ev.NoL);
     
-    pdf += ev.NoL * ONE_OVER_PI;
+    pdf += ONE_OVER_PI;
 }
 
 static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
@@ -13,7 +13,7 @@ static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout Sc
     float sinphii = SIN_PHI(data.sampleData.L);
     float cosphii = COS_PHI(data.sampleData.L);
     float sinphio = SIN_PHI(data.V);
-    float cosphio = COS_PHI(data.sampleData.L);
+    float cosphio = COS_PHI(data.V);
     float dcos = cosphii * cosphio + sinphii * sinphio;
     if( dcos < 0.0 )
         dcos = 0.0;
@@ -39,9 +39,8 @@ static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout Sc
     float A = 1.0 - (sigma2 / (2.0 * (sigma2 + 0.33)));
     float B = 0.45 * sigma2 / (sigma2 + 0.09);
     
-    f += data.color * ONE_OVER_PI * ( A + B * dcos * sinalpha * tanbeta ) * abs_cos_theta_i;
-    
-    pdf += ev.NoL * ONE_OVER_PI;
+    f = data.color * ONE_OVER_PI * ( A + B * dcos * sinalpha * tanbeta ) * abs_cos_theta_i;    
+    pdf = ev.NoL * ONE_OVER_PI;
 }
 
 // evaluate specular dielectric BRDF with micro facet reflections
@@ -56,22 +55,22 @@ static void Evaluate_Specular(inout float3 f, inout float pdf, inout ScatteringD
     float G1 = GGX_G1(data.V, data.ax, data.ay);
     float G2 = GGX_G1(data.sampleData.L, data.ax, data.ay);
     
-    f += D * F * G1 * G2 / ( 4.0 * abs(ev.NoV) );    
-    pdf += D * G1 / max(0.0001, 4.0 * ev.NoV);
+    f = D * F * G1 * G2 / ( 4.0 * abs(ev.NoV) );    
+    pdf = D * G1 / max(0.0001, 4.0 * ev.NoV);
 }
 
 // evaluate specular dielectric BRDF with micro facet reflections
-static void Evaluate_ClearCoat(inout ScatteringData data)
+static void Evaluate_ClearCoat(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
-    float VoH = dot(data.V, data.sampleData.H);
+    float aVOH = dot(data.V, data.sampleData.H);
+    
+    float F = lerp(0.04, 1.0, SchlickWeight(aVOH));
+    float D = GTR1( abs( data.sampleData.H.y), data.clearCoatRoughness);
+    float G = Smith_G( abs(data.sampleData.L.y), 0.25) * Smith_G(abs(data.V.y), 0.25);
+    float jacobian = 1.0 / (4.0 * aVOH);
 
-    float F = lerp(0.04, 1.0, SchlickWeight(VoH));
-    float D = GTR1(data.sampleData.H.y, data.clearCoatRoughness);
-    float G = Smith_G(data.sampleData.L.y, 0.25) * Smith_G(data.V.y, 0.25);
-    float jacobian = 1.0 / (4.0 * VoH);
-
-    // data.sampleData.sampleReflectance = ((float3) F) * D * G;    
-    // data.sampleData.pdf  = D * data.sampleData.H.y * jacobian;
+    f =  ((float3) F) * D * G;
+    pdf = D * data.sampleData.H.y * jacobian;
 }
 
 static void Evaluate_Transmission(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
