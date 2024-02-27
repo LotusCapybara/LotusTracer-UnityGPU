@@ -12,7 +12,7 @@
 ## Images
 Example images. Assets were taken from Sketchfab, please follow these amazing creators.
 
-![Image](https://i.gyazo.com/a208c6c0a2d8aca13ced23827631c150.png)
+![Image](https://i.gyazo.com/4814c16f56dfeb9e4be9d194115e4737.jpg)
 Asset courtesy of [Adrian Carter](https://sketchfab.com/Adrian.Carter3D).
 ![Image](https://i.gyazo.com/348eeed22f02b4fd57a503c1a13bea17.png)
 Asset courtesy of [Vetech 82](https://sketchfab.com/Vetech82).
