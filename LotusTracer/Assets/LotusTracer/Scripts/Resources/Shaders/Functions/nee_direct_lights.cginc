@@ -100,7 +100,11 @@ static void GetLightsNEE(inout uint randState, in ScatteringData data, bool come
         GetBSDF_F(randState, data, lightBSDF, lightPDF);    
     }
 
-    radiance = lightContribution * lightBSDF;
+    if(lightPDF > 0)
+    {
+        radiance += lightContribution * lightBSDF / lightPDF;    
+    }    
+    
     pdf = lightPDF;
 }
 

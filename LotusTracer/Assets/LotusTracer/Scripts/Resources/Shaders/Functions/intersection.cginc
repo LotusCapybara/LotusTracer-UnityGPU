@@ -171,6 +171,8 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
         // coordinates transformation (textures have z up, and they are right handed)
         packednormal.xyz = float3(packednormal.y, -packednormal.z, packednormal.x);
 
+        packednormal.xz *= 2;
+        
         // tangent space of map to world space of triangle hit
         float3x3 tbn = float3x3(hitInfo.tangent, hitInfo.biTangent, hitInfo.normal);        
         hitInfo.normal = mul(packednormal, tbn);

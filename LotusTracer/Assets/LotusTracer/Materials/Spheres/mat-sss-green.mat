@@ -127,7 +127,7 @@ Material:
     - _IOR: 1
     - _IsThin: 0
     - _MaxScatteringDistance: 0.2
-    - _MediumDensity: 0.5
+    - _MediumDensity: 1
     - _Metallic: 0
     - _MetallicPower: 0
     - _Mode: 0
@@ -137,7 +137,7 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RoughPower: 0
-    - _ScatteringDirection: 0.5
+    - _ScatteringDirection: 0
     - _Smoothness: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

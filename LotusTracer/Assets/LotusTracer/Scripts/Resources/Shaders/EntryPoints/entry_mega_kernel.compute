@@ -69,22 +69,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
 
         bounceData = MakeScatteringData(randState, hitInfo);
         
-        // NEE: direct light
-        // we gather light from concrete lights that are affecting to this path point
-        // concrete lights are point light, spot light, direction light, etc        
-        float3 directLightVal;
-        float directLightPDF;
-        GetLightsNEE(randState, bounceData, insideMediumCounter > 0, directLightVal, directLightPDF);
-        if(directLightPDF > 0)
-        {
-            float directMis = 1.0;
-            if(b > 0)
-            {
-                directMis = PowerHeuristic(bouncePDF, directLightPDF);
-            }
-            
-            radiance += directMis * throughput * directLightVal / directLightPDF;        
-        }                
+                   
 
         // Note here on Emissive Materials MIS
         // Some implementations seem to also add a direct sample towards emissive meshes/triangles
@@ -103,30 +88,37 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         // path tracer could mitigate this by having a dedicated kernel for volumetric scattering? 
         if(insideMediumCounter > 0)
         {
-            // the inner march step distance is calculated in different ways by different implementations
-            // I've seen some log versions, fully manual/user controller, fixed steps.. and so on
-            // this one seem fine and fast for now?
-            float scatterDistance = bounceData.maxScatteringDistance / bounceData.mediumDensity;
+            // I used to have manual tweaking in materials for this value but it was a pain
+            // I found this implementation online that seems to be mor generic
+            float scatterDistance = min(-log(GetRandom0to1(randState)) / bounceData.mediumDensity, hitInfo.distance);
             mediumWasSampled = scatterDistance < hitInfo.distance;
         
             if(mediumWasSampled)
             {
-                absorbDistance += scatterDistance;
-        
+
+
+                // beer's law absorption. I'm using medium density as coefficient, which is not great but ¯\_(ツ)_/¯
+                // this should be used in materials that won't scatter light and "just" absorb? 
+                // throughput *= exp(- bounceData.mediumDensity * absorbDistance);
+                
+                throughput *= bounceData.color;
+                
+                absorbDistance += scatterDistance;        
                 
                 pathRay.origin = pathRay.direction * scatterDistance;
+
+                float3 directLightVal;
+                float directLightPDF;
+                GetLightsNEE(randState, bounceData, true, directLightVal, directLightPDF);
+                if(directLightPDF > 0)
+                    radiance += directLightVal * throughput;
         
-                float3 scatterDir = Sample_PhaseHG(randState, pathRay.direction, bounceData.scatteringDirection);
-                pathRay.direction = scatterDir;
-                
+                float3 scatterDir = Sample_PhaseHG(randState, -pathRay.direction, bounceData.scatteringDirection);
                 bouncePDF = Evaluate_PhaseHG(dot(-pathRay.direction, scatterDir), bounceData.scatteringDirection);
+                pathRay.direction = scatterDir;
         
                 if(bouncePDF <= 0)
                     break;
-
-                // beer's law absorption. I'm using medium density as coefficient, which is not great but ¯\_(ツ)_/¯
-                throughput *= bounceData.color;
-                throughput *= exp(- bounceData.mediumDensity * absorbDistance);
         
                 b--;
                 volumeScattersCounter++;
@@ -140,6 +132,23 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         // so this path is "in the vacuum" which means we can try to sample hits to surface using common BSDF sampling and evaluation
         if(! mediumWasSampled)
         {
+            // NEE: direct light
+            // we gather light from concrete lights that are affecting to this path point
+            // concrete lights are point light, spot light, direction light, etc        
+            float3 directLightVal;
+            float directLightPDF;
+            GetLightsNEE(randState, bounceData, false, directLightVal, directLightPDF);
+            if(directLightPDF > 0)
+            {
+                float directMis = 1.0;
+                if(b > 0)
+                {
+                    directMis = PowerHeuristic(bouncePDF, directLightPDF);
+                }
+            
+                radiance += directMis * throughput * directLightVal;        
+            }     
+            
             bool validSample = GetBSDF_Sample(randState, bounceData);
             if(!validSample)
                 break;
