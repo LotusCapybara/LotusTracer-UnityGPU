@@ -11,7 +11,18 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     eval = 0;
     pdf = 0;
 
-    data.H = normalize(data.L + data.V);    
+    
+    if(data.isReflection)
+    {
+        data.H = normalize(data.L + data.V);    
+    }
+    else
+    {
+        data.H = normalize(data.V + data.L * data.eta);
+        if(data.H.y < 0)
+            data.H = - data.H;
+    }
+    
     
     EvaluationVars ev = MakeEvaluationVars(data);
 
@@ -44,16 +55,9 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
         pdf += tempPDF * data.probs.wSpecularReflection;
     }
 
-    if(data.probs.wTransmission > 0.0)
+    if(!data.isReflection && data.probs.wTransmission > 0.0)
     {
-        if(data.isReflection)
-        {
-            Evaluate_Specular(tempF, tempPDF, data, ev);
-        }
-        else
-        {
-            Evaluate_Transmission(tempF, tempPDF, data, ev);    
-        }
+        Evaluate_Transmission(tempF, tempPDF, data, ev);    
        
         eval += tempF *  data.probs.wTransmission;
         pdf += tempPDF * data.probs.wTransmission;

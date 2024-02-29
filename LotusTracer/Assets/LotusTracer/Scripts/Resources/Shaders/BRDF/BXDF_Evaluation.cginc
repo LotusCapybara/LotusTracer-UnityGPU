@@ -86,36 +86,31 @@ static void Evaluate_ClearCoat(inout float3 f, inout float pdf, inout Scattering
 
 static void Evaluate_Transmission(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
+    f = V_ZERO;
+    pdf = 0;
+    
     if(data.V.y * data.L.y > 0)
         return;
     if(ev.NoV == 0)
         return;
-    
-    float3 H = normalize(data.V + data.L * data.eta);
-    if(H.y < 0)
-        H = -H;
-    
-    float sVoH = dot(data.V, H);
-    float sLoH = dot(data.L, H);
 
-    float3 F = SchlickFresnel(dot(data.V, H),  data.eta) / (1.0 - data.cSpec0);
-    F = clamp(F, V_ZERO, V_ONE);
-    F = lerp(data.cSpec0, V_ONE, F);
-    
-    float srqtDenom = sVoH + data.eta * sLoH;
-    float t = (data.eta) / srqtDenom;
-    
-    float D = D_GGX(data.H, data.ax, data.ay);
-    float G1 = G_GGX(data.V, data.ax, data.ay);
-    float G2 = G_GGX(data.L, data.ax, data.ay);
+    float LoH = dot(data.L, data.H);
 
-    f =  data.color * abs(D * G1 * G2 * t * t * sLoH * sVoH / ev.NoV);
-    f *= (1.0 - data.metallic) * data.transmissionPower;
+    // float F =  DielectricFresnel(ev.VoH, data.eta);
+    float F =  SchlickFresnel(ev.VoH, data.eta);
+    // could also use ggx on these but I think it's faster this way and it's fine
+    float D = D_GTR( data.H.y, data.roughness * data.roughness);
+    float G1 = G_Smith( abs(data.V), data.roughness * data.roughness);
+    float G2 = G_Smith( abs(data.L), data.roughness * data.roughness);
 
-    float dwh_dwi = data.eta * data.eta * abs(dot(data.L, H)) / (srqtDenom * srqtDenom);
-        
-    pdf =  D * G1 / max(0.0001, 4.0 * ev.NoV);
-    pdf *= dwh_dwi;
+    float denom2 = pow(LoH + ev.VoH * data.eta , 2.0 );
+    float eta2 = data.eta * data.eta;
+    float jacobian = abs(LoH) / denom2; 
+
+    f = pow(data.color, (float3) 0.5) * (V_ONE - (float3)F) * D * G1 * G2 * abs(ev.VoH) * jacobian * eta2 / abs(data.V.y * data.L.y);    
+
+    // ------- pdf            
+    pdf = (1.0 - F) *  G1 * max(0,  abs(ev.VoH)) * D * jacobian / data.V.y;     
 }
 
 

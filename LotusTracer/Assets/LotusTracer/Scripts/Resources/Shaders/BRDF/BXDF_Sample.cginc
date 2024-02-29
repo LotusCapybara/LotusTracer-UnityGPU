@@ -16,7 +16,7 @@ bool Sample_Diffuse(inout uint randState, inout ScatteringData data)
 bool Sample_Specular(inout uint randState, inout ScatteringData data)
 {
     // -- Sample visible distribution of normals
-    float3 facetH = Sample_GGX(randState, data.ax, data.ax);
+    float3 facetH = Sample_GGX_Microfacet(randState, data.ax, data.ax);
 
     if(facetH.y < 0)
         facetH.y = - facetH.y;
@@ -44,22 +44,13 @@ bool Sample_ClearCoat(inout uint randState, inout ScatteringData data)
 
 bool Sample_Transmission(inout uint randState, inout ScatteringData data)
 {    
-    float3 facetH =  Sample_GGX(randState, data.ax, data.ay);
+    float3 facetH =  Sample_GGX_Microfacet(randState, data.ax, data.ay);
     if(facetH.y < 0)
         facetH = -facetH;
 
-    float3 F = SchlickFresnel(dot(data.V, facetH),  data.eta);
-
-    if(GetRandom0to1(randState) > Luminance(F))
-    {
-        data.L = reflect(-data.V, facetH);
-    }
-    else
-    {
-        data.L = refract(-data.V, WORLD_UP, data.eta);
-        if(data.L.y > 0)
-            data.L = - data.L;    
-    }
+    data.L = refract(-data.V, facetH, data.eta);
+    if(data.L.y > 0)
+        data.L = - data.L;   
 
     data.H = normalize(data.L + data.V);
     

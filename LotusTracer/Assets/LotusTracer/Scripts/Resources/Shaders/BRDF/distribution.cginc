@@ -36,7 +36,7 @@ float G_GGX( in float3 v, float ax, float ay )
     return 2.0 / ( 1.0 + sqrt( 1.0 + alpha2 * tan_theta_sq ) );    
 }
 
-float3 Sample_GGX(inout uint randState, float ax, float ay)
+float3 Sample_GGX_Microfacet(inout uint randState, float ax, float ay)
 {
     float r0 = GetRandom0to1(randState);
     float r1 = GetRandom0to1(randState);
