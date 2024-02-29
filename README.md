@@ -51,3 +51,11 @@ Since this is a just-for-fun project I would never consider using it for any act
  - denoising
  - more and better direct light support
  - some other stuff since I'm experimenting with this now and then
+
+## Debug Tools
+
+This path tracer has multiple debug tools, like cpu mirroring of sampling functions to validate scattering, BVH visualization or Debug Texture Buffers.
+However, some of those can be a bit clunky in usability since I made them on the fly to solve specific problems.
+
+![Image](https://i.gyazo.com/f79b35bbffe64187766246a746e5105e.png)
+ 
