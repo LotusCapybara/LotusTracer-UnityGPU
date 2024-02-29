@@ -3,7 +3,6 @@
 public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
 {
     public const string KERNEL_DEBUG_TEXTURES = "Kernel_CameraDebugTextures";
-    public const string KERNEL_BVH_DENSITY = "Kernel_BVHDensity";
 
     public ComputeShaderHolder_CameraBuffers(string shaderName, RenderScene renderScene,
         TracerComputeBuffers buffers, TracerTextures tracerTextures) : 
@@ -15,7 +14,6 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
     {
         // kernels
         _kernelIds.Add(KERNEL_DEBUG_TEXTURES, _shader.FindKernel(KERNEL_DEBUG_TEXTURES));
-        _kernelIds.Add(KERNEL_BVH_DENSITY, _shader.FindKernel(KERNEL_BVH_DENSITY));
         
         // shader variables
         _shader.SetInt("width", _scene.width);
@@ -26,16 +24,7 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
         _shader.SetInt("treeNodesQty", _scene.serializedScene.qtyBVHNodes);
         _shader.SetInt("totalMaterials", _scene.serializedScene.qtyMaterials);
         
-        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureColorBuffer", ERenderTextureType.ColorBuffer);
-        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureNormalBuffer", ERenderTextureType.NormalBuffer);
-        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureRoughnessBuffer", ERenderTextureType.RoughnessBuffer);
-        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureMetallicBuffer", ERenderTextureType.MetallicBuffer);
-        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureEmissiveBuffer", ERenderTextureType.EmissiveBuffer);
-        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureSchlickWeightBuffer", ERenderTextureType.SchlickWeight);
-        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureDielectricFresnelBuffer", ERenderTextureType.DielectricFresnel);
-        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureSchlickFresnelBuffer", ERenderTextureType.SchlickFresnel);
-        
-        SetTexture(KERNEL_BVH_DENSITY, "_TextureBVHDensityBuffer", ERenderTextureType.BVHDensity);
+        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureDebugBuffer", ERenderTextureType.Debug);
         
         _shader.SetTexture(_kernelIds[KERNEL_DEBUG_TEXTURES], "_AtlasesAlbedo", _scene.textureArrayAlbedo);
         SetBuffer(KERNEL_DEBUG_TEXTURES, BuffersNames.MAP_DATA_ALBEDO);

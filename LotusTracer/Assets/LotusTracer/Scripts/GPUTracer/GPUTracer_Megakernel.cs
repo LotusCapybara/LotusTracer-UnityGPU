@@ -41,6 +41,8 @@ public class GPUTracer_Megakernel : MonoBehaviour
     public double totalTime { get; private set; }
     public double averageSampleTime { get; private set; }
     public int indirectIteration => _indirectIteration;
+    public EDebugBufferType debugType { get; set; }
+    public bool isRenderingDebug { get; set; }
     
     private IEnumerator Start()
     {
@@ -109,19 +111,29 @@ public class GPUTracer_Megakernel : MonoBehaviour
         
         while (_indirectIteration < totalIterations)
         {
-            _csMegaKernel.shader.SetInt("iteration", _indirectIteration);
             _csMegaKernel.shader.SetInt("someSeed", Random.Range(0, 15000));
-            _csMegaKernel.DispatchKernelFull(ComputeShaderHolder_MegaKernel.KERNEL_MEGA_PATH_TRACE, _width, _height);
-            _csMegaKernel.DispatchKernelFull(ComputeShaderHolder_MegaKernel.KERNEL_ACCUMULATE_FINAL, _width, _height);
             
-            //_csBloom.ExecuteBloom();
+            if (isRenderingDebug)
+            {
+                _csCameraBuffers.shader.SetInt("_debugBufferType", (int) debugType);
+                CreateCameraDebugBuffers();
+            }
+            else
+            {
+                _csMegaKernel.shader.SetInt("iteration", _indirectIteration);
+                
+                _csMegaKernel.DispatchKernelFull(ComputeShaderHolder_MegaKernel.KERNEL_MEGA_PATH_TRACE, _width, _height);
+                _csMegaKernel.DispatchKernelFull(ComputeShaderHolder_MegaKernel.KERNEL_ACCUMULATE_FINAL, _width, _height);
             
-            _indirectIteration++;
-            totalTime = _stopwatch.Elapsed.TotalSeconds;
-            averageSampleTime = totalTime / indirectIteration;
+                //_csBloom.ExecuteBloom();
             
-            if(maxTime > 0 && totalTime >= maxTime)
-                break;
+                _indirectIteration++;
+                totalTime = _stopwatch.Elapsed.TotalSeconds;
+                averageSampleTime = totalTime / indirectIteration;
+            
+                if(maxTime > 0 && totalTime >= maxTime)
+                    break;
+            }
 
             yield return CameraMovementRoutine();
 
@@ -165,6 +177,5 @@ public class GPUTracer_Megakernel : MonoBehaviour
             return;
         
         _csCameraBuffers.DispatchKernelFull(ComputeShaderHolder_CameraBuffers.KERNEL_DEBUG_TEXTURES, _width, _height);
-        _csCameraBuffers.DispatchKernelFull(ComputeShaderHolder_CameraBuffers.KERNEL_BVH_DENSITY, _width, _height);
     }
 }

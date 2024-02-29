@@ -1,95 +1,37 @@
 #pragma kernel Kernel_CameraDebugTextures
-#pragma kernel Kernel_BVHDensity
 
 #include "../constants.cginc"
 #include "../tracingTypes.cginc"
 #include "../Functions/common.cginc"
 #include "../tracingVariables.cginc"
 #include "../Functions/fresnel.cginc"
+#include "../Functions/factories.cginc"
 #include "../Functions/intersection.cginc"
 #include "../BRDF/bsdf_functions.cginc"
 #include "../Functions/post_processing.cginc"
-#include "../Functions/factories.cginc"
 #include "../BRDF/BxDF.cginc"
 
+#define DEBUG_TYPE_COLOR 0
+#define DEBUG_TYPE_NORMAL 1
+#define DEBUG_TYPE_ROUGH 2
+#define DEBUG_TYPE_METALLIC 3
+#define DEBUG_TYPE_EMISSIVE 4
+#define DEBUG_TYPE_SCHLICK_WEIGHT 5
+#define DEBUG_TYPE_SCHLICK_FRESNEL 6
+#define DEBUG_TYPE_SCHLICK_FRESNEL_COLOR 7
+#define DEBUG_TYPE_DIELECTRIC_FRESNEL 8
+#define DEBUG_TYPE_BVH_DENSITY 9
+#define DEBUG_TYPE_Dist_D 10
+#define DEBUG_TYPE_Dist_GV 11
+#define DEBUG_TYPE_Dist_GL 12
+#define DEBUG_TYPE_Eval_Diffuse 13
+#define DEBUG_TYPE_Eval_Reflect 14
 
-RWTexture2D<float4> _TextureColorBuffer;
-RWTexture2D<float4> _TextureNormalBuffer;
-RWTexture2D<float4> _TextureRoughnessBuffer;
-RWTexture2D<float4> _TextureMetallicBuffer;
-RWTexture2D<float4> _TextureEmissiveBuffer;
-RWTexture2D<float4> _TextureBVHDensityBuffer;
-RWTexture2D<float4> _TextureSchlickWeightBuffer;
-RWTexture2D<float4> _TextureDielectricFresnelBuffer;
-RWTexture2D<float4> _TextureSchlickFresnelBuffer;
 
-[numthreads(8,8,1)]
-void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
-{
-    int index = id.y * width + id.x;
-    RenderRay pathRay = _CameraRays[index];
-    TriangleHitInfo hitInfo = (TriangleHitInfo) 0;
+uint _debugBufferType;
+RWTexture2D<float4> _TextureDebugBuffer;
 
-    float3 baseColor = MAGENTA;
-    float3 normalColor = MAGENTA;
-    float3 roughColor = MAGENTA;
-    float3 metallicColor = MAGENTA;
-    float3 emissiveColor = MAGENTA;
-    float3 schlickWeightColor = MAGENTA;
-    float3 dielectricFresnelColor = MAGENTA;
-    float3 schlickFresnelColor = MAGENTA;
-    
-    int rand = 65465;
-    
-    bool foundHit = GetBounceHit(hitInfo, pathRay, INFINITY, true);
-
-    if(!hitInfo.isFrontFace)
-    {
-        pathRay.origin = hitInfo.position + pathRay.direction * EPSILON * 3.0;
-        foundHit = GetBounceHit(hitInfo, pathRay, INFINITY, true);
-    }
-
-    if(foundHit)
-    {
-        ScatteringData scattering_data = MakeScatteringData(rand, hitInfo);
-
-        baseColor = scattering_data.color;
-        
-        float3 normalMap = (scattering_data.WorldNormal * 0.5) + 0.5; 
-        normalColor = normalMap;
-
-        roughColor = scattering_data.roughness;
-        metallicColor = scattering_data.metallic;
-        emissiveColor = scattering_data.emissionPower;
-
-        ScatteringToLocal(scattering_data);
-
-        float3 reflectL = reflect(- scattering_data.V, WORLD_UP);
-        float3 reflectH = normalize(scattering_data.V + reflectL);
-        
-        // schlick weight
-        schlickWeightColor = (float3) SchlickWeight(scattering_data.V.y);
-
-        dielectricFresnelColor = DielectricFresnel( dot(scattering_data.V, reflectH) , scattering_data.eta);
-
-        float cSpec0 = SLERP(SchlickR0FromEta( scattering_data.eta), scattering_data.color, scattering_data.metallic);
-        schlickFresnelColor = SchlickFresnel(cSpec0, dot(scattering_data.V, reflectH)); // for dielectric and metallic
-        //schlickFresnelColor = SchlickFresnel(0.05, dot(scattering_data.V, reflectH)); // for clear coat
-    }
-
-    _TextureColorBuffer[id.xy] = float4(baseColor.xyz, 1);
-    _TextureNormalBuffer[id.xy] = float4(normalColor.xyz, 1);
-    _TextureRoughnessBuffer[id.xy] = float4(roughColor.xyz, 1);
-    _TextureMetallicBuffer[id.xy] = float4(metallicColor.xyz, 1);
-    _TextureEmissiveBuffer[id.xy] = float4(emissiveColor.xyz, 1);
-
-    _TextureSchlickWeightBuffer[id.xy] = float4(schlickWeightColor.xyz, 1);
-    _TextureDielectricFresnelBuffer[id.xy] = ACESFilter( float4(dielectricFresnelColor.xyz, 1) );
-    _TextureSchlickFresnelBuffer[id.xy] = float4(schlickFresnelColor.xyz, 1);
-}
-
-[numthreads(8,8,1)]
-void Kernel_BVHDensity (uint3 id : SV_DispatchThreadID)
+float3 Get_BVHDensity (uint3 id)
 {
     int index = id.y * width + id.x;
     RenderRay pathRay = _CameraRays[index];
@@ -114,5 +56,134 @@ void Kernel_BVHDensity (uint3 id : SV_DispatchThreadID)
     qtyHits -= divisor;
     color.z = max(0, qtyHits) / divisor;
     
-    _TextureBVHDensityBuffer[id.xy] = float4(color.xyz, 1); 
+    return color;
+}
+
+
+
+[numthreads(8,8,1)]
+void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
+{
+    int index = id.y * width + id.x;
+    RenderRay pathRay = _CameraRays[index];
+    TriangleHitInfo hitInfo = (TriangleHitInfo) 0;
+
+    float3 finalColor = V_ONE;   
+    
+    uint rand = 17 * id * someSeed;
+    
+    bool foundHit = GetBounceHit(hitInfo, pathRay, INFINITY, true);
+
+    if(!hitInfo.isFrontFace)
+    {
+        pathRay.origin = hitInfo.position + pathRay.direction * EPSILON * 3.0;
+        foundHit = GetBounceHit(hitInfo, pathRay, INFINITY, true);
+    }
+
+    if(foundHit)
+    {
+        ScatteringData scattering_data = MakeScatteringData(rand, hitInfo);
+        scattering_data.L = reflect(- scattering_data.V, scattering_data.WorldNormal);
+        scattering_data.H = normalize(scattering_data.V + scattering_data.L);
+
+        switch (_debugBufferType)
+        {
+            case DEBUG_TYPE_COLOR:
+                finalColor = scattering_data.color;
+            break;
+            
+            case DEBUG_TYPE_NORMAL:
+                float3 normalMap = (scattering_data.WorldNormal * 0.5) + 0.5; 
+                finalColor = normalMap;            
+            break;
+            
+            case DEBUG_TYPE_ROUGH:
+                finalColor = (float3) scattering_data.roughness;
+            break;
+            
+            case DEBUG_TYPE_METALLIC:
+                finalColor = (float3) scattering_data.metallic;
+            break;
+            
+            case DEBUG_TYPE_EMISSIVE:
+                finalColor = (float3) scattering_data.emissionPower;
+            break;
+            
+            case DEBUG_TYPE_SCHLICK_WEIGHT:
+                ScatteringToLocal(scattering_data);                
+                finalColor = (float3) SchlickWeight(scattering_data.V.y);
+            break;
+            
+            case DEBUG_TYPE_SCHLICK_FRESNEL:
+                ScatteringToLocal(scattering_data);
+                finalColor = SchlickFresnel(scattering_data.cSpec0, dot(scattering_data.L, scattering_data.H)); // for dielectric and metallic
+                //schlickFresnelColor = SchlickFresnel(0.05, dot(scattering_data.V, reflectH)); // for clear coat
+            break;
+
+            case DEBUG_TYPE_SCHLICK_FRESNEL_COLOR:
+                ScatteringToLocal(scattering_data);
+                finalColor = SchlickFresnel_V(scattering_data.cSpec0, dot(scattering_data.L, scattering_data.H)); // for dielectric and metallic
+                //schlickFresnelColor = SchlickFresnel(0.05, dot(scattering_data.L, reflectH)); // for clear coat
+            break;
+            
+            
+            case DEBUG_TYPE_DIELECTRIC_FRESNEL:
+                ScatteringToLocal(scattering_data);
+                finalColor = DielectricFresnel( dot(scattering_data.V, scattering_data.H) , scattering_data.eta);
+            break;
+            
+            case DEBUG_TYPE_BVH_DENSITY:
+                finalColor = Get_BVHDensity(id);
+            break;
+
+            case DEBUG_TYPE_Dist_D:
+                ScatteringToLocal(scattering_data);
+                finalColor = D_GGX(scattering_data.H, scattering_data.ax, scattering_data.ay);
+            break;
+
+            case DEBUG_TYPE_Dist_GV:
+                ScatteringToLocal(scattering_data);
+                finalColor = D_GGX(scattering_data.V, scattering_data.ax, scattering_data.ay);
+            break;
+
+            case DEBUG_TYPE_Dist_GL:
+                ScatteringToLocal(scattering_data);
+                finalColor = D_GGX(scattering_data.L, scattering_data.ax, scattering_data.ay);
+            break;
+
+            case DEBUG_TYPE_Eval_Diffuse:
+            {
+                ScatteringToLocal(scattering_data);
+                Sample_Diffuse(rand, scattering_data );
+                scattering_data.isReflection = true;
+                EvaluationVars ev = MakeEvaluationVars(scattering_data);
+
+                float3 f = V_ZERO;
+                float pdf = 0; 
+                Evaluate_Diffuse_Lambert(f, pdf, scattering_data, ev );            
+                finalColor = f / pdf;
+            }
+            break;
+
+            case DEBUG_TYPE_Eval_Reflect:
+            {
+                ScatteringToLocal(scattering_data);
+                Sample_Specular(rand, scattering_data );
+                scattering_data.isReflection = true;
+                    
+                EvaluationVars ev = MakeEvaluationVars(scattering_data);
+
+                float3 f = V_ZERO;
+                float pdf = 0; 
+                Evaluate_Specular(f, pdf, scattering_data, ev );            
+                finalColor = f / pdf;
+            }
+            break;
+            
+            
+        }
+    }
+
+    _TextureDebugBuffer[id.xy] = float4(finalColor.xyz, 1);
+    _TextureDebugBuffer[id.xy] = ACESFilter( _TextureDebugBuffer[id.xy] );
 }

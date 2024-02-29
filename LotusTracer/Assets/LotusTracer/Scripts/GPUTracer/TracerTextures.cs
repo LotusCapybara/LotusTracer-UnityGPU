@@ -3,15 +3,15 @@ using UnityEngine;
 
 public enum ERenderTextureType
 {
-    Final, SamplerBuffer, SamplerBufferPrev, Debug, 
-    
-    ColorBuffer, NormalBuffer, RoughnessBuffer, MetallicBuffer, EmissiveBuffer, 
-    SchlickWeight, DielectricFresnel, SchlickFresnel,
-    
-    BVHDensity
-    
+    Final, SamplerBuffer, SamplerBufferPrev, Debug
 }
 
+public enum EDebugBufferType
+{
+    Color, Normal, Rough, Metallic, Emissive, SchlickWeight, SchlickFresnel, SchlickFresnelColor, 
+    DielectricFresnel, BVHDensity, Dist_D, Dist_GV, Dist_GL,
+    Eval_Diffuse, Eval_Reflect
+}
 
 public class TracerTextures
 {
@@ -24,41 +24,15 @@ public class TracerTextures
             { ERenderTextureType.Final, 
                 ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
             
-            { ERenderTextureType.Debug, 
-                ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
-            
             { ERenderTextureType.SamplerBuffer, 
                 ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
             
             { ERenderTextureType.SamplerBufferPrev, 
                 ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
             
-            { ERenderTextureType.ColorBuffer, 
-                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
-            
-            { ERenderTextureType.NormalBuffer, 
+            { ERenderTextureType.Debug, 
                 ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
-            
-            { ERenderTextureType.RoughnessBuffer, 
-                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
-            
-            { ERenderTextureType.MetallicBuffer, 
-                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
-            
-            { ERenderTextureType.EmissiveBuffer, 
-                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
-            
-            { ERenderTextureType.SchlickWeight, 
-                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
-            
-            { ERenderTextureType.DielectricFresnel, 
-                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
-            
-            { ERenderTextureType.SchlickFresnel, 
-                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
-            
-            { ERenderTextureType.BVHDensity, 
-                ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
+           
         };
         
         // Initialize all black

@@ -36,15 +36,26 @@ float G_GGX( in float3 v, float ax, float ay )
     return 2.0 / ( 1.0 + sqrt( 1.0 + alpha2 * tan_theta_sq ) );    
 }
 
-float3 Sample_GGX(inout uint randState, float roughness)
+float3 Sample_GGX(inout uint randState, float ax, float ay)
 {
     float r0 = GetRandom0to1(randState);
     float r1 = GetRandom0to1(randState);
 
-    float theta = atan( roughness * roughness * sqrt( r0 / ( 1.0 - r0 )) );
-    float phi = 2.0 * PI * r1;
+    if(ax == ay)
+    {
+        float theta = atan( ax * sqrt( r1 / ( 1.0 - r1 )) );
+        float phi = 2.0 * PI * r0;
+        return SphericalToVector(theta, phi);
+    }
 
-    return  SphericalToVector(theta, phi);
+    // todo: add sampling for anisotropic materials (which are still not implemented)
+    return V_ONE;
+    
+}
+
+float PDF_GGX(in ScatteringData data)
+{
+    return D_GGX(data.H, data.ax, data.ay) * abs(data.H.y);
 }
 
 
@@ -89,3 +100,5 @@ float G_Smith(float NoV, float alphaG)
     float b = NoV * NoV;
     return (2.0 * NoV) / (NoV + sqrt(a + b - a * b));
 }
+
+

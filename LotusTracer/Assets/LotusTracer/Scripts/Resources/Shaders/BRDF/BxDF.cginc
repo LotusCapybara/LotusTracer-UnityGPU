@@ -3,6 +3,7 @@
 #include "..\BRDF\BXDF_Evaluation.cginc"
 #include "..\BRDF\BXDF_Sample.cginc"
 
+
 void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval, out float pdf)
 {
     ScatteringToLocal(data);
@@ -12,16 +13,7 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
 
     data.H = normalize(data.L + data.V);    
     
-    EvaluationVars ev;
-    ev.NoL = data.L.y;
-    ev.NoV = data.V.y;
-    ev.NoH = data.H.y;
-    ev.VoH = dot(data.V, data.H);
-    ev.VoL = dot(data.V, data.L);;
-    ev.FL = SchlickWeight(ev.NoL);
-    ev.FV = SchlickWeight(ev.NoV);
-    ev.squareR = data.roughness * data.roughness;
-
+    EvaluationVars ev = MakeEvaluationVars(data);
 
     float3 tempF = (float3) 0;
     float tempPDF = 0;

@@ -6,6 +6,9 @@ public class RenderRawImage : MonoBehaviour
 {
     [SerializeField]
     private ERenderTextureType _textureType;
+
+    [SerializeField]
+    private EDebugBufferType _debugBufferType;
     
     [FormerlySerializedAs("_tracer")]
     [SerializeField]
@@ -21,6 +24,9 @@ public class RenderRawImage : MonoBehaviour
 
     private void Update()
     {
+        tracerMegakernel.isRenderingDebug = _textureType == ERenderTextureType.Debug;
+        tracerMegakernel.debugType = _debugBufferType;
+        
         _rawImage.texture = tracerMegakernel.GetRenderTexture(_textureType);
     }
 }

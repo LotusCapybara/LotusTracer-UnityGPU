@@ -43,23 +43,34 @@ static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout Sc
     pdf = ONE_OVER_PI;
 }
 
-// evaluate specular dielectric BRDF with micro facet reflections
 static void Evaluate_Specular(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
-    if (ev.NoL <= 0.0 || ev.NoV <= 0.0)
+    f = V_ZERO;
+    pdf = 0;
+
+    if(!data.isReflection)
         return;
     
-    // evaluate fresnel term    
-    float3 F = SchlickFresnel_V(data.cSpec0, dot(data.L, data.H) );
+    float aNoV = abs(ev.NoV);
+    
+    // this is perfect internal reflection basically, I'm skipping it
+    if(aNoV == 0)
+        return;
+    
+    if( Luminance(data.cSpec0) <= 0 )
+        return;
+    
+    float3 F = SchlickFresnel_V(data.cSpec0, dot(data.V, data.H) );
     float D = D_GGX(data.H, data.ax, data.ay);
     float G1 = G_GGX(data.V, data.ax, data.ay);
     float G2 = G_GGX(data.L, data.ax, data.ay);
     
-    f = D * F * G1 * G2 / ( 4.0 * abs(ev.NoV) );    
-    pdf = D * G1 / max(0.0001, 4.0 * ev.NoV);
+    f = D * F * G1 * G2 / ( 4.0 * aNoV );
+
+    float EoH = abs(ev.VoH);
+    pdf = PDF_GGX(data) / (4.0  * EoH);
 }
 
-// evaluate specular dielectric BRDF with micro facet reflections
 static void Evaluate_ClearCoat(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
     float aVOH = dot(data.V, data.H);

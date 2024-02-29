@@ -32,10 +32,10 @@ inline bool SameGlobalHemiSphere(float3 a, float3 b)
 float3 SphericalToVector( float theta , float phi )
 {
     float x = sin( theta ) * cos( phi );
-    float y = cos( theta );
-    float z = sin( theta ) * sin( phi );
-
-    return float3(x, y, z);
+    float y = sin( theta ) * sin( phi );
+    float z = cos( theta );
+    
+    return float3(x, z, y);
 }
 
 float3 RandomDirectionInHemisphereCosWeighted(inout uint state)

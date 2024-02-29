@@ -130,6 +130,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     // materials don't have specular color and metallic materials have specific color for their materials.
     // Renderers that use specular color usually do it for artistic freedom, such as Disney renderers
     float minSpec = max(0.1,  SchlickR0FromEta(1.0 / data.eta));
+    // todo: replace V_ONE by "specularColor * specularPower"
     data.cSpec0 = SLERP(minSpec * V_ONE, data.color, mat.metallic);
     
     data.probs =  CreateProbabilities(randState, data);
@@ -138,3 +139,19 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     
     return data;
 }
+
+EvaluationVars MakeEvaluationVars(in ScatteringData data)
+{
+    EvaluationVars ev;
+    ev.NoL = data.L.y;
+    ev.NoV = data.V.y;
+    ev.NoH = data.H.y;
+    ev.VoH = dot(data.V, data.H);
+    ev.VoL = dot(data.V, data.L);;
+    ev.FL = SchlickWeight(ev.NoL);
+    ev.FV = SchlickWeight(ev.NoV);
+    ev.squareR = data.roughness * data.roughness;
+
+    return ev;
+}
+
