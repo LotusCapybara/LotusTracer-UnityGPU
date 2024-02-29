@@ -50,7 +50,7 @@ static void Evaluate_Specular(inout float3 f, inout float pdf, inout ScatteringD
         return;
     
     // evaluate fresnel term    
-    float3 F = SchlickFresnel_V(data.F0, dot(data.L, data.H) );
+    float3 F = SchlickFresnel_V(data.cSpec0, dot(data.L, data.H) );
     float D = D_GGX(data.H, data.ax, data.ay);
     float G1 = G_GGX(data.V, data.ax, data.ay);
     float G2 = G_GGX(data.L, data.ax, data.ay);
@@ -75,25 +75,36 @@ static void Evaluate_ClearCoat(inout float3 f, inout float pdf, inout Scattering
 
 static void Evaluate_Transmission(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
+    if(data.V.y * data.L.y > 0)
+        return;
     if(ev.NoV == 0)
         return;
+    
+    float3 H = normalize(data.V + data.L * data.eta);
+    if(H.y < 0)
+        H = -H;
+    
+    float sVoH = dot(data.V, H);
+    float sLoH = dot(data.L, H);
 
-    float LoH = dot(data.L, data.H);
-
-    float F = DielectricFresnel(ev.VoH, data.eta);
+    float3 F = SchlickFresnel(dot(data.V, H),  data.eta) / (1.0 - data.cSpec0);
+    F = clamp(F, V_ZERO, V_ONE);
+    F = lerp(data.cSpec0, V_ONE, F);
+    
+    float srqtDenom = sVoH + data.eta * sLoH;
+    float t = (data.eta) / srqtDenom;
+    
     float D = D_GGX(data.H, data.ax, data.ay);
     float G1 = G_GGX(data.V, data.ax, data.ay);
     float G2 = G_GGX(data.L, data.ax, data.ay);
-    float denom = LoH + ev.VoH * data.eta;
-    denom *= denom;
-    float eta2 = data.eta * data.eta;
-    float jacobian = abs(LoH) / denom;
 
+    f =  data.color * abs(D * G1 * G2 * t * t * sLoH * sVoH / ev.NoV);
+    f *= (1.0 - data.metallic) * data.transmissionPower;
 
-    f =  F * D * G1 * G2 * abs(ev.VoH) * jacobian * eta2;
-    f /= abs(data.L.y * data.V.y);
-
-    pdf =  G1 * max(0.0, ev.VoH) * D * jacobian / data.V.y;    
+    float dwh_dwi = data.eta * data.eta * abs(dot(data.L, H)) / (srqtDenom * srqtDenom);
+        
+    pdf =  D * G1 / max(0.0001, 4.0 * ev.NoV);
+    pdf *= dwh_dwi;
 }
 
 

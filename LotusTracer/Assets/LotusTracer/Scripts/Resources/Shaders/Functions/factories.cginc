@@ -4,12 +4,14 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
 {
     float baseLuminance = Luminance(data.color);
 
+    
     // weight of each of these models based on material properties
     SampleProbabilities prob;
-    
+
+    // Cspec0.GetIntensity() * specularPdfScale( roughness )
     prob.wDiffuseReflection  = baseLuminance * (1.0 - data.metallic) * (1.0 -  data.transmissionPower);
-    prob.wSpecularReflection  = Luminance(data.F0) * 8.0 * (1.0 - data.roughness); // magic number 8.0 to avoid fireflies?
-    prob.wTransmission = (1.0 - data.metallic) * data.transmissionPower;
+    prob.wSpecularReflection  = Luminance(data.cSpec0) * 8.0 * (1.0 - data.roughness); // magic number 8.0 to avoid fireflies?
+    prob.wTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower;
     prob.wClearCoat = 0.05 * data.clearCoat;    
     
     prob.totalW = prob.wDiffuseReflection + prob.wSpecularReflection + prob.wTransmission + prob.wClearCoat;
@@ -128,7 +130,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     // materials don't have specular color and metallic materials have specific color for their materials.
     // Renderers that use specular color usually do it for artistic freedom, such as Disney renderers
     float minSpec = max(0.1,  SchlickR0FromEta(1.0 / data.eta));
-    data.F0 = lerp(minSpec * V_ONE, data.color, mat.metallic);
+    data.cSpec0 = SLERP(minSpec * V_ONE, data.color, mat.metallic);
     
     data.probs =  CreateProbabilities(randState, data);
 

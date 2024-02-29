@@ -75,16 +75,13 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         // entering a medium and bouncing 15 times while the rest of the threads are useless. I guess a wave front
         // path tracer could mitigate this by having a dedicated kernel for volumetric scattering? 
         if(isInsideMedium)
-        {
-            
-            
+        {   
             float scatterDist = min(-log(GetRandom0to1(randState)) / bounceData.mediumDensity, hitInfo.distance);
 
             if(hitInfo.distance <= scatterDist || bounceData.mediumDensity <= 0)
             {
                 isInsideMedium = false;
                 pathRay.origin = hitInfo.position + pathRay.direction * EPSILON * 2.0;
-                //throughput *= exp(-(1.0 - bounceData.color) * hitInfo.distance * bounceData.mediumDensity);
             }
             else
             {
@@ -93,7 +90,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                 float3 scatterDir = Sample_Phase(randState, -pathRay.direction, bounceData.scatteringDirection);
                 bounceData.L = scatterDir;
 
-                throughput *= bounceData.color;
+                
                 throughput *= exp(-(1.0 - bounceData.color) * scatterDist * bounceData.mediumDensity);
                 
                 float3 directRadiance = GetLightsNEE(randState, bounceData, bouncePDF, true);
@@ -117,9 +114,9 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                 innerMediumBounces++;
                 if(innerMediumBounces > MAX_MEDIUM_SCATTERS)
                     break;
-                
-                continue;
-            }     
+            }
+
+            continue;
         }
 
         isInsideMedium = false;

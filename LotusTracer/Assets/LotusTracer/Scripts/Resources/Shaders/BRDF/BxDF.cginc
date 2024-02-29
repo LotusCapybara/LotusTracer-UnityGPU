@@ -54,19 +54,15 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
 
     if(data.probs.wTransmission > 0.0)
     {
-        float3 F = DielectricFresnel(dot(data.V, data.H),  data.eta);
-        
         if(data.isReflection)
         {
             Evaluate_Specular(tempF, tempPDF, data, ev);
-            tempPDF *= F;
         }
         else
         {
-            Evaluate_Transmission(tempF, tempPDF, data, ev);
-            tempPDF *= (V_ONE - F);
-        }        
-        
+            Evaluate_Transmission(tempF, tempPDF, data, ev);    
+        }
+       
         eval += tempF *  data.probs.wTransmission;
         pdf += tempPDF * data.probs.wTransmission;
     }

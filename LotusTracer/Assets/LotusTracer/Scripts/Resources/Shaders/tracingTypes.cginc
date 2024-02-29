@@ -157,7 +157,7 @@ struct ScatteringData
     float scatteringDirection;
     float maxScatteringDistance;
 
-    float3 F0;
+    float3 cSpec0;
     float ax;
     float ay;
     float eta;

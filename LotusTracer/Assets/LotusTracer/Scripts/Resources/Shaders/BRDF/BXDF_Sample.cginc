@@ -45,15 +45,15 @@ bool Sample_Transmission(inout uint randState, inout ScatteringData data)
     if(facetH.y < 0)
         facetH = -facetH;
 
-    float3 F = DielectricFresnel(dot(data.V, facetH),  data.eta);
+    float3 F = SchlickFresnel(dot(data.V, facetH),  data.eta);
 
-    if(GetRandom0to1(randState) < Luminance(F))
+    if(GetRandom0to1(randState) > Luminance(F))
     {
         data.L = reflect(-data.V, facetH);
     }
     else
     {
-        data.L = refract(-data.V, facetH, data.eta);
+        data.L = refract(-data.V, WORLD_UP, data.eta);
         if(data.L.y > 0)
             data.L = - data.L;    
     }
