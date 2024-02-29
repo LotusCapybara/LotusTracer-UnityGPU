@@ -6,6 +6,7 @@ public enum ERenderTextureType
     Final, SamplerBuffer, SamplerBufferPrev, Debug, 
     
     ColorBuffer, NormalBuffer, RoughnessBuffer, MetallicBuffer, EmissiveBuffer, 
+    SchlickWeight, DielectricFresnel, SchlickFresnel,
     
     BVHDensity
     
@@ -45,6 +46,15 @@ public class TracerTextures
                 ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
             
             { ERenderTextureType.EmissiveBuffer, 
+                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
+            
+            { ERenderTextureType.SchlickWeight, 
+                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
+            
+            { ERenderTextureType.DielectricFresnel, 
+                ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
+            
+            { ERenderTextureType.SchlickFresnel, 
                 ShaderUtils.Create(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, false)},
             
             { ERenderTextureType.BVHDensity, 

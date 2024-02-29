@@ -31,6 +31,9 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
         SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureRoughnessBuffer", ERenderTextureType.RoughnessBuffer);
         SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureMetallicBuffer", ERenderTextureType.MetallicBuffer);
         SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureEmissiveBuffer", ERenderTextureType.EmissiveBuffer);
+        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureSchlickWeightBuffer", ERenderTextureType.SchlickWeight);
+        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureDielectricFresnelBuffer", ERenderTextureType.DielectricFresnel);
+        SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureSchlickFresnelBuffer", ERenderTextureType.SchlickFresnel);
         
         SetTexture(KERNEL_BVH_DENSITY, "_TextureBVHDensityBuffer", ERenderTextureType.BVHDensity);
         

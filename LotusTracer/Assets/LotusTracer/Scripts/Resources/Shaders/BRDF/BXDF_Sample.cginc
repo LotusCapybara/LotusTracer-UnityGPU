@@ -1,12 +1,12 @@
 bool Sample_Diffuse(inout uint randState, inout ScatteringData data)
 {
     // todo replace by Disney Diffuse
-    data.sampleData.L = normalize( RandomDirectionInHemisphereCosWeighted(randState) );
+    data.L = normalize( RandomDirectionInHemisphereCosWeighted(randState) );
 
-    if(data.sampleData.L.y < 0)
-        data.sampleData.L.y = -data.sampleData.L.y;
+    if(data.L.y < 0)
+        data.L.y = -data.L.y;
 
-    data.sampleData.H = normalize(data.sampleData.L + data.V);
+    data.H = normalize(data.L + data.V);
     
     return true;
 }
@@ -16,10 +16,10 @@ bool Sample_Diffuse(inout uint randState, inout ScatteringData data)
 bool Sample_Specular(inout uint randState, inout ScatteringData data)
 {
     // -- Sample visible distribution of normals
-    float3 facetH = GetMicroFacetH(randState, data);
+    float3 facetH = Sample_GGX(randState, data.roughness);
     
-    data.sampleData.L = normalize(reflect(-data.V, facetH));
-    data.sampleData.H = normalize(data.sampleData.L + data.V);
+    data.L = normalize(reflect(-data.V, facetH));
+    data.H = normalize(data.L + data.V);
     
     return true;
 }
@@ -27,53 +27,62 @@ bool Sample_Specular(inout uint randState, inout ScatteringData data)
 
 bool Sample_ClearCoat(inout uint randState, inout ScatteringData data)
 {
-    // -- Sample visible distribution of normals
-    float r0 = GetRandom0to1(randState);
-    float r1 = GetRandom0to1(randState);
-
     // it is really similar to how specular sampling is calculated, but
-    float3 H = Sample_GTR1(data.clearCoatRoughness, r0, r1);
+    float3 H = Sample_GTR(randState, data.clearCoatRoughness);
 
     if (H.y < 0.0)
         H = -H;
     
-    data.sampleData.L = normalize(reflect(-data.V, H));
-    data.sampleData.H = normalize(data.sampleData.L + data.V);
+    data.L = normalize(reflect(-data.V, H));
+    data.H = normalize(data.L + data.V);
     
     return true;
 }
 
 bool Sample_Transmission(inout uint randState, inout ScatteringData data)
-{
-    float3 facetH =  GetMicroFacetH(randState, data);
+{    
+    float3 facetH =  Sample_GGX(randState, data.roughness);
     if(facetH.y < 0)
         facetH = -facetH;
 
-    data.sampleData.L =
-            data.eta == 1 ?
-            - data.V :
-            refract(-data.V, facetH, data.eta);
+    float3 F = DielectricFresnel(dot(data.V, facetH),  data.eta);
 
-    if(data.sampleData.L.y > 0)
-        data.sampleData.L = - data.sampleData.L;
-    
-    data.sampleData.H = normalize(data.sampleData.L + data.V);
+    if(GetRandom0to1(randState) < Luminance(F))
+    {
+        data.L = reflect(-data.V, facetH);
+    }
+    else
+    {
+        data.L = refract(-data.V, facetH, data.eta);
+        if(data.L.y > 0)
+            data.L = - data.L;    
+    }
+
+    data.H = normalize(data.L + data.V);
     
     return true;
 }
 
+float Evaluate_Phase(in ScatteringData data, float g)
+{
+    if( abs(g) < 0.03 )
+        return INV_4_PI;
 
-float3 Sample_PhaseHG(inout uint randState, float3 V, float g)
-{   
+    float cos_theta = dot( data.V , data.L );
+    float denom = 1.0 + SQUARE(g) + (2.0 * g) * cos_theta;
+    return INV_4_PI * ( 1.0 + SQUARE(g) ) / ( denom * sqrt( denom ) );
+}
+
+
+float3 Sample_Phase(inout uint randState, in float3 V, float g)
+{
+    g = clamp(g, -0.95, 0.95);
+    float cosTheta;
     float r1 = GetRandom0to1(randState);
     float r2 = GetRandom0to1(randState);
-    
-    float cosTheta;
 
     if (abs(g) < 0.001)
-    {
         cosTheta = 1.0 - 2.0 * r2;
-    }        
     else 
     {
         float sqrTerm = (1.0 - g * g) / (1.0 + g - 2.0 * g * r2);
@@ -85,14 +94,17 @@ float3 Sample_PhaseHG(inout uint randState, float3 V, float g)
     float sinPhi = sin(phi);
     float cosPhi = cos(phi);
 
-    float3 t, bt;
-    CreateCoordinateSystem(V, t, bt);
+    float3 T;
+    float3 B;
 
-    return sinTheta * cosPhi * t + sinTheta * sinPhi * bt + cosTheta * V;
+    CreateCoordinateSystem(V, T, B);
+    return  sinTheta * cosPhi * T + sinTheta * sinPhi * B + cosTheta * V;
 }
 
-float Evaluate_PhaseHG(float cosTheta, float g)
+void Evaluate_PhaseHG(float cosTheta, float g, out float f, out float pdf)
 {
     float denom = 1.0 + g * g + 2.0 * g * cosTheta;
-    return INV_4_PI * (1.0 - g * g) / (denom * sqrt(denom));
+    f = INV_4_PI * (1.0 - g * g) / (denom * sqrt(denom));
+
+    pdf = INV_4_PI;
 }

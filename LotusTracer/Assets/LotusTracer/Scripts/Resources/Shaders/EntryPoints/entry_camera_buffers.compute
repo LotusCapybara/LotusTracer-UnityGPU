@@ -5,8 +5,10 @@
 #include "../tracingTypes.cginc"
 #include "../Functions/common.cginc"
 #include "../tracingVariables.cginc"
+#include "../Functions/fresnel.cginc"
 #include "../Functions/intersection.cginc"
 #include "../BRDF/bsdf_functions.cginc"
+#include "../Functions/post_processing.cginc"
 #include "../Functions/factories.cginc"
 #include "../BRDF/BxDF.cginc"
 
@@ -16,15 +18,16 @@ RWTexture2D<float4> _TextureNormalBuffer;
 RWTexture2D<float4> _TextureRoughnessBuffer;
 RWTexture2D<float4> _TextureMetallicBuffer;
 RWTexture2D<float4> _TextureEmissiveBuffer;
-
 RWTexture2D<float4> _TextureBVHDensityBuffer;
+RWTexture2D<float4> _TextureSchlickWeightBuffer;
+RWTexture2D<float4> _TextureDielectricFresnelBuffer;
+RWTexture2D<float4> _TextureSchlickFresnelBuffer;
 
 [numthreads(8,8,1)]
 void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
 {
     int index = id.y * width + id.x;
     RenderRay pathRay = _CameraRays[index];
-    pathRay.invDirection = 1.0 / pathRay.direction;
     TriangleHitInfo hitInfo = (TriangleHitInfo) 0;
 
     float3 baseColor = MAGENTA;
@@ -32,10 +35,19 @@ void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
     float3 roughColor = MAGENTA;
     float3 metallicColor = MAGENTA;
     float3 emissiveColor = MAGENTA;
+    float3 schlickWeightColor = MAGENTA;
+    float3 dielectricFresnelColor = MAGENTA;
+    float3 schlickFresnelColor = MAGENTA;
     
     int rand = 65465;
     
-    bool foundHit = GetBounceHit(hitInfo, pathRay, INFINITY, false);
+    bool foundHit = GetBounceHit(hitInfo, pathRay, INFINITY, true);
+
+    if(!hitInfo.isFrontFace)
+    {
+        pathRay.origin = hitInfo.position + pathRay.direction * EPSILON * 3.0;
+        foundHit = GetBounceHit(hitInfo, pathRay, INFINITY, true);
+    }
 
     if(foundHit)
     {
@@ -49,6 +61,20 @@ void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
         roughColor = scattering_data.roughness;
         metallicColor = scattering_data.metallic;
         emissiveColor = scattering_data.emissionPower;
+
+        ScatteringToLocal(scattering_data);
+
+        float3 reflectL = reflect(- scattering_data.V, WORLD_UP);
+        float3 reflectH = normalize(scattering_data.V + reflectL);
+        
+        // schlick weight
+        schlickWeightColor = (float3) SchlickWeight(scattering_data.V.y);
+
+        dielectricFresnelColor = DielectricFresnel( dot(scattering_data.V, reflectH) , scattering_data.eta);
+
+        float cSpec0 = SLERP(SchlickR0FromEta( scattering_data.eta), scattering_data.color, scattering_data.metallic);
+        schlickFresnelColor = SchlickFresnel(cSpec0, dot(scattering_data.V, reflectH)); // for dielectric and metallic
+        //schlickFresnelColor = SchlickFresnel(0.05, dot(scattering_data.V, reflectH)); // for clear coat
     }
 
     _TextureColorBuffer[id.xy] = float4(baseColor.xyz, 1);
@@ -56,6 +82,10 @@ void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
     _TextureRoughnessBuffer[id.xy] = float4(roughColor.xyz, 1);
     _TextureMetallicBuffer[id.xy] = float4(metallicColor.xyz, 1);
     _TextureEmissiveBuffer[id.xy] = float4(emissiveColor.xyz, 1);
+
+    _TextureSchlickWeightBuffer[id.xy] = float4(schlickWeightColor.xyz, 1);
+    _TextureDielectricFresnelBuffer[id.xy] = ACESFilter( float4(dielectricFresnelColor.xyz, 1) );
+    _TextureSchlickFresnelBuffer[id.xy] = float4(schlickFresnelColor.xyz, 1);
 }
 
 [numthreads(8,8,1)]
@@ -63,7 +93,6 @@ void Kernel_BVHDensity (uint3 id : SV_DispatchThreadID)
 {
     int index = id.y * width + id.x;
     RenderRay pathRay = _CameraRays[index];
-    pathRay.invDirection = 1.0 / pathRay.direction;
 
     float qtyHits = 0;
     

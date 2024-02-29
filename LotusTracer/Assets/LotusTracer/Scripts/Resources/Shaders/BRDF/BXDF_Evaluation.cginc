@@ -7,11 +7,11 @@ static void Evaluate_Diffuse_Lambert(inout float3 f, inout float pdf, inout Scat
 
 static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
-    float sintheta_i = SIN_THETA(data.sampleData.L);
+    float sintheta_i = SIN_THETA(data.L);
     float sintheta_o = SIN_THETA(data.V);
 
-    float sinphii = SIN_PHI(data.sampleData.L);
-    float cosphii = COS_PHI(data.sampleData.L);
+    float sinphii = SIN_PHI(data.L);
+    float cosphii = COS_PHI(data.L);
     float sinphio = SIN_PHI(data.V);
     float cosphio = COS_PHI(data.V);
     float dcos = cosphii * cosphio + sinphii * sinphio;
@@ -19,7 +19,7 @@ static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout Sc
         dcos = 0.0;
 
     float abs_cos_theta_o = (float) ABS_COS_THETA(data.V);
-    float abs_cos_theta_i = (float) ABS_COS_THETA(data.sampleData.L);
+    float abs_cos_theta_i = (float) ABS_COS_THETA(data.L);
 
     if( abs_cos_theta_i < 0.00001 && abs_cos_theta_o < 0.00001 )
         return;
@@ -50,10 +50,10 @@ static void Evaluate_Specular(inout float3 f, inout float pdf, inout ScatteringD
         return;
     
     // evaluate fresnel term    
-    float3 F = SchlickFresnel_V(data.F0, dot(data.sampleData.L, data.sampleData.H) );
-    float D = GGX_D(data.sampleData.H, data.ax, data.ay);
-    float G1 = GGX_G1(data.V, data.ax, data.ay);
-    float G2 = GGX_G1(data.sampleData.L, data.ax, data.ay);
+    float3 F = SchlickFresnel_V(data.F0, dot(data.L, data.H) );
+    float D = D_GGX(data.H, data.ax, data.ay);
+    float G1 = G_GGX(data.V, data.ax, data.ay);
+    float G2 = G_GGX(data.L, data.ax, data.ay);
     
     f = D * F * G1 * G2 / ( 4.0 * abs(ev.NoV) );    
     pdf = D * G1 / max(0.0001, 4.0 * ev.NoV);
@@ -62,46 +62,38 @@ static void Evaluate_Specular(inout float3 f, inout float pdf, inout ScatteringD
 // evaluate specular dielectric BRDF with micro facet reflections
 static void Evaluate_ClearCoat(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
-    float aVOH = dot(data.V, data.sampleData.H);
+    float aVOH = dot(data.V, data.H);
     
     float F = lerp(0.04, 1.0, SchlickWeight(aVOH));
-    float D = GTR1( abs( data.sampleData.H.y), data.clearCoatRoughness);
-    float G = Smith_G( abs(data.sampleData.L.y), 0.25) * Smith_G(abs(data.V.y), 0.25);
+    float D = D_GTR( abs( data.H.y), data.clearCoatRoughness);
+    float G = G_Smith( abs(data.L.y), 0.25) * G_Smith(abs(data.V.y), 0.25);
     float jacobian = 1.0 / (4.0 * aVOH);
 
     f =  ((float3) F) * D * G;
-    pdf = D * data.sampleData.H.y * jacobian;
+    pdf = D * data.H.y * jacobian;
 }
 
 static void Evaluate_Transmission(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
-    if(data.V.y * data.sampleData.L.y > 0)
-        return;
     if(ev.NoV == 0)
         return;
-    
-    float3 H = normalize(data.V + data.sampleData.L * data.eta);
-    if(H.y < 0)
-        H = -H;
-    
-    float sVoH = dot(data.V, H);
-    float sLoH = dot(data.sampleData.L, H);
 
-    float3 F = DielectricFresnel(dot(data.V, H),  data.eta, 1.0 / data.eta);
-    float srqtDenom = sVoH + data.eta * sLoH;
-    float t = (data.eta) / srqtDenom;
-    
-    float D = GGX_D(data.sampleData.H, data.ax, data.ay);
-    float G1 = GGX_G1(data.V, data.ax, data.ay);
-    float G2 = GGX_G1(data.sampleData.L, data.ax, data.ay);
+    float LoH = dot(data.L, data.H);
 
-    f =  (V_ONE - F) * data.color * abs(D * G1 * G2 * t * t * sLoH * sVoH / ev.NoV);
-    f *= (1.0 - data.metallic) * data.transmissionPower;
+    float F = DielectricFresnel(ev.VoH, data.eta);
+    float D = D_GGX(data.H, data.ax, data.ay);
+    float G1 = G_GGX(data.V, data.ax, data.ay);
+    float G2 = G_GGX(data.L, data.ax, data.ay);
+    float denom = LoH + ev.VoH * data.eta;
+    denom *= denom;
+    float eta2 = data.eta * data.eta;
+    float jacobian = abs(LoH) / denom;
 
-    float dwh_dwi = data.eta * data.eta * abs(dot(data.sampleData.L, H)) / (srqtDenom * srqtDenom);
-        
-    pdf =  D * G1 / max(0.0001, 4.0 * ev.NoV);
-    pdf *= dwh_dwi;
+
+    f =  F * D * G1 * G2 * abs(ev.VoH) * jacobian * eta2;
+    f /= abs(data.L.y * data.V.y);
+
+    pdf =  G1 * max(0.0, ev.VoH) * D * jacobian / data.V.y;    
 }
 
 

@@ -1,3 +1,5 @@
+
+#include "..\BRDF\distribution.cginc"
 #include "..\BRDF\BXDF_Evaluation.cginc"
 #include "..\BRDF\BXDF_Sample.cginc"
 
@@ -8,14 +10,14 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     eval = 0;
     pdf = 0;
 
-    data.sampleData.H = normalize(data.sampleData.L + data.V);    
+    data.H = normalize(data.L + data.V);    
     
     EvaluationVars ev;
-    ev.NoL = data.sampleData.L.y;
+    ev.NoL = data.L.y;
     ev.NoV = data.V.y;
-    ev.NoH = data.sampleData.H.y;
-    ev.VoH = dot(data.V, data.sampleData.H);
-    ev.VoL = dot(data.V, data.sampleData.L);;
+    ev.NoH = data.H.y;
+    ev.VoH = dot(data.V, data.H);
+    ev.VoL = dot(data.V, data.L);;
     ev.FL = SchlickWeight(ev.NoL);
     ev.FV = SchlickWeight(ev.NoV);
     ev.squareR = data.roughness * data.roughness;
@@ -50,18 +52,24 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
         pdf += tempPDF * data.probs.wSpecularReflection;
     }
 
-    if(!data.isReflection && data.probs.wSpecularTransmission > 0.0)
+    if(data.probs.wTransmission > 0.0)
     {
-        Evaluate_Transmission(tempF, tempPDF, data, ev);
-        eval += tempF *  data.probs.wSpecularTransmission;
-        pdf += tempPDF * data.probs.wSpecularTransmission;
+        float3 F = DielectricFresnel(dot(data.V, data.H),  data.eta);
+        
+        if(data.isReflection)
+        {
+            Evaluate_Specular(tempF, tempPDF, data, ev);
+            tempPDF *= F;
+        }
+        else
+        {
+            Evaluate_Transmission(tempF, tempPDF, data, ev);
+            tempPDF *= (V_ONE - F);
+        }        
+        
+        eval += tempF *  data.probs.wTransmission;
+        pdf += tempPDF * data.probs.wTransmission;
     }
-    
-    if(data.probs.wDiffuseTransmission > 0.0)
-    {
-        // todo implement
-    }
-
 
     // todo: something is wrong with Clear Coat, it's "eating" energy
     // can't find if it's negative values or some exception or what
@@ -72,7 +80,7 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     //     pdf  += tempPDF * data.probs.wClearCoat;
     // }    
     
-    eval *= abs(data.sampleData.L.y); // N dot L from the Rendering equation   
+    eval *= abs(data.L.y); // N dot L from the Rendering equation   
     
     ScatteringToWorld(data);
 }
@@ -96,12 +104,8 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
         // same direction for both dielectric and metallic speculars
         validSample = Sample_Specular(randState, data);
     }
-    else if(randomSample < data.probs.wRangeDiffuseTransmission)
+    else if(randomSample < data.probs.wRangeTransmission)
     {
-        validSample = Sample_Transmission(randState, data);
-    }
-    else if(randomSample < data.probs.wRangeSpecularTransmission)
-    {        
         validSample = Sample_Transmission(randState, data);
     }
     else // clear coat
@@ -109,7 +113,7 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
         validSample = Sample_ClearCoat(randState, data);
     }
 
-    data.isReflection = data.sampleData.L.y * data.V.y > 0;
+    data.isReflection = data.L.y * data.V.y > 0;
     
     ScatteringToWorld(data);
 

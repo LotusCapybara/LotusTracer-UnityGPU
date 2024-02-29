@@ -13,53 +13,6 @@ float3 SLERP(float3 a, float3 b, float t)
 }
 
 
-float SchlickWeight(float y)
-{
-    return  pow(saturate(1.0 - y), 5.0);    
-}
-
-float SchlickR0FromEta( float rROI )
-{
-    float r = ( rROI - 1.0 ) / ( rROI + 1.0 ) ;
-    return r * r;
-}
-
-float3 SchlickFresnel_V( float3 f0 , float theta )
-{
-    return f0 + (1.0 - f0) * pow(1.0 - theta, 5.0);
-}
-
-float SchlickFresnel(float f0, float f90, float theta)
-{
-    return f0 + (f90 - f0) * pow(1.0 - theta, 5.0);
-}
-
-float DielectricFresnel(float cosThetaI, float etaI, float etaT)
-{
-    const bool entering = cosThetaI > 0.0;
-    const float _etaI = entering ? etaI : etaT;
-    const float _etaT = entering ? etaT : etaI;
-
-    const float sinI = sqrt(saturate(1.0 -  cosThetaI * cosThetaI));
-    const float sinT = _etaI * sinI / _etaT;
-    if( sinT >= 1.0 )
-        return 1.0;
-    if( !entering )
-        cosThetaI = -cosThetaI;
-
-    const float cosT = sqrt( 1.0 - sinT * sinT );
-
-    const float t0 = _etaT * cosThetaI;
-    const float t1 = _etaI * cosT;
-    const float t2 = _etaI * cosThetaI;
-    const float t3 = _etaT * cosT;
-
-    const float Rparl = ( t0 - t1 ) / ( t0 + t1 );
-    const float Rparp = ( t2 - t3 ) / ( t2 + t3 );
-    return ( Rparl * Rparl + Rparp * Rparp ) * 0.5;
-}
-
-
 float2 PackedUV(in TextureData texture_data, in float2 uv)
 {
     float wScale = (float)texture_data.width / 4096.0;
@@ -100,6 +53,14 @@ float3 RandomDirectionInHemisphereCosWeighted(inout uint state)
 }
 
 
+float3 SphericalUniformSample(inout uint randState)
+{
+    float theta = acos(1.0 - 2.0 * GetRandom0to1(randState));
+    float phi = 2.0 * PI * GetRandom0to1(randState);
+    
+    return SphericalToVector(theta, phi);
+}
+
 
 // ----------------------  world to local and that
 
@@ -124,15 +85,15 @@ float3 ToLocal(float3 T, float3 B, float3 N, float3 v)
 void ScatteringToWorld(inout ScatteringData data)
 {
     data.V = ToWorld(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.V);
-    data.sampleData.L = ToWorld(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.sampleData.L);
-    data.sampleData.H = ToWorld(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.sampleData.H);
+    data.L = ToWorld(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.L);
+    data.H = ToWorld(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.H);
 }
 
 void ScatteringToLocal(inout ScatteringData data)
 {
     data.V = ToLocal(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.V);
-    data.sampleData.L = ToLocal(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.sampleData.L);
-    data.sampleData.H = ToLocal(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.sampleData.H);
+    data.L = ToLocal(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.L);
+    data.H = ToLocal(data.WorldTangent, data.WorldBiTangent, data.WorldNormal, data.H);
 }
 
 // ---------------------------------- math / bsdf utils

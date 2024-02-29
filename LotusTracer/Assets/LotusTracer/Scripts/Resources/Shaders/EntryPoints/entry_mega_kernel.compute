@@ -7,6 +7,7 @@
 #include "../tracingTypes.cginc"
 #include "../Functions/common.cginc"
 #include "../tracingVariables.cginc"
+#include "../Functions/fresnel.cginc"
 #include "../BRDF/bsdf_functions.cginc"
 #include "../Functions/factories.cginc"
 #include "../Functions/intersection.cginc"
@@ -28,8 +29,6 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
     pathRay.direction.z += GetRandomMin1to1(randState) * 0.0001;
     pathRay.direction = normalize(pathRay.direction);
     
-    pathRay.invDirection = 1.0 / pathRay.direction;
-    
     TriangleHitInfo hitInfo = (TriangleHitInfo) 0;
 
     float3 radiance = V_ZERO;
@@ -40,9 +39,8 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
     float3 bounceBSDF;
     float bouncePDF = 1.0;
     float rayDistance = INFINITY;
-    int insideMediumCounter = 0;
-    int volumeScattersCounter = 0;
-    float absorbDistance = 0;
+    bool isInsideMedium = false;
+    int innerMediumBounces = 0;
     
     for(int b = 0; b < maxBounces; b++)
     {
@@ -50,7 +48,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         {
             // todo gather light from environment cube map, if any            
             break;
-        }        
+        }
 
         if(!hitInfo.isFrontFace && b == 0)
         {
@@ -58,27 +56,17 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
             pathRay.origin = hitInfo.position + pathRay.direction * (EPSILON * 2.0);
             continue;
         }        
-        
+
+        bounceData = MakeScatteringData(randState, hitInfo);
+
         // self emission
         if(bounceData.emissionPower > 0)
         {
             radiance += throughput * bounceData.emissionPower * bounceData.color;
             break;
-        }               
-
-
-        bounceData = MakeScatteringData(randState, hitInfo);
+        }
         
                    
-
-        // Note here on Emissive Materials MIS
-        // Some implementations seem to also add a direct sample towards emissive meshes/triangles
-        // I tried some implementations around that but I only managed to increase gpu memory size, noise
-        // and overall loss of performance. So the only 2 importance sampling methods I'm using are
-        // Direct Light and bounce BSDF on emissive materials
-        
-        bool mediumWasSampled = false;
-
         // this part of code checks if the path is inside a scattering medium (like water, gelly.. basically translucent
         // medium that allow light to pass through.
         // some implementations do an internal for loop here to loop the internal scattering until it gets out and then
@@ -86,69 +74,73 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         // instead. I think this approach is more friendly for GPU calculation. Imagine having 1 path in the gpu wave
         // entering a medium and bouncing 15 times while the rest of the threads are useless. I guess a wave front
         // path tracer could mitigate this by having a dedicated kernel for volumetric scattering? 
-        if(insideMediumCounter > 0)
+        if(isInsideMedium)
         {
-            // I used to have manual tweaking in materials for this value but it was a pain
-            // I found this implementation online that seems to be mor generic
-            float scatterDistance = min(-log(GetRandom0to1(randState)) / bounceData.mediumDensity, hitInfo.distance);
-            mediumWasSampled = scatterDistance < hitInfo.distance;
-        
-            if(mediumWasSampled)
+            
+            
+            float scatterDist = min(-log(GetRandom0to1(randState)) / bounceData.mediumDensity, hitInfo.distance);
+
+            if(hitInfo.distance <= scatterDist || bounceData.mediumDensity <= 0)
             {
+                isInsideMedium = false;
+                pathRay.origin = hitInfo.position + pathRay.direction * EPSILON * 2.0;
+                //throughput *= exp(-(1.0 - bounceData.color) * hitInfo.distance * bounceData.mediumDensity);
+            }
+            else
+            {
+                pathRay.origin += pathRay.direction * scatterDist;
+                    
+                float3 scatterDir = Sample_Phase(randState, -pathRay.direction, bounceData.scatteringDirection);
+                bounceData.L = scatterDir;
 
-
-                // beer's law absorption. I'm using medium density as coefficient, which is not great but ¯\_(ツ)_/¯
-                // this should be used in materials that won't scatter light and "just" absorb? 
-                // throughput *= exp(- bounceData.mediumDensity * absorbDistance);
-                
                 throughput *= bounceData.color;
+                throughput *= exp(-(1.0 - bounceData.color) * scatterDist * bounceData.mediumDensity);
                 
-                absorbDistance += scatterDistance;        
-                
-                pathRay.origin = pathRay.direction * scatterDistance;
+                float3 directRadiance = GetLightsNEE(randState, bounceData, bouncePDF, true);
+                radiance += directRadiance * throughput;
 
-                float3 directLightVal;
-                float directLightPDF;
-                GetLightsNEE(randState, bounceData, true, directLightVal, directLightPDF);
-                if(directLightPDF > 0)
-                    radiance += directLightVal * throughput;
-        
-                float3 scatterDir = Sample_PhaseHG(randState, -pathRay.direction, bounceData.scatteringDirection);
-                bouncePDF = Evaluate_PhaseHG(dot(-pathRay.direction, scatterDir), bounceData.scatteringDirection);
+                
+                float scatterF;
+                Evaluate_PhaseHG(dot(-pathRay.direction, scatterDir), bounceData.scatteringDirection, scatterF, bouncePDF);
+
                 pathRay.direction = scatterDir;
-        
+
                 if(bouncePDF <= 0)
                     break;
-        
-                b--;
-                volumeScattersCounter++;
-                if(volumeScattersCounter > MAX_MEDIUM_SCATTERS)
+                
+                throughput *= scatterF / bouncePDF;
+                
+                if(Luminance(throughput) <= 0)
                     break;
-            }          
+
+                b --;
+                innerMediumBounces++;
+                if(innerMediumBounces > MAX_MEDIUM_SCATTERS)
+                    break;
+                
+                continue;
+            }     
         }
+
+        isInsideMedium = false;
+        innerMediumBounces = 0;
+
+        // Note here on Emissive Materials MIS
+        // Some implementations seem to also add a direct sample towards emissive meshes/triangles
+        // I tried some implementations around that but I only managed to increase gpu memory size, noise
+        // and overall loss of performance. So the only 2 importance sampling methods I'm using are
+        // Direct Light and bounce BSDF on emissive materials
         
+        // NEE: direct light
+        // we gather light from concrete lights that are affecting to this path point
+        // concrete lights are point light, spot light, direction light, etc        
+        float3 directRadiance = GetLightsNEE(randState, bounceData, bouncePDF, false);
+        radiance += directRadiance * throughput;
 
         // if no medium direction was sampled, it means that we might have exited the medium (or we never entered in first place)
         // so this path is "in the vacuum" which means we can try to sample hits to surface using common BSDF sampling and evaluation
-        if(! mediumWasSampled)
-        {
-            // NEE: direct light
-            // we gather light from concrete lights that are affecting to this path point
-            // concrete lights are point light, spot light, direction light, etc        
-            float3 directLightVal;
-            float directLightPDF;
-            GetLightsNEE(randState, bounceData, false, directLightVal, directLightPDF);
-            if(directLightPDF > 0)
-            {
-                float directMis = 1.0;
-                if(b > 0)
-                {
-                    directMis = PowerHeuristic(bouncePDF, directLightPDF);
-                }
-            
-                radiance += directMis * throughput * directLightVal;        
-            }     
-            
+        if(! isInsideMedium)
+        {   
             bool validSample = GetBSDF_Sample(randState, bounceData);
             if(!validSample)
                 break;
@@ -161,38 +153,13 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
 
             throughput *=  bounceBSDF / bouncePDF;
 
-            pathRay.direction = bounceData.sampleData.L;
-            pathRay.origin  = hitInfo.position + pathRay.direction * 2.0 * EPSILON;
-            // we use the inverse of the direction in some intersection calculation
-            pathRay.invDirection = 1.0 / pathRay.direction;
+            pathRay.direction = bounceData.L;
+            pathRay.origin  = hitInfo.position + pathRay.direction * 2.0 * EPSILON;            
 
-            if(bounceData.mediumDensity > 0)
+            if(!bounceData.isReflection)
             {
-                // this is a clunky way of checking if the ray is currently inside a medium
-                // we stack and de-stack entering and exiting dense mediums
-                if(!bounceData.isReflection)
-                {
-                    insideMediumCounter++;
-                }
-                else
-                {
-                    insideMediumCounter--;
-                    insideMediumCounter = max(insideMediumCounter, 0);
-            
-                    if(insideMediumCounter <= 0)
-                    {
-                        absorbDistance = 0;
-                        volumeScattersCounter = 0;
-                    }                        
-                }    
-            }
-            else
-            {
-                insideMediumCounter = 0;
-                absorbDistance = 0;
-                volumeScattersCounter = 0;
-            }            
-            
+                isInsideMedium = true;
+            } 
         }
             
         // this is called Russian Roulette. If the throughput of a ray becomes too low, we randomly

@@ -13,7 +13,6 @@ struct RenderRay
 {
     float3 origin;
     float3 direction;
-    float3 invDirection;
 };
 
 struct RenderTriangle
@@ -108,25 +107,17 @@ struct TriangleHitInfo
     float2 textureUV;
 };
 
-struct SampleData
-{
-    float3 L;
-    float3 H;
-};
-
 struct SampleProbabilities
 {
     float wDiffuseReflection;
     float wSpecularReflection;
-    float wDiffuseTransmission;
-    float wSpecularTransmission;
+    float wTransmission;    
     float wClearCoat;
 
     float totalW;
     float wRangeDiffuseReflection;
     float wRangeSpecularReflection;
-    float wRangeDiffuseTransmission;
-    float wRangeSpecularTransmission;
+    float wRangeTransmission;
     float wRangeClearCoat;
     
 };
@@ -150,7 +141,9 @@ struct ScatteringData
     float3 WorldTangent;
     float3 WorldBiTangent;
     
-    float3 V;    
+    float3 V;
+    float3 L;
+    float3 H;    
 
     float emissionPower;
     float3 color;
@@ -174,7 +167,6 @@ struct ScatteringData
     bool isReflection; // reflection or refraction?
     bool isThin;
 
-    SampleData sampleData;
     SampleProbabilities probs;
 };
 

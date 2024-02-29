@@ -124,7 +124,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _IOR: 1
+    - _IOR: 3
     - _IsThin: 0
     - _MaxScatteringDistance: 0
     - _MediumDensity: 0

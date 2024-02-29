@@ -1,15 +1,14 @@
 
 float IsDirectLightOccluded(int lightIndex, in ScatteringData scatteringData)
 {
-    float NoL = dot(scatteringData.sampleData.L, scatteringData.WorldNormal);
+    float NoL = dot(scatteringData.L, scatteringData.WorldNormal);
 
     if(NoL <= 0)
         return -1;
     
     RenderRay ray;    
-    ray.direction = scatteringData.sampleData.L;
-    ray.origin = scatteringData.surfacePoint + scatteringData.sampleData.L * EPSILON;
-    ray.invDirection = 1.0 / ray.direction;   
+    ray.direction = scatteringData.L;
+    ray.origin = scatteringData.surfacePoint + scatteringData.L * EPSILON;
             
     float dist = distance(_Lights[lightIndex].position, scatteringData.surfacePoint);
 
@@ -43,7 +42,7 @@ float3 GetLightColorContribution(int lightIndex, in ScatteringData scatteringDat
             break;
         case LIGHT_SPOT:
 
-            float dotToOuter = dot(- scatteringData.sampleData.L, _Lights[lightIndex].forward);
+            float dotToOuter = dot(- scatteringData.L, _Lights[lightIndex].forward);
             float spotAngleFactor = 1.0 - _Lights[lightIndex].angle * ONE_OVER_360;
 
             if (dotToOuter <= spotAngleFactor)
@@ -57,43 +56,45 @@ float3 GetLightColorContribution(int lightIndex, in ScatteringData scatteringDat
     return _Lights[lightIndex].color * power;
 }
 
-static void GetLightsNEE(inout uint randState, in ScatteringData data, bool comesFromMedium, out float3 radiance, out float pdf)
+static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float bouncePDF, bool comesFromMedium)
 {
-    radiance = V_ZERO;
-    pdf = 0;
+    float3 radiance = V_ZERO;
 
     if(qtyDirectLights <= 0)
-        return;
+        return radiance;
 
     // todo this is a hacky temporal thing because right now I'm not handling
     // nee for glass and other transmisive materials pretty well
     if(data.transmissionPower >= 0.9 && data.mediumDensity < 0.1)
-        return;
+        return radiance;
 
     int lightIndex = (int)(GetRandom0to1(randState) * qtyDirectLights);
     lightIndex = clamp(lightIndex, 0, qtyDirectLights - 1);
 
     float3 surfacePoint = data.surfacePoint + data.WorldNormal * EPSILON;
     
-    data.sampleData.L = normalize(_Lights[lightIndex].position - surfacePoint);
-    data.sampleData.H = normalize(data.sampleData.L + data.V);
-    data.isReflection = dot(data.sampleData.L, data.WorldNormal) > 0;
+    data.L = normalize(_Lights[lightIndex].position - surfacePoint);
+    data.H = normalize(data.L + data.V);
+    data.isReflection = dot(data.L, data.WorldNormal) > 0;
 
     float dist = IsDirectLightOccluded(lightIndex, data);
     
     if(dist <= 0)
-        return;
+        return radiance;
 
     float3 lightContribution = GetLightColorContribution(lightIndex, data, dist);
 
-    float3 lightBSDF;
-    float lightPDF;
+    float3 lightBSDF = V_ZERO;
+    float lightPDF = 0;
 
     if(comesFromMedium)
     {
-        float p = Sample_PhaseHG(randState, dot(data.V, data.sampleData.L), data.scatteringDirection);
-        lightBSDF = (float3) p;
-        lightPDF = p;
+        float f;
+        Evaluate_PhaseHG(dot( data.V, data.L), data.scatteringDirection, f, lightPDF);
+        lightBSDF = (float3) f;
+        // float p = Evaluate_Phase(data, data.scatteringDirection);
+        // lightBSDF = (float3) p;
+        // lightPDF = p;
     }
     else
     {
@@ -102,9 +103,10 @@ static void GetLightsNEE(inout uint randState, in ScatteringData data, bool come
 
     if(lightPDF > 0)
     {
-        radiance += lightContribution * lightBSDF / lightPDF;    
-    }    
-    
-    pdf = lightPDF;
+        float mis = PowerHeuristic(bouncePDF, lightPDF);
+        radiance += lightContribution * mis * lightBSDF / lightPDF;    
+    }
+
+    return radiance;
 }
 

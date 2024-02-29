@@ -8,6 +8,8 @@
 #include "../constants.cginc"
 #include "../tracingTypes.cginc"
 #include "../Functions/common.cginc"
+#include "../Functions/post_processing.cginc"
+#include "../Functions/fresnel.cginc"
 #include "../BRDF/bsdf_functions.cginc"
 #include "../BRDF/BxDF.cginc"
 

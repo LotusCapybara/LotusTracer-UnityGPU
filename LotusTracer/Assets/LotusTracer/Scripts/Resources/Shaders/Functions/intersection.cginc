@@ -52,20 +52,22 @@ float RayDistanceToBounds(in RenderRay ray, in BoundsBox bounds)
 
 bool DoesRayHitBounds(in RenderRay r, in BoundsBox b)
 {
-    float tx1 = (b.min.x - r.origin.x) * r.invDirection.x;
-    float tx2 = (b.max.x - r.origin.x) * r.invDirection.x;
+    float3 invDirection = 1.0 / r.direction;
+    
+    float tx1 = (b.min.x - r.origin.x) * invDirection.x;
+    float tx2 = (b.max.x - r.origin.x) * invDirection.x;
 
     float tmin = min(tx1, tx2);
     float tmax = max(tx1, tx2);
 
-    float ty1 = (b.min.y - r.origin.y) * r.invDirection.y;
-    float ty2 = (b.max.y - r.origin.y) * r.invDirection.y;
+    float ty1 = (b.min.y - r.origin.y) * invDirection.y;
+    float ty2 = (b.max.y - r.origin.y) * invDirection.y;
 
     tmin = max(tmin, min(ty1, ty2));
     tmax = min(tmax, max(ty1, ty2));
 
-    float tz1 = (b.min.z - r.origin.z) * r.invDirection.z;
-    float tz2 = (b.max.z - r.origin.z) * r.invDirection.z;
+    float tz1 = (b.min.z - r.origin.z) * invDirection.z;
+    float tz2 = (b.max.z - r.origin.z) * invDirection.z;
 
     tmin = max(tmin, min(tz1, tz2));
     tmax = min(tmax, max(tz1, tz2));

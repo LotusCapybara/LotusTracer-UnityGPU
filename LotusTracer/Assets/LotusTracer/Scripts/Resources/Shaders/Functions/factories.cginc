@@ -3,27 +3,22 @@
 SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData data)
 {
     float baseLuminance = Luminance(data.color);
-    
+
     // weight of each of these models based on material properties
     SampleProbabilities prob;
-
-    
     
     prob.wDiffuseReflection  = baseLuminance * (1.0 - data.metallic) * (1.0 -  data.transmissionPower);
     prob.wSpecularReflection  = Luminance(data.F0) * 8.0 * (1.0 - data.roughness); // magic number 8.0 to avoid fireflies?
-    prob.wDiffuseTransmission = 0; //baseLuminance * (1.0 - data.metallic) * data.transmissionPower * data.roughness;
-    prob.wSpecularTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower;
+    prob.wTransmission = (1.0 - data.metallic) * data.transmissionPower;
     prob.wClearCoat = 0.05 * data.clearCoat;    
     
-    prob.totalW = prob.wDiffuseReflection + prob.wSpecularReflection + prob.wDiffuseTransmission +
-        prob.wSpecularTransmission +  prob.wClearCoat;
+    prob.totalW = prob.wDiffuseReflection + prob.wSpecularReflection + prob.wTransmission + prob.wClearCoat;
 
     float invWTotal = 1.0 / prob.totalW;
 
     prob.wRangeDiffuseReflection  = prob.wDiffuseReflection * invWTotal;
     prob.wRangeSpecularReflection = prob.wRangeDiffuseReflection + prob.wSpecularReflection * invWTotal;
-    prob.wRangeDiffuseTransmission = prob.wRangeSpecularReflection + prob.wDiffuseTransmission * invWTotal;
-    prob.wRangeSpecularTransmission = prob.wRangeDiffuseTransmission + prob.wSpecularTransmission * invWTotal;
+    prob.wRangeTransmission = prob.wRangeSpecularReflection + prob.wTransmission * invWTotal;
     prob.wRangeClearCoat = 1.0;
     
     return prob;
@@ -36,8 +31,8 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     
     ScatteringData data;
     data.isReflection = false;
-    data.sampleData.L = (float) 0;
-    data.sampleData.H = (float) 0;    
+    data.L = (float) 0;
+    data.H = (float) 0;    
     
     data.surfacePoint = hitInfo.position;
     data.V = hitInfo.backRayDirection;
@@ -65,8 +60,8 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     data.emissionPower = mat.emissiveIntensity;
     data.transmissionPower = clamp(mat.transmissionPower, 0.05, 0.95); 
 
-    mat.ior = clamp(mat.ior, 1.0001, 2.0);
-    data.eta = dot(hitInfo.normal, hitInfo.backRayDirection) > 0 ? 1.0 / mat.ior  : mat.ior  / 1.0;
+    mat.ior = data.transmissionPower > 0.0 ? clamp(mat.ior, 1.0001, 2.0) : mat.ior;
+    data.eta = hitInfo.isFrontFace ? mat.ior  : 1.0 / mat.ior;
     // data.isThin = mat.thi // todo: use material flags to check if it's thin
     data.isThin  = false;
     
