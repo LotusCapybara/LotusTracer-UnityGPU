@@ -8,6 +8,7 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
     // I've seen this being applied on different places (like the transmission sample itself)
     // and it seems to be working ok-ish here. I might refactor it later?
     float transmissionProb = data.transmissionPower;
+    float specularF = 1.0;
     if(transmissionProb > 0)
     {
         // I think some people use Dielectric Fresnel here, but it's not looking good for me
@@ -17,6 +18,11 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
         {
             transmissionProb = 0;
         }
+        else
+        {
+            specularF = schlickF;
+            transmissionProb *= (1.0 - schlickF);
+        }
     }
     
     // weight of each of these models based on material properties
@@ -24,7 +30,7 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
 
     // Cspec0.GetIntensity() * specularPdfScale( roughness )
     prob.wDiffuseReflection  = baseLuminance * (1.0 - data.metallic) * (1.0 -  transmissionProb);
-    prob.wSpecularReflection  = Luminance(data.cSpec0) * 8.0 * (1.0 - data.roughness); // magic number 8.0 to avoid fireflies?
+    prob.wSpecularReflection  = Luminance(data.cSpec0) * (1.0 - data.roughness) * specularF;
     prob.wTransmission = baseLuminance * (1.0 - data.metallic) * transmissionProb;
     prob.wClearCoat = 0.05 * data.clearCoat;    
     

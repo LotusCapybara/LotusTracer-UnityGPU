@@ -147,7 +147,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
             // this means we found and invalid path sample and we should terminate this path
             if(bouncePDF <= 0)
                 break;
-
+            
             throughput *=  bounceBSDF / bouncePDF;
 
             pathRay.direction = bounceData.L;
@@ -167,7 +167,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         if(b > 3)
         {
             // q would be "the probabilities of continuing the path"
-            float q = min(MaxComponent(throughput) + 0.001, 0.99);
+            float q = min(MaxComponent(throughput) + 0.01, 0.9);
             if (GetRandom0to1(randState) > q)
                 break;
 
@@ -178,6 +178,8 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         }
     }
 
+    if(Luminance(throughput) > 10)
+        return;
     
     _SamplingBuffer[id.xy] = float4( radiance.xyz , 1) ;
 }
@@ -187,7 +189,9 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
 void Kernel_AccumulateFinalTexture (uint3 id : SV_DispatchThreadID)
 {
     float iterationWeight = 1.0 / (iteration + 1.0);
-  
+
+    
+    
     _SamplingBuffer[id.xy] = _SamplingBufferPrev[id.xy] * (1.0 - iterationWeight) + (_SamplingBuffer[id.xy] * iterationWeight);
     _SamplingBufferPrev[id.xy] = _SamplingBuffer[id.xy];
     
@@ -195,8 +199,8 @@ void Kernel_AccumulateFinalTexture (uint3 id : SV_DispatchThreadID)
     // ldr for rendering with the color space you expect to see on screen
 
     // todo: re add aces after being "sure" models are fine
-    // float4 finalColor =  ACESFilter(_SamplingBuffer[id.xy]);
+    float4 finalColor =  ACESFilter(_SamplingBuffer[id.xy]);
 
-    float4 finalColor =  _SamplingBuffer[id.xy];    
+    // float4 finalColor =  _SamplingBuffer[id.xy];    
     _LDRFinalBuffer[id.xy] = finalColor;
 }

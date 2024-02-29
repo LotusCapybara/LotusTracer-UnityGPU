@@ -106,8 +106,10 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
     }
 
     data.isReflection = data.L.y * data.V.y > 0;
+
+    bool isValid = abs(data.L.y) > EPSILON;
     
     ScatteringToWorld(data);
 
-    return validSample;
+    return isValid;
 }
