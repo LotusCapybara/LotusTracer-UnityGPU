@@ -91,9 +91,9 @@ namespace CapyTracerCore.Core
             t.tangentA = ReadFloat3(reader);
             t.tangentB = ReadFloat3(reader);
             t.tangentC = ReadFloat3(reader);
-            t.biTangentA = ReadFloat3(reader);
-            t.biTangentB = ReadFloat3(reader);
-            t.biTangentC = ReadFloat3(reader);
+            // t.biTangentA = ReadFloat3(reader);
+            // t.biTangentB = ReadFloat3(reader);
+            // t.biTangentC = ReadFloat3(reader);
             
             t.centerPos = ReadFloat3(reader);
             

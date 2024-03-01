@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -168,13 +166,6 @@ public static class SceneExport_GenerateMaterials
 
         if (generateDebugInfo)
         {
-            // generate textures that show how the atlases were generated
-            // packerAlbedos.GenerateDebugFiles("albedo");
-            // packerNormals.GenerateDebugFiles("normal");
-            // packerRough.GenerateDebugFiles("rough");
-            // packerMetal.GenerateDebugFiles("metal");
-            // packerEmission.GenerateDebugFiles("emission");
-            
             // dump log file with information of generated atlases
             string atlasText = "";
 
@@ -196,11 +187,11 @@ public static class SceneExport_GenerateMaterials
                 var mat = scene.materials[m];
                 
                 materialsText += $"Mat: {m}   { unityMaterials[m].name }\n";
-                materialsText += $"Canvas Albedo: {mat.albedoMapCanvasIndex}\n";
-                materialsText += $"Canvas Normal: {mat.normalMapCanvasIndex}\n";
-                materialsText += $"Canvas Rough: {mat.roughMapCanvasIndex}\n";
-                materialsText += $"Canvas Metal: {mat.metalMapCanvasIndex}\n";
-                materialsText += $"Canvas Emission: {mat.emissionMapCanvasIndex}\n";
+                materialsText += $"Canvas Albedo: {mat.albedoMapCanvasIndex} txt: {mat.albedoMapIndex} \n";
+                materialsText += $"Canvas Normal: {mat.normalMapCanvasIndex} txt: {mat.normalMapIndex}\n";
+                materialsText += $"Canvas Rough: {mat.roughMapCanvasIndex} txt: {mat.roughMapIndex}\n";
+                materialsText += $"Canvas Metal: {mat.metalMapCanvasIndex} txt: {mat.metalMapIndex}\n";
+                materialsText += $"Canvas Emission: {mat.emissionMapCanvasIndex} txt: {mat.emissionMapIndex}\n";
                 
                 materialsText += "----------------\n\n";
             }

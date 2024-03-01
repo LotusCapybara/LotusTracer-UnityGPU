@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Serialization;
 
 [Serializable]
-public class TextureDataManaged 
+public class TextureDataManaged
 {
+    public string name;
     public int originalIndex;
     public int atlasIndex;
     public int x;

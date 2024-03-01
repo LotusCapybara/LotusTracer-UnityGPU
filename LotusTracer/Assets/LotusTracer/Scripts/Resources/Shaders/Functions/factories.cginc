@@ -94,7 +94,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
         int atlasIndex = texture_data.atlasIndex;
 
         data.color *= _AtlasesAlbedo
-            .SampleLevel(sampler_AtlasesAlbedo, float3(targetUV.x, targetUV.y, atlasIndex) , 0).rgb;
+            .SampleLevel(sampler_AtlasesAlbedo, float3(targetUV.x, targetUV.y, 0) , 0).rgb;
     }
 
     if(mat.roughMapIndex >= 0)

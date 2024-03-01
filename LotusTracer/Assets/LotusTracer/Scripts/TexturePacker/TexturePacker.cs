@@ -17,17 +17,16 @@ public class TexturePacker
             { TextureFormat.R8 , TextureImporterFormat.R8}
         };
     
-    private List<Texture2D> _originalTextures = new();
-    private int _atlasWidth;
-    private int _atlasHeight;
-
-    public List<TextureDataManaged> allTextureDatas;
+    
     public List<TextureAtlasData> atlases;
 
-    private TextureFormat _format;
-
-    private string _setName;
-    private bool _isNormal;
+    private List<TextureDataManaged> _allTextureDatas;
+    private readonly List<Texture2D> _originalTextures = new();
+    private readonly int _atlasWidth;
+    private readonly int _atlasHeight;
+    private readonly TextureFormat _format;
+    private readonly string _setName;
+    private readonly bool _isNormal;
     
     public TexturePacker(TextureFormat format, string setName, bool isNormal)
     {
@@ -42,7 +41,7 @@ public class TexturePacker
     {
         List<TextureData> datas = new List<TextureData>();
 
-        foreach (var textureDataManaged in allTextureDatas)
+        foreach (var textureDataManaged in _allTextureDatas)
         {
             datas.Add(textureDataManaged.GetStruct());
         }
@@ -55,7 +54,7 @@ public class TexturePacker
         if (textureId < 0)
             return -1;
         
-        foreach (var textureData in allTextureDatas)
+        foreach (var textureData in _allTextureDatas)
         {
             if (textureData.originalIndex == textureId)
                 return textureData.atlasIndex;
@@ -69,10 +68,10 @@ public class TexturePacker
         if (originalIndex < 0)
             return -1;
         
-        foreach (var textureData in allTextureDatas)
+        foreach (var textureData in _allTextureDatas)
         {
             if (textureData.originalIndex == originalIndex)
-                return allTextureDatas.IndexOf(textureData);
+                return _allTextureDatas.IndexOf(textureData);
         }
 
         throw new Exception("texture not found");
@@ -83,19 +82,20 @@ public class TexturePacker
     public void PackTextures(List<Texture2D> textures)
     {
         _originalTextures.AddRange(textures);
-        allTextureDatas = new List<TextureDataManaged>();
+        _allTextureDatas = new List<TextureDataManaged>();
 
         for (int i = 0; i < _originalTextures.Count; i++)
         {
             TextureDataManaged dataManaged = new TextureDataManaged();
             dataManaged.originalIndex = i;
+            dataManaged.name = _originalTextures[i].name;
             dataManaged.width = _originalTextures[i].width;
             dataManaged.height = _originalTextures[i].height;
 
-            allTextureDatas.Add(dataManaged);
+            _allTextureDatas.Add(dataManaged);
         }
 
-        allTextureDatas.Sort((a, b) => a.height.CompareTo(b.height));
+        _allTextureDatas.Sort((a, b) => a.height.CompareTo(b.height));
 
         int xPos = 0;
         int yPos = 0;
@@ -107,7 +107,7 @@ public class TexturePacker
 
         atlases.Add(currentAtlas);
 
-        List<TextureDataManaged> datasToPack = new List<TextureDataManaged>(allTextureDatas);
+        List<TextureDataManaged> datasToPack = new List<TextureDataManaged>(_allTextureDatas);
 
         while (datasToPack.Count > 0)
         {
@@ -167,7 +167,7 @@ public class TexturePacker
             {
                 var texturePixels = _originalTextures[tId].GetPixels();
 
-                var textureData = allTextureDatas.First(d => d.originalIndex == tId);
+                var textureData = _allTextureDatas.First(d => d.originalIndex == tId);
 
                 for (int y = 0; y < textureData.height; y++)
                 {
@@ -227,6 +227,15 @@ public class TexturePacker
         debugText += $"Total Atlases: {atlases.Count}\n";
         debugText += $"Textures: {atlases.Count}\n";
         
+        debugText += $"\n";
+
+        for (int i = 0; i < _originalTextures.Count; i++)
+        {
+            debugText += $"{i}: {_originalTextures[i].name}\n";
+        }
+        
+        debugText += $"\n\n";
+        
         for (int i = 0; i < atlases.Count; i++)
         {
             debugText += $"{i}:\n";
@@ -238,7 +247,7 @@ public class TexturePacker
             
             foreach (var textureData in atlases[i].textureDatas)
             {
-                debugText += $" - at:{textureData.atlasIndex} oi:{textureData.originalIndex} x:{textureData.x} y:{textureData.y} w:{textureData.width} h:{textureData.height} \n";
+                debugText += $" - at:{textureData.atlasIndex} oi:{textureData.originalIndex} x:{textureData.x} y:{textureData.y} w:{textureData.width} h:{textureData.height}  - {textureData.name} \n";
             }
         }
 

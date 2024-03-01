@@ -22,9 +22,11 @@ namespace CapyTracerCore.Core
         public float3 tangentA;
         public float3 tangentB;
         public float3 tangentC;
-        public float3 biTangentA;
-        public float3 biTangentB;
-        public float3 biTangentC;
+        
+        // decided to recalculate this in runtime 
+        // public float3 biTangentA;
+        // public float3 biTangentB;
+        // public float3 biTangentC;
 
         // a set of flags for this triangle packed into an int
         // cant' use booleans since the compute buffers don't seem to receive booleans
@@ -94,21 +96,21 @@ namespace CapyTracerCore.Core
             if (index == 0)
             {
                 tangentA = value.xyz;
-                biTangentA = math.normalize( crossSign * math.cross(normalA, tangentA.xyz));
+                // biTangentA = math.normalize( crossSign * math.cross(normalA, tangentA.xyz));
                 return;
             }
         
             if (index == 1)
             {
                 tangentB = value.xyz;
-                biTangentB = math.normalize( crossSign * math.cross(normalB, tangentB.xyz));
+                // biTangentB = math.normalize( crossSign * math.cross(normalB, tangentB.xyz));
                 return;
             }
         
             if (index == 2)
             {
                 tangentC = value.xyz;
-                biTangentC = math.normalize( crossSign * math.cross(normalC, tangentC.xyz));
+                // biTangentC = math.normalize( crossSign * math.cross(normalC, tangentC.xyz));
                 return;
             }
         
@@ -119,6 +121,11 @@ namespace CapyTracerCore.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetTextureUV(int index, float2 uv)
         {
+            if (uv.x < - 0.2f || uv.x > 1.2f || uv.y < -0.2f || uv.y > 1.2f)
+            {
+                throw new Exception("UDIM UV detected. UDIM are not supported");
+            }
+            
             if (index == 0)
             {
                 textureUV0 = uv;

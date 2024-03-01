@@ -31,9 +31,9 @@ struct RenderTriangle
     float3 tangentA;
     float3 tangentB;
     float3 tangentC;
-    float3 biTangentA;
-    float3 biTangentB;
-    float3 biTangentC;
+    // float3 biTangentA;
+    // float3 biTangentB;
+    // float3 biTangentC;
     int flags;
 };
 

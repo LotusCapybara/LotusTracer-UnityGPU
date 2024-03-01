@@ -74,9 +74,9 @@ namespace CapyTracerCore.Core
             t.tangentA.WriteBinary(writer);
             t.tangentB.WriteBinary(writer);
             t.tangentC.WriteBinary(writer);
-            t.biTangentA.WriteBinary(writer);
-            t.biTangentB.WriteBinary(writer);
-            t.biTangentC.WriteBinary(writer);
+            // t.biTangentA.WriteBinary(writer);
+            // t.biTangentB.WriteBinary(writer);
+            // t.biTangentC.WriteBinary(writer);
             t.centerPos.WriteBinary(writer);
             writer.Write(t.materialIndex);
             t.textureUV0.WriteBinary(writer);

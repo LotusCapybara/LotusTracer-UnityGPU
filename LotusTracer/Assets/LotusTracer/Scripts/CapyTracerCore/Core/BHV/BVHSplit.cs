@@ -87,8 +87,6 @@ namespace CapyTracerCore.Core
 
                     float splitPos = minCentroid[splitInfo.Item1] +
                                      (maxCentroid[splitInfo.Item1] - minCentroid[splitInfo.Item1]) * 0.5f;
-
-                    
                     
                     
                     BoundsBox boundsA = tempNode.bounds;

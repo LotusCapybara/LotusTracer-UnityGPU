@@ -13,7 +13,7 @@ public static class SceneExport_GatherTriangles
     {
         
         MeshRenderer[] meshes = sceneContainer.transform.GetComponentsInChildren<MeshRenderer>();
-
+        
 
         BoundsBox sceneBounds = new BoundsBox();
 

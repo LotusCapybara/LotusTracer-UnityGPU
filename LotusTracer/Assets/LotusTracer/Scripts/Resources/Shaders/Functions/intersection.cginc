@@ -154,7 +154,13 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
 
     hitInfo.normal = normalize(  tri.normalA * ( 1 - u - v) + tri.normalB * u + tri.normalC * v );
     hitInfo.tangent = normalize( tri.tangentA * ( 1 - u - v) + tri.tangentB * u + tri.tangentC * v );
-    hitInfo.biTangent = normalize( tri.biTangentA * ( 1 - u - v) + tri.biTangentB * u + tri.biTangentC * v );
+
+    float crossSign = -1;
+    float3 biTangentA = normalize(crossSign  * cross(tri.normalA, tri.tangentA));
+    float3 biTangentB = normalize(crossSign  * cross(tri.normalB, tri.tangentB));
+    float3 biTangentC = normalize(crossSign  * cross(tri.normalC, tri.tangentC));
+    
+    hitInfo.biTangent = normalize( biTangentA * ( 1 - u - v) + biTangentB * u + biTangentC * v );
 
     int normalMapIndex = _Materials[hitInfo.materialIndex].normalMapIndex;
     if(normalMapIndex >= 0)

@@ -82,6 +82,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
             {
                 isInsideMedium = false;
                 pathRay.origin = hitInfo.position + pathRay.direction * EPSILON * 2.0;
+                throughput *= exp(-(1.0 - bounceData.color) * scatterDist * bounceData.mediumDensity);
             }
             else
             {
@@ -90,8 +91,8 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                 float3 scatterDir = Sample_Phase(randState, -pathRay.direction, bounceData.scatteringDirection);
                 bounceData.L = scatterDir;
 
-                
-                throughput *= exp(-(1.0 - bounceData.color) * scatterDist * bounceData.mediumDensity);
+                throughput *= bounceData.color;
+                //throughput *= exp(-(1.0 - bounceData.color) * scatterDist * bounceData.mediumDensity);
                 
                 float3 directRadiance = GetLightsNEE(randState, bounceData, bouncePDF, true);
                 radiance += directRadiance * throughput;
