@@ -15,11 +15,16 @@ struct RenderRay
     float3 direction;
 };
 
-struct RenderTriangle
+struct RenderTriangleVertices
 {
     float3 posA;
     float3 p0p1;
     float3 p0p2;
+    int flags;
+};
+
+struct RenderTriangleData
+{
     float3 normalA;
     float3 normalB;
     float3 normalC;
@@ -34,7 +39,6 @@ struct RenderTriangle
     // float3 biTangentA;
     // float3 biTangentB;
     // float3 biTangentC;
-    int flags;
 };
 
 struct RenderLight

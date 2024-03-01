@@ -25,8 +25,8 @@ public static class SceneExport_ExportDats
                 }
                 
                 // write all triangleIndices
-                writer.Write(scene.triangles.Length);
-                foreach (var triangle in scene.triangles)
+                writer.Write(SceneExport_GatherTriangles.s_gatheredTriangles.Length);
+                foreach (var triangle in SceneExport_GatherTriangles.s_gatheredTriangles)
                 {
                     triangle.WriteBinary(writer);
                 }

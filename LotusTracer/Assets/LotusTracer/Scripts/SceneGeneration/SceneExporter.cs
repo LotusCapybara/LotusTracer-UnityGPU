@@ -112,12 +112,14 @@ public class SceneExporter : MonoBehaviour
                 
                 // read all triangleIndices
                 scene.qtyTriangles = reader.ReadInt32();
-                scene.triangles = new FastTriangle[scene.qtyTriangles];
+                scene.triangleVertices = new RenderTriangle_Vertices[scene.qtyTriangles];
+                scene.triangleDatas = new RenderTriangle_Data[scene.qtyTriangles];
                 
                 for (int t = 0; t < scene.qtyTriangles; t++)
                 {
-                    FastTriangle triangle = SceneBinaryRead.ReadTriangle(reader);
-                    scene.triangles[t] = triangle;
+                    var triangleVD = SceneBinaryRead.ReadTriangle(reader);
+                    scene.triangleVertices[t] = triangleVD.Item1;
+                    scene.triangleDatas[t] = triangleVD.Item2;
                 }
                 
                 // read lights

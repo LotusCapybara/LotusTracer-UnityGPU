@@ -35,7 +35,7 @@ namespace CapyTracerCore.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ExpandWithTriangle(in FastTriangle triangle)
+        public void ExpandWithTriangle(in RenderTriangle triangle)
         {
             ExpandWithPoint(triangle.posA);
             ExpandWithPoint(triangle.posA + triangle.p0p1);

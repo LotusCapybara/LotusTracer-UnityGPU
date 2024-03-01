@@ -6,7 +6,32 @@ using Unity.Mathematics;
 namespace CapyTracerCore.Core
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct FastTriangle
+    public struct RenderTriangle_Vertices
+    {
+        public float3 posA;
+        public float3 p0p1;
+        public float3 p0p2;
+        public int flags;
+    }
+    
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RenderTriangle_Data
+    {
+        public float3 normalA;
+        public float3 normalB;
+        public float3 normalC;
+        public float3 centerPos;
+        public int materialIndex;
+        public float2 textureUV0;
+        public float2 textureUV1;
+        public float2 textureUV2;
+        public float3 tangentA;
+        public float3 tangentB;
+        public float3 tangentC;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RenderTriangle
     {
         public float3 posA;
         public float3 p0p1;

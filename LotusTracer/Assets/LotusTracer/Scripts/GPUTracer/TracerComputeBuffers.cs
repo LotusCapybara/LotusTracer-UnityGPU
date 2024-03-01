@@ -8,7 +8,8 @@ using UnityEngine;
 public class BuffersNames
 {
     public const string CAMERA_RAYS = "_CameraRays";
-    public const string TRIANGLES = "_Triangles";
+    public const string TRIANGLE_VERTICES = "_TriangleVertices";
+    public const string TRIANGLE_DATAS = "_TriangleDatas";
     public const string BVH_TREE = "_AccelTree";
     public const string MATERIALS = "_Materials";
     public const string LIGHTS = "_Lights";
@@ -33,10 +34,15 @@ public class TracerComputeBuffers
         bufferCameraRays.SetData(renderScene.cameraRays);
         _buffers.Add(BuffersNames.CAMERA_RAYS, bufferCameraRays);
         
-        // fast triangleIndices
-        var bufferTriangles = new ComputeBuffer(renderScene.serializedScene.qtyTriangles, Marshal.SizeOf<FastTriangle>());
-        bufferTriangles.SetData(renderScene.serializedScene.triangles);
-        _buffers.Add(BuffersNames.TRIANGLES, bufferTriangles);
+        // triangle vertices
+        var bufferTriangleVertices = new ComputeBuffer(renderScene.serializedScene.qtyTriangles, Marshal.SizeOf<RenderTriangle_Vertices>());
+        bufferTriangleVertices.SetData(renderScene.serializedScene.triangleVertices);
+        _buffers.Add(BuffersNames.TRIANGLE_VERTICES, bufferTriangleVertices);
+        
+        // triangle datas
+        var bufferTriangleDatas = new ComputeBuffer(renderScene.serializedScene.qtyTriangles, Marshal.SizeOf<RenderTriangle_Data>());
+        bufferTriangleDatas.SetData(renderScene.serializedScene.triangleDatas);
+        _buffers.Add(BuffersNames.TRIANGLE_DATAS, bufferTriangleDatas);
         
         // bvh tree
         var bufferBVH = new ComputeBuffer(renderScene.serializedScene.qtyBVHNodes, Marshal.SizeOf<StackBVH4Node>());

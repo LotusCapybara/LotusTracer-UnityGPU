@@ -8,7 +8,7 @@ namespace CapyTracerCore.Core
 {
     public static class BVHSplit
     {
-        public static void SplitNode(BVHNode node, int maxDepth, int maxNodeTriangles, FastTriangle[] triangles)
+        public static void SplitNode(BVHNode node, int maxDepth, int maxNodeTriangles, RenderTriangle[] triangles)
         {
             Stack<BVHNode> stackNodes = new Stack<BVHNode>();
             stackNodes.Push(node);
@@ -60,7 +60,7 @@ namespace CapyTracerCore.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SplitDepthNode(BVHNode currentNode, FastTriangle[] triangles)
+        private static void SplitDepthNode(BVHNode currentNode, RenderTriangle[] triangles)
         {
             List<BVHNode> newNodes = new List<BVHNode>();
             newNodes.Add(currentNode);
@@ -145,7 +145,7 @@ namespace CapyTracerCore.Core
         // (int, float) = (bestAxis, positionInAxis)   score is the score for this axis, with the bestRatio (at what position of the axis should be split)
         // then outside this function, you check what axis had the best score, and use that one, with the given split position (the ratio)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static (int, float) GetAxisSplitScore(in float3 minCentroid, in float3 maxCentroid, in FastTriangle[] allTriangles, in List<int> tIndices)
+        private static (int, float) GetAxisSplitScore(in float3 minCentroid, in float3 maxCentroid, in RenderTriangle[] allTriangles, in List<int> tIndices)
         {
             float bestScore = Mathf.Infinity;
             float bestRatio = 0f;

@@ -69,13 +69,13 @@ public static class SceneExport_GenerateBVH
         scene.qtyBVHNodes = outNodes.Length;
         scene.bvhNodes = outNodes;
 
-        var sortedTrianglesArray = new FastTriangle[sortedTriangles.Count];
+        var sortedTrianglesArray = new RenderTriangle[sortedTriangles.Count];
         
         List<int> emissiveTriangleIndices = new List<int>();
 
         for (int t = 0; t < sortedTriangles.Count; t++)
         {
-            sortedTrianglesArray[t] = scene.triangles[sortedTriangles[t]];
+            sortedTrianglesArray[t] = SceneExport_GatherTriangles.s_gatheredTriangles[sortedTriangles[t]];
             
             if(scene.materials[ sortedTrianglesArray[t].materialIndex ].emissiveIntensity > 0)
                 emissiveTriangleIndices.Add(t);
@@ -85,7 +85,7 @@ public static class SceneExport_GenerateBVH
         if(emissiveTriangleIndices.Count == 0)
             emissiveTriangleIndices.Add(-1);
         
-        scene.triangles = sortedTrianglesArray;
+        SceneExport_GatherTriangles.s_gatheredTriangles = sortedTrianglesArray;
     }
 
     public static List<BVHNode> GenerateHeapNodes(SerializedScene scene, int bvhMaxDepth, int bvhMaxNodeTriangles)
@@ -95,7 +95,7 @@ public static class SceneExport_GenerateBVH
         // I need to pass this to a value type array. This is common too with GPU data structures,
         // you'll find that's common to do this same process to pass kd trees to the GPU.
         BVHNode heapNodeRoot = new BVHNode(new BoundsBox(scene.boundMin, scene.boundMax), scene.qtyTriangles);
-        BVHSplit.SplitNode(heapNodeRoot, bvhMaxDepth, bvhMaxNodeTriangles, scene.triangles);
+        BVHSplit.SplitNode(heapNodeRoot, bvhMaxDepth, bvhMaxNodeTriangles, SceneExport_GatherTriangles.s_gatheredTriangles);
 
         List<BVHNode> heapNodes = new List<BVHNode>();
         

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +8,8 @@ using UnityEngine;
 
 public static class SceneExport_GatherTriangles
 {
+    public static RenderTriangle[] s_gatheredTriangles;
+    
     public static void Export(SerializedScene scene, GameObject sceneContainer, List<Material> outUnityMaterials)
     {
         
@@ -17,7 +18,7 @@ public static class SceneExport_GatherTriangles
 
         BoundsBox sceneBounds = new BoundsBox();
 
-        List<Task<List<FastTriangle>>> allTasks = new List<Task<List<FastTriangle>>>();
+        List<Task<List<RenderTriangle>>> allTasks = new List<Task<List<RenderTriangle>>>();
         
         for(int m = 0; m < meshes.Length; m++)
         {
@@ -59,31 +60,31 @@ public static class SceneExport_GatherTriangles
         }
         
         
-        List<FastTriangle> allTriangles = new List<FastTriangle>();
+        List<RenderTriangle> allTriangles = new List<RenderTriangle>();
         Task.WaitAll(allTasks.ToArray());
         foreach (var allTask in allTasks)
         {
             allTriangles.AddRange(allTask.Result);
         }
         
-        scene.triangles = allTriangles.ToArray();
+        s_gatheredTriangles = allTriangles.ToArray();
         scene.qtyTriangles = allTriangles.Count;
         scene.boundMin = sceneBounds.min;
         scene.boundMax = sceneBounds.max;
     }
 
-    private static List<FastTriangle> GetTrianglesForMesh(
+    private static List<RenderTriangle> GetTrianglesForMesh(
         Vector3 transformPos, Vector3 transformScale, Quaternion transformRotation,
         in Vector3[] vertices, in Vector3[] normals, in Vector4[] tangents, in int[] triangles, List<Vector2> uvs, int materialIndex,
         bool isInvisibleLightBouncer)
     {
-        List<FastTriangle> allTriangles = new List<FastTriangle>();
+        List<RenderTriangle> allTriangles = new List<RenderTriangle>();
         
         int t = 0;
 
         for (int st = 0; st < triangles.Length; st += 3)
         {
-            FastTriangle newTriangle = new FastTriangle();
+            RenderTriangle newTriangle = new RenderTriangle();
             newTriangle.materialIndex = materialIndex;
             newTriangle.flags = 0;
 

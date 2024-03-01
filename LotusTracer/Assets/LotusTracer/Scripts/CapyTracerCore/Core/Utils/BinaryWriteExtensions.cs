@@ -63,26 +63,27 @@ namespace CapyTracerCore.Core
         }
         
         
-        public static void WriteBinary(this FastTriangle t, BinaryWriter writer)
+        public static void WriteBinary(this RenderTriangle t, BinaryWriter writer)
         {
+            // Render Triangle Vertices
             t.posA.WriteBinary(writer);
             t.p0p1.WriteBinary(writer);
             t.p0p2.WriteBinary(writer);
+            writer.Write(t.flags);
+            
+            // Render Triangle Data
             t.normalA.WriteBinary(writer);
             t.normalB.WriteBinary(writer);
             t.normalC.WriteBinary(writer);
             t.tangentA.WriteBinary(writer);
             t.tangentB.WriteBinary(writer);
             t.tangentC.WriteBinary(writer);
-            // t.biTangentA.WriteBinary(writer);
-            // t.biTangentB.WriteBinary(writer);
-            // t.biTangentC.WriteBinary(writer);
             t.centerPos.WriteBinary(writer);
             writer.Write(t.materialIndex);
             t.textureUV0.WriteBinary(writer);
             t.textureUV1.WriteBinary(writer);
             t.textureUV2.WriteBinary(writer);
-            writer.Write(t.flags);
+            
         }
         
         public static void WriteBinary(this RenderLight light, BinaryWriter writer)

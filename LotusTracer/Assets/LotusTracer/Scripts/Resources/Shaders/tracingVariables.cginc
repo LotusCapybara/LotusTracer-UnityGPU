@@ -47,7 +47,8 @@ RWTexture2D<float4> _LDRFinalBuffer;
 StructuredBuffer<RenderRay> _CameraRays;
 
 uint totalTriangles;
-StructuredBuffer<RenderTriangle> _Triangles;
+StructuredBuffer<RenderTriangleVertices> _TriangleVertices;
+StructuredBuffer<RenderTriangleData> _TriangleDatas;
 
 uint qtyDirectLights;
 StructuredBuffer<RenderLight> _Lights;

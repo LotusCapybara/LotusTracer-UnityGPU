@@ -30,7 +30,7 @@ namespace CapyTracerCore.Core
             isLeaf = true;
         }
 
-        public void FinishGeneration(FastTriangle[] allTriangles)
+        public void FinishGeneration(RenderTriangle[] allTriangles)
         {
             bounds = BoundsBox.AS_SHRINK;
             

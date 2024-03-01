@@ -78,7 +78,7 @@ bool DoesRayHitBounds(in RenderRay r, in BoundsBox b)
 
 float FastIntersectRayWithTriangle(int triIndex, in RenderRay ray, float maxDistance, bool isFirstBounce)
 {
-    RenderTriangle tri = _Triangles[triIndex];
+    RenderTriangleVertices tri = _TriangleVertices[triIndex];
 
     if(isFirstBounce && (tri.flags & 0x1) == 1)
        return 0;
@@ -115,30 +115,31 @@ float FastIntersectRayWithTriangle(int triIndex, in RenderRay ray, float maxDist
 
 bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout TriangleHitInfo hitInfo)
 {
-    RenderTriangle tri = _Triangles[triIndex];
+    RenderTriangleVertices triV = _TriangleVertices[triIndex];
+    RenderTriangleData tri = _TriangleDatas[triIndex];
             
-    float3 pVec = cross(ray.direction, tri.p0p2);
-    const float det = dot(tri.p0p1, pVec);
+    float3 pVec = cross(ray.direction, triV.p0p2);
+    const float det = dot(triV.p0p1, pVec);
         
     if (abs(det) < 1E-8)
         return false;
         
     float invDet = 1.0 / det;
 
-    float3 tVec = ray.origin - tri.posA;
+    float3 tVec = ray.origin - triV.posA;
     float u = dot(tVec, pVec) * invDet;
         
     if (u < 0 || u > 1)
         return false;
         
-    float3 qVec = cross(tVec, tri.p0p1);
+    float3 qVec = cross(tVec, triV.p0p1);
         
     float v = dot(ray.direction, qVec) * invDet;
         
     if (v < 0 || (u + v) > 1)
         return false;
         
-    float distance = dot(tri.p0p2, qVec) * invDet;
+    float distance = dot(triV.p0p2, qVec) * invDet;
         
     if (distance <= 0 || distance > maxDistance)
         return false;

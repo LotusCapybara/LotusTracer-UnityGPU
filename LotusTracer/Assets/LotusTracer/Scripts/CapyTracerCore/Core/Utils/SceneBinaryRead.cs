@@ -77,33 +77,33 @@ namespace CapyTracerCore.Core
         }
         
         
-        public static FastTriangle ReadTriangle(BinaryReader reader)
+        public static (RenderTriangle_Vertices, RenderTriangle_Data) ReadTriangle(BinaryReader reader)
         {
-            FastTriangle t = new FastTriangle();
+            RenderTriangle_Vertices tv = new RenderTriangle_Vertices();
+            tv.posA = ReadFloat3(reader);
+            tv.p0p1 = ReadFloat3(reader);
+            tv.p0p2 = ReadFloat3(reader);
+            tv.flags = reader.ReadInt32();
 
-            t.posA = ReadFloat3(reader);
-            t.p0p1 = ReadFloat3(reader);
-            t.p0p2 = ReadFloat3(reader);
-            
-            t.normalA = ReadFloat3(reader);
-            t.normalB = ReadFloat3(reader);
-            t.normalC = ReadFloat3(reader);
-            t.tangentA = ReadFloat3(reader);
-            t.tangentB = ReadFloat3(reader);
-            t.tangentC = ReadFloat3(reader);
+
+            RenderTriangle_Data td = new RenderTriangle_Data();
+            td.normalA = ReadFloat3(reader);
+            td.normalB = ReadFloat3(reader);
+            td.normalC = ReadFloat3(reader);
+            td.tangentA = ReadFloat3(reader);
+            td.tangentB = ReadFloat3(reader);
+            td.tangentC = ReadFloat3(reader);
             // t.biTangentA = ReadFloat3(reader);
             // t.biTangentB = ReadFloat3(reader);
             // t.biTangentC = ReadFloat3(reader);
             
-            t.centerPos = ReadFloat3(reader);
+            td.centerPos = ReadFloat3(reader);
+            td.materialIndex = reader.ReadInt32();
+            td.textureUV0 = ReadFloat2(reader);
+            td.textureUV1 = ReadFloat2(reader);
+            td.textureUV2 = ReadFloat2(reader);
             
-            t.materialIndex = reader.ReadInt32();
-
-            t.textureUV0 = ReadFloat2(reader);
-            t.textureUV1 = ReadFloat2(reader);
-            t.textureUV2 = ReadFloat2(reader);
-            t.flags = reader.ReadInt32();
-            return t;
+            return (tv, td);
         }
         
         public static RenderLight ReadLight(BinaryReader reader)
