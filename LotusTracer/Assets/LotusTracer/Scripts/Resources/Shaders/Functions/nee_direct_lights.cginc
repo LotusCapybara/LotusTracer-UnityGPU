@@ -1,61 +1,4 @@
 
-float IsDirectLightOccluded(int lightIndex, in ScatteringData scatteringData)
-{
-    float NoL = dot(scatteringData.L, scatteringData.WorldNormal);
-
-    if(NoL <= 0)
-        return -1;
-    
-    RenderRay ray;    
-    ray.direction = scatteringData.L;
-    ray.origin = scatteringData.surfacePoint + scatteringData.L * EPSILON;
-            
-    float dist = distance(_Lights[lightIndex].position, scatteringData.surfacePoint);
-
-    if(dist > _Lights[lightIndex].range)
-        return -1;
-            
-    // shadow ray
-    if(IsLightOccluded(ray, dist))
-        return -1;
-
-    return dist;
-}
-
-float3 GetLightColorContribution(int lightIndex, in ScatteringData scatteringData, float dist)
-{
-    int lightType = _Lights[lightIndex].type;
-
-    // todo: fix this specific case
-    // if (lightType == ELightType.Directional)
-    // {
-    //     scatteringData.L = - scene.lights[lightIndex].forward;
-    // }
-
-    float power = _Lights[lightIndex].intensity;
-
-    [branch]
-    switch (lightType)
-    {
-        case LIGHT_POINT:
-            power = _Lights[lightIndex].intensity / (dist * dist);
-            break;
-        case LIGHT_SPOT:
-
-            float dotToOuter = dot(- scatteringData.L, _Lights[lightIndex].forward);
-            float spotAngleFactor = 1.0 - _Lights[lightIndex].angle * ONE_OVER_360;
-
-            if (dotToOuter <= spotAngleFactor)
-                return V_ZERO;
-        
-            float angleDecay = saturate((dotToOuter - spotAngleFactor) / (1.0 - spotAngleFactor));
-            power = _Lights[lightIndex].intensity * angleDecay / (dist * dist); 
-        break;
-    }
-
-    return _Lights[lightIndex].color * power;
-}
-
 static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float bouncePDF, bool comesFromMedium)
 {
     float3 radiance = V_ZERO;
@@ -77,13 +20,38 @@ static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float b
     data.H = normalize(data.L + data.V);
     data.isReflection = dot(data.L, data.WorldNormal) > 0;
 
-    float dist = IsDirectLightOccluded(lightIndex, data);
+    float dist = distance(data.surfacePoint, _Lights[lightIndex].position);
+
+    float3 lightContribution = _Lights[lightIndex].color * _Lights[lightIndex].intensity /  (dist * dist);  // GetLightColorContribution(lightIndex, data, dist);
+
+    float3 tramissionPower = V_ONE;
+
+    TriangleHitInfo hitInfo =  (TriangleHitInfo) 0;
+    RenderRay shadowRay;    
+    shadowRay.direction = normalize(data.L);
+    shadowRay.origin = data.surfacePoint + data.L * EPSILON;
+
+    float totalDist = dist;
     
-    if(dist <= 0)
-        return radiance;
+    for(int i = 0; i < 5; i++)
+    {
+        bool didShadowHit = GetBounceHit(hitInfo, shadowRay, totalDist, false);
 
-    float3 lightContribution = GetLightColorContribution(lightIndex, data, dist);
+        RenderMaterial mat = _Materials[hitInfo.materialIndex];
 
+        if(didShadowHit && mat.transmissionPower <= 0)
+            return V_ZERO;       
+        
+        if(!didShadowHit || mat.emissiveIntensity > 0)
+            break;         
+
+        tramissionPower *= mat.color;
+        tramissionPower *= exp(- mat.color * max(0.1, mat.mediumDensity) * hitInfo.distance);
+        shadowRay.origin = hitInfo.position + shadowRay.direction * 2.0 * EPSILON;
+
+        totalDist -= hitInfo.distance;
+    }
+    
     float3 lightBSDF = V_ZERO;
     float lightPDF = 0;
 
@@ -92,9 +60,6 @@ static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float b
         float f;
         Evaluate_PhaseHG(dot( data.V, data.L), data.scatteringDirection, f, lightPDF);
         lightBSDF = (float3) f;
-        // float p = Evaluate_Phase(data, data.scatteringDirection);
-        // lightBSDF = (float3) p;
-        // lightPDF = p;
     }
     else
     {
@@ -107,6 +72,6 @@ static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float b
         radiance += lightContribution * mis * lightBSDF / lightPDF;    
     }
 
-    return radiance;
+    return radiance * tramissionPower;
 }
 

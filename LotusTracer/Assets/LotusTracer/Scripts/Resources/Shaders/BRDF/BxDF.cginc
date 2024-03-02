@@ -55,7 +55,7 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
         pdf += tempPDF * data.probs.wSpecularReflection;
     }
 
-    if( data.probs.wTransmission > 0.0)
+    if(!data.isReflection && data.probs.wTransmission > 0.0)
     {
         Evaluate_Transmission(tempF, tempPDF, data, ev);    
        

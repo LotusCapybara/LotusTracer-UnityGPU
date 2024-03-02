@@ -9,21 +9,16 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
     // and it seems to be working ok-ish here. I might refactor it later?
     float transmissionProb = data.transmissionPower;
     float specularF = 1.0;
-    // if(transmissionProb > 0)
-    // {
-    //     // I think some people use Dielectric Fresnel here, but it's not looking good for me
-    //     // I might be missing something
-    //     float schlickF = SchlickFresnel(data.cSpec0, dot(data.V, data.WorldNormal));
-    //     if(GetRandom0to1(randState) > schlickF)
-    //     {
-    //         transmissionProb = 0;
-    //     }
-    //     else
-    //     {
-    //         specularF = schlickF;
-    //         transmissionProb *= (1.0 - schlickF);
-    //     }
-    // }
+    if(transmissionProb > 0)
+    {
+        // I think some people use Dielectric Fresnel here, but it's not looking good for me
+        // I might be missing something
+        float f = SchlickFresnel(data.cSpec0, dot(data.V, data.WorldNormal));
+        if(GetRandom0to1(randState) < f)
+        {
+            transmissionProb = 0;
+        }
+    }
     
     // weight of each of these models based on material properties
     SampleProbabilities prob;
@@ -56,7 +51,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     
     data.surfacePoint = hitInfo.position;
     data.V = hitInfo.backRayDirection;
-    data.color = mat.color;    
+    data.color = mat.color;
     
     data.WorldNormal = hitInfo.isFrontFace ? hitInfo.normal : - hitInfo.normal;
     data.WorldTangent = hitInfo.tangent;
@@ -77,7 +72,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     data.mediumDensity = mat.mediumDensity;
     data.scatteringDirection = clamp(mat.scatteringDirection, -0.95, 0.95);
     data.emissionPower = mat.emissiveIntensity;
-    data.transmissionPower = clamp(mat.transmissionPower, 0.05, 0.95); 
+    data.transmissionPower = saturate(mat.transmissionPower); 
 
     mat.ior = data.transmissionPower > 0.0 ? clamp(mat.ior, 1.0001, 2.0) : mat.ior;
     data.eta = hitInfo.isFrontFace ? 1.0 / mat.ior  : mat.ior;

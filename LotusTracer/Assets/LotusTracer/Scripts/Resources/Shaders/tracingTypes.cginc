@@ -144,7 +144,7 @@ struct ScatteringData
     
     float3 V;
     float3 L;
-    float3 H;    
+    float3 H;
 
     float emissionPower;
     float3 color;

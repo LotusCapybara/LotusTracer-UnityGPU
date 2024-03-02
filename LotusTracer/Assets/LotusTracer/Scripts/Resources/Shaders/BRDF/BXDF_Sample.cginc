@@ -48,9 +48,21 @@ bool Sample_Transmission(inout uint randState, inout ScatteringData data)
     if(facetH.y < 0)
         facetH = -facetH;
 
-    data.L = refract(-data.V, facetH, data.eta);
-    if(data.L.y > 0)
-        data.L = - data.L;   
+    float F = DielectricFresnel(dot(facetH, data.V), data.eta);
+
+    if(GetRandom0to1(randState) < F)
+    {
+        data.L = reflect(-data.V, facetH);
+    }
+    else
+    {
+        data.L = refract(-data.V, facetH, data.eta);
+        if(data.L.y > 0)
+            data.L = - data.L;  
+    }
+    
+
+     
 
     data.H = normalize(data.L + data.V);
     

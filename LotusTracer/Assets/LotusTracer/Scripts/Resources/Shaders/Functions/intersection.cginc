@@ -174,12 +174,14 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
         float3 packednormal = _AtlasesNormal
             .SampleLevel(sampler_AtlasesNormal, float3(targetUV.x, targetUV.y, atlasIndex) , 0).rgb;
 
+        // packednormal.g = 1.0 - packednormal.g;
         // remapping from 0to1 to -1 to 1. This is how normal maps usually work
         packednormal.xyz = packednormal.xyz * 2.0 - 1.0;
+        
 
         // coordinates transformation (textures have z up, and they are right handed)
         packednormal.xyz = float3(packednormal.y, -packednormal.z, packednormal.x);
-        packednormal.xz *= 1.5;
+        packednormal.xz *= 1.5; 
         
         // tangent space of map to world space of triangle hit
         float3x3 tbn = float3x3(hitInfo.tangent, hitInfo.biTangent, hitInfo.normal);        
@@ -201,7 +203,7 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
     int stackIndex = 0;
     shortStack[stackIndex] = 0;
     
-    float closestDistance = INFINITY;
+    float closestDistance = maxDistance;
     int hittingTriangleIndex = -1;
     
     while (stackIndex >= 0 && stackIndex < BVH_STACK_SIZE)
@@ -211,7 +213,7 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
         BVH4Node node = _AccelTree[ptr];
 
         if(!DoesRayHitBounds(ray, node.bounds))
-            continue;;
+            continue;
         
         bool isLeaf = (node.data >> 31) & 0x1;
 
@@ -247,48 +249,4 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
     }
 
     return hittingTriangleIndex >= 0;
-}
-
-bool IsLightOccluded(in RenderRay ray, float lightDistance)
-{
-    uint shortStack[BVH_STACK_SIZE];
-    int stackIndex = 0;
-    shortStack[stackIndex] = 0;
-
-    while (stackIndex >= 0 && stackIndex < BVH_STACK_SIZE)
-    {
-        int ptr = shortStack[stackIndex--];
-    
-        BVH4Node node = _AccelTree[ptr];
-
-        if(!DoesRayHitBounds(ray, node.bounds))
-            continue;
-        
-        bool isLeaf = (node.data >> 31) & 0x1;
-
-        [branch]
-        if (isLeaf)
-        {
-            for (int tIndex = node.startIndex; tIndex < (node.startIndex + node.qtyTriangles); tIndex++)
-            {
-                float hitDistance = FastIntersectRayWithTriangle( tIndex, ray, lightDistance, false);
-                
-                if (hitDistance > 0 &&  hitDistance < lightDistance)
-                {
-                    return true;
-                }
-            }
-        }
-        else
-        {
-            for(int ch = 0; ch < 4; ch++)
-            {
-                const bool isTraversable =  (node.data >> (30 - ch)) & 0x1 ;
-                if(isTraversable)
-                    shortStack[++stackIndex] = node.startIndex + ch;
-            }
-        }       
-    }    
-
-    return false;
 }
