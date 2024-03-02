@@ -45,7 +45,6 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
         // buffers for each kernel
         foreach (var kvpKernels in _kernelIds)
         {
-            SetBuffer(kvpKernels.Key, BuffersNames.CAMERA_RAYS);
             SetBuffer(kvpKernels.Key, BuffersNames.TRIANGLE_VERTICES);
             SetBuffer(kvpKernels.Key, BuffersNames.TRIANGLE_DATAS);
             SetBuffer(kvpKernels.Key, BuffersNames.BVH_TREE);

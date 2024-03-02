@@ -29,6 +29,19 @@ public abstract class ComputeShaderHolder
     }
     
     protected virtual void Initialize() {}
+    
+    public void UpdateCameraGPUData()
+    {
+        _shader.SetInt("width", _scene.width);
+        _shader.SetInt("height", _scene.height);
+        
+        _shader.SetFloat("cameraFOV", _scene.renderCamera.fov );
+        _shader.SetVector("cameraPos", _scene.renderCamera.position.toVector4() );
+        _shader.SetVector("cameraForward", _scene.renderCamera.forward.toVector4() );
+        _shader.SetVector("cameraUp", _scene.renderCamera.up.toVector4() );
+        _shader.SetVector("cameraRight", _scene.renderCamera.right.toVector4() );
+    }
+    
 
     public void DispatchKernelSingle(string kernelName)
     {

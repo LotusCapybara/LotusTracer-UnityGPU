@@ -2,6 +2,32 @@
 
 // ---------------------------------------------------
 
+RenderRay GetCameraRay(uint3 id, inout uint randState)
+{
+    RenderRay pathRay ;
+    pathRay.origin = cameraPos.xyz;
+
+    float aspectRatio = (float) width / height;
+    float u = (2.0 * id.x / width - 1.0) * aspectRatio;
+    float v = 1.0 - 2.0 * id.y / height;
+
+    // Calculate the tangent of the half field of view
+    float tanHalfFov = tan(cameraFOV * PI / 180.0 * 0.5);
+    float3 direction = cameraForward + cameraRight * u * tanHalfFov - cameraUp * v * tanHalfFov;
+    direction = normalize(direction);
+
+
+    pathRay.direction = direction;
+    pathRay.direction.x += GetRandomMin1to1(randState) * 0.0001;
+    pathRay.direction.y += GetRandomMin1to1(randState) * 0.0001;
+    pathRay.direction.z += GetRandomMin1to1(randState) * 0.0001;
+    pathRay.direction = normalize(pathRay.direction);
+    
+    
+
+    return pathRay;
+}
+
 inline float MaxComponent(in float3 v)
 {
     return max(v.x, max(v.y, v.z));

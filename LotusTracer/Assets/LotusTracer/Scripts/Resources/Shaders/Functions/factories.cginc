@@ -9,27 +9,25 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
     // and it seems to be working ok-ish here. I might refactor it later?
     float transmissionProb = data.transmissionPower;
     float specularF = 1.0;
-    if(transmissionProb > 0)
-    {
-        // I think some people use Dielectric Fresnel here, but it's not looking good for me
-        // I might be missing something
-        float schlickF = SchlickFresnel(data.cSpec0, dot(data.V, data.WorldNormal));
-        if(GetRandom0to1(randState) > schlickF)
-        {
-            transmissionProb = 0;
-        }
-        else
-        {
-            specularF = schlickF;
-            transmissionProb *= (1.0 - schlickF);
-        }
-    }
+    // if(transmissionProb > 0)
+    // {
+    //     // I think some people use Dielectric Fresnel here, but it's not looking good for me
+    //     // I might be missing something
+    //     float schlickF = SchlickFresnel(data.cSpec0, dot(data.V, data.WorldNormal));
+    //     if(GetRandom0to1(randState) > schlickF)
+    //     {
+    //         transmissionProb = 0;
+    //     }
+    //     else
+    //     {
+    //         specularF = schlickF;
+    //         transmissionProb *= (1.0 - schlickF);
+    //     }
+    // }
     
     // weight of each of these models based on material properties
     SampleProbabilities prob;
-
-    // Cspec0.GetIntensity() * specularPdfScale( roughness )
-    prob.wDiffuseReflection  = baseLuminance * (1.0 - data.metallic) * (1.0 -  transmissionProb);
+    prob.wDiffuseReflection  =  baseLuminance * (1.0 - data.metallic) * (1.0 -  transmissionProb);
     prob.wSpecularReflection  = Luminance(data.cSpec0) * (1.0 - data.roughness) * specularF;
     prob.wTransmission = baseLuminance * (1.0 - data.metallic) * transmissionProb;
     prob.wClearCoat = 0.05 * data.clearCoat;    
@@ -78,12 +76,11 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     
     data.mediumDensity = mat.mediumDensity;
     data.scatteringDirection = clamp(mat.scatteringDirection, -0.95, 0.95);
-    data.maxScatteringDistance = mat.maxScatteringDistance;
     data.emissionPower = mat.emissiveIntensity;
     data.transmissionPower = clamp(mat.transmissionPower, 0.05, 0.95); 
 
     mat.ior = data.transmissionPower > 0.0 ? clamp(mat.ior, 1.0001, 2.0) : mat.ior;
-    data.eta = hitInfo.isFrontFace ? mat.ior  : 1.0 / mat.ior;
+    data.eta = hitInfo.isFrontFace ? 1.0 / mat.ior  : mat.ior;
     // data.isThin = mat.thi // todo: use material flags to check if it's thin
     data.isThin  = false;
     
@@ -94,7 +91,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
         int atlasIndex = texture_data.atlasIndex;
 
         data.color *= _AtlasesAlbedo
-            .SampleLevel(sampler_AtlasesAlbedo, float3(targetUV.x, targetUV.y, 0) , 0).rgb;
+            .SampleLevel(sampler_AtlasesAlbedo, float3(targetUV.x, targetUV.y, atlasIndex) , 0).rgb;
     }
 
     if(mat.roughMapIndex >= 0)
@@ -135,11 +132,9 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     data.roughness = clamp(data.roughness, EPSILON, 1.0);
     data.metallic = saturate(data.metallic);
 
-    // I'll implement anisotropic materials at some point
-    // It should be easy, the distribution functions already support it and I just need to
-    // use a variable in the materials to displace the symmetry
-    data.ax = data.roughness  * data.roughness;
-    data.ay = data.roughness  * data.roughness;
+    float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
+    data.ax = max(0.001, mat.roughness / aspect);
+    data.ay = max(0.001, mat.roughness * aspect);
 
     // F0 for dielectrics can vary really based on the eta but I found that 0.1 is all right for
     // most cases in this implementation. It looks dielectric enough and the specularity is strong

@@ -24,10 +24,9 @@ Shader "LotusTracerLit"
 		_SpecularTransmission("SpecularTransmission", Range( 0 , 1)) = 0
 		_MediumDensity("MediumDensity", Range( 0 , 1)) = 0
 		_ScatteringDirection("ScatteringDirection", Range( -1 , 1)) = 0
-		_MaxScatteringDistance("MaxScatteringDistance", Range( 0 , 50)) = 0
 		[Toggle]
 		_IsThin("IsThin", int) = 0
-		_IOR("IOR", Range( 0.001 , 4)) = 0
+		_IOR("IOR", Range( 0.5 , 4)) = 1.5
 		_AnisoPower("AnisoPower", Range( 0 , 1)) = 1
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 

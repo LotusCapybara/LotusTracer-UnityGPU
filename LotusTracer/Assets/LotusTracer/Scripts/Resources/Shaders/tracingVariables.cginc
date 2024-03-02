@@ -2,8 +2,15 @@
 
 
 // global shader data
+bool _isCameraMoving;
 float width;
 float height;
+float cameraFOV;
+float aspectRatio;
+float4 cameraPos;
+float4 cameraForward;
+float4 cameraUp;
+float4 cameraRight;
 int maxBounces;
 float totalSize;
 int iteration;
@@ -43,8 +50,6 @@ RWTexture2D<float4> _SamplingBuffer;
 RWTexture2D<float4> _LDRFinalBuffer;
 
 // these buffers contain Scene information such as geometry, BVH, Lights, etc
-
-StructuredBuffer<RenderRay> _CameraRays;
 
 uint totalTriangles;
 StructuredBuffer<RenderTriangleVertices> _TriangleVertices;

@@ -2,8 +2,8 @@
 
 #include "../constants.cginc"
 #include "../tracingTypes.cginc"
-#include "../Functions/common.cginc"
 #include "../tracingVariables.cginc"
+#include "../Functions/common.cginc"
 #include "../Functions/fresnel.cginc"
 #include "../Functions/factories.cginc"
 #include "../Functions/intersection.cginc"
@@ -34,7 +34,8 @@ RWTexture2D<float4> _TextureDebugBuffer;
 float3 Get_BVHDensity (uint3 id)
 {
     int index = id.y * width + id.x;
-    RenderRay pathRay = _CameraRays[index];
+    uint rand = 0;
+    RenderRay pathRay = GetCameraRay(id, rand);
 
     float qtyHits = 0;
     
@@ -59,18 +60,15 @@ float3 Get_BVHDensity (uint3 id)
     return color;
 }
 
-
-
 [numthreads(8,8,1)]
 void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
 {
     int index = id.y * width + id.x;
-    RenderRay pathRay = _CameraRays[index];
+    uint rand = 17 * id * someSeed;
+    RenderRay pathRay = GetCameraRay(id, rand);
     TriangleHitInfo hitInfo = (TriangleHitInfo) 0;
 
     float3 finalColor = V_ONE;   
-    
-    uint rand = 17 * id * someSeed;
     
     bool foundHit = GetBounceHit(hitInfo, pathRay, INFINITY, true);
 

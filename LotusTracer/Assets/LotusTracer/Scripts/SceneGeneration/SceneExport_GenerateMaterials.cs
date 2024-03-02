@@ -51,11 +51,10 @@ public static class SceneExport_GenerateMaterials
             float metallicPower = unityMaterials[m].GetFloat("_MetallicPower");
             float emissionPower = unityMaterials[m].GetFloat("_EmissionPower");
             float ior = unityMaterials[m].GetFloat("_IOR");
-            // float anisoPower = unityMaterials[m].GetFloat("_AnisoPower");
+            float anisoPower = unityMaterials[m].GetFloat("_AnisoPower");
             float transmissionPower = unityMaterials[m].GetFloat("_SpecularTransmission");
             float mediumDensity = unityMaterials[m].GetFloat("_MediumDensity");
             float scatteringDirection = unityMaterials[m].GetFloat("_ScatteringDirection");
-            float maxScatteringDistance = unityMaterials[m].GetFloat("_MaxScatteringDistance");
             // int isThin = unityMaterials[m].GetInt("_IsThin");
 
             int flags = 0;
@@ -74,6 +73,7 @@ public static class SceneExport_GenerateMaterials
                 emissiveIntensity = emissionPower,
                 color =  new float4(baseColor.r, baseColor.g, baseColor.b, baseColor.a),
                 metallic = metallicPower, 
+                anisotropic = anisoPower,
                 roughness = roughnessPower,
                 clearCoat = coatPower,
                 clearCoatRoughness = coatPowerRoughness,
@@ -91,7 +91,6 @@ public static class SceneExport_GenerateMaterials
                 transmissionPower = transmissionPower,
                 mediumDensity = mediumDensity,
                 scatteringDirection = scatteringDirection,
-                maxScatteringDistance = maxScatteringDistance,
                 flags = flags
             };
             

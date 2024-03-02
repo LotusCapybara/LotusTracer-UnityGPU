@@ -36,9 +36,6 @@ struct RenderTriangleData
     float3 tangentA;
     float3 tangentB;
     float3 tangentC;
-    // float3 biTangentA;
-    // float3 biTangentB;
-    // float3 biTangentC;
 };
 
 struct RenderLight
@@ -59,11 +56,11 @@ struct RenderMaterial
     float transmissionPower;
     float mediumDensity;
     float scatteringDirection;
-    float maxScatteringDistance;
     float roughness;
     float clearCoat;
     float clearCoatRoughness;
     float metallic;
+    float anisotropic;
         
     int albedoMapIndex;
     int albedoMapCanvasIndex;
@@ -159,7 +156,6 @@ struct ScatteringData
     float transmissionPower;
     float mediumDensity;
     float scatteringDirection;
-    float maxScatteringDistance;
 
     float3 cSpec0;
     float ax;

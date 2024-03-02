@@ -33,11 +33,11 @@ namespace CapyTracerCore.Core
             writer.Write(mat.transmissionPower);
             writer.Write(mat.mediumDensity);
             writer.Write(mat.scatteringDirection);
-            writer.Write(mat.maxScatteringDistance);
             writer.Write(mat.roughness);
             writer.Write(mat.clearCoat);
             writer.Write(mat.clearCoatRoughness);
             writer.Write(mat.metallic);
+            writer.Write(mat.anisotropic);
             writer.Write(mat.albedoMapIndex);
             writer.Write(mat.albedoMapCanvasIndex);
             writer.Write(mat.normalMapIndex);

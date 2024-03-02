@@ -104,6 +104,8 @@ public class GPUTracer_Megakernel : MonoBehaviour
     {
         totalTime = 0;
 
+        _csMegaKernel.UpdateCameraGPUData();
+        _csCameraBuffers.UpdateCameraGPUData();
         CreateCameraDebugBuffers();
         yield return null;
 
@@ -146,18 +148,21 @@ public class GPUTracer_Megakernel : MonoBehaviour
         Debug.Log("Finished");
     }
 
+    
+    
     private IEnumerator CameraMovementRoutine()
     {
         if (tracerCamera.isMoving)
         {
+            _csMegaKernel.shader.SetBool("_isCameraMoving", true);
             _indirectIteration = 0;
             _stopwatch.Restart();
             totalTime = 0;
 
-            _renderScene.UpdateCameraRays();
-            _computeBuffers.GetBuffer(BuffersNames.CAMERA_RAYS).SetData(_renderScene.cameraRays);
+            _csMegaKernel.UpdateCameraGPUData();
+            _csCameraBuffers.UpdateCameraGPUData();
             yield return null;
-            CreateCameraDebugBuffers();
+            // CreateCameraDebugBuffers();
             _wasCameraMovingLastFrame = true;
         }
         else if (_wasCameraMovingLastFrame)
@@ -165,9 +170,13 @@ public class GPUTracer_Megakernel : MonoBehaviour
             _wasCameraMovingLastFrame = false;
             
             _textures.ResetTextures();
-            _renderScene.UpdateCameraRays();
-            _computeBuffers.GetBuffer(BuffersNames.CAMERA_RAYS).SetData(_renderScene.cameraRays);
+            _csMegaKernel.UpdateCameraGPUData();
+            _csCameraBuffers.UpdateCameraGPUData();
             CreateCameraDebugBuffers();
+        }
+        else
+        {
+            _csMegaKernel.shader.SetBool("_isCameraMoving", false);
         }
     }
     
@@ -175,7 +184,6 @@ public class GPUTracer_Megakernel : MonoBehaviour
     {
         if(!createCameraDebugBuffers)
             return;
-        
         _csCameraBuffers.DispatchKernelFull(ComputeShaderHolder_CameraBuffers.KERNEL_DEBUG_TEXTURES, _width, _height);
     }
 }

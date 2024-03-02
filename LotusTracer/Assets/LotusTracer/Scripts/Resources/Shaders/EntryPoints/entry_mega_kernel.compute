@@ -5,8 +5,8 @@
 
 #include "../constants.cginc"
 #include "../tracingTypes.cginc"
-#include "../Functions/common.cginc"
 #include "../tracingVariables.cginc"
+#include "../Functions/common.cginc"
 #include "../Functions/fresnel.cginc"
 #include "../Functions/factories.cginc"
 #include "../BRDF/bsdf_functions.cginc"
@@ -18,16 +18,13 @@
 [numthreads(8,8,1)]
 void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
 {
-    _SamplingBuffer[id.xy] = float4(0, 0, 0, 1);    
+    _SamplingBuffer[id.xy] = float4(0, 0, 0, 1);
 
     int index = id.y * width + id.x;
-    uint randState = id.x * someSeed + id.y * someSeed + iteration * someSeed + index;
     
-    RenderRay pathRay = _CameraRays[index];
-    pathRay.direction.x += GetRandomMin1to1(randState) * 0.0001;
-    pathRay.direction.y += GetRandomMin1to1(randState) * 0.0001;
-    pathRay.direction.z += GetRandomMin1to1(randState) * 0.0001;
-    pathRay.direction = normalize(pathRay.direction);
+    uint randState = id.x * someSeed + id.y * someSeed + iteration * someSeed + index;
+
+    RenderRay pathRay = GetCameraRay(id, randState);
     
     TriangleHitInfo hitInfo = (TriangleHitInfo) 0;
 
@@ -41,6 +38,8 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
     float rayDistance = INFINITY;
     bool isInsideMedium = false;
     int innerMediumBounces = 0;
+
+    maxBounces = _isCameraMoving ? max(3, maxBounces) : maxBounces;
     
     for(int b = 0; b < maxBounces; b++)
     {

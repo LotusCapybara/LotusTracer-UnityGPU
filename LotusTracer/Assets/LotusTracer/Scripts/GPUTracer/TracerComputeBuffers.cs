@@ -7,7 +7,6 @@ using UnityEngine;
 
 public class BuffersNames
 {
-    public const string CAMERA_RAYS = "_CameraRays";
     public const string TRIANGLE_VERTICES = "_TriangleVertices";
     public const string TRIANGLE_DATAS = "_TriangleDatas";
     public const string BVH_TREE = "_AccelTree";
@@ -28,11 +27,6 @@ public class TracerComputeBuffers
     public TracerComputeBuffers(RenderScene renderScene)
     {
         _buffers = new Dictionary<string, ComputeBuffer>();
-        
-        // camera rays
-        var bufferCameraRays = new ComputeBuffer(renderScene.totalPixels, Marshal.SizeOf<RenderRay>() );
-        bufferCameraRays.SetData(renderScene.cameraRays);
-        _buffers.Add(BuffersNames.CAMERA_RAYS, bufferCameraRays);
         
         // triangle vertices
         var bufferTriangleVertices = new ComputeBuffer(renderScene.serializedScene.qtyTriangles, Marshal.SizeOf<RenderTriangle_Vertices>());

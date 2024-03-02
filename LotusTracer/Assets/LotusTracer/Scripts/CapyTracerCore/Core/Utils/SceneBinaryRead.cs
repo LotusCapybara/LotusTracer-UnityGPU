@@ -41,11 +41,11 @@ namespace CapyTracerCore.Core
             mat.transmissionPower = reader.ReadSingle();
             mat.mediumDensity = reader.ReadSingle();
             mat.scatteringDirection = reader.ReadSingle();
-            mat.maxScatteringDistance = reader.ReadSingle();
             mat.roughness = reader.ReadSingle();
             mat.clearCoat = reader.ReadSingle();
             mat.clearCoatRoughness = reader.ReadSingle();
             mat.metallic = reader.ReadSingle();
+            mat.anisotropic = reader.ReadSingle();
             mat.albedoMapIndex = reader.ReadInt32();
             mat.albedoMapCanvasIndex = reader.ReadInt32();
             mat.normalMapIndex = reader.ReadInt32();

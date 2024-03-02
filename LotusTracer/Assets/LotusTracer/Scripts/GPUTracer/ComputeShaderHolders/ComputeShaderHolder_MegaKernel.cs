@@ -48,7 +48,6 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
         SetTexture(KERNEL_MEGA_PATH_TRACE, "_SamplingBuffer", ERenderTextureType.SamplerBuffer);
         SetTexture(KERNEL_MEGA_PATH_TRACE, "_DebugTexture", ERenderTextureType.Debug);
         
-        SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.CAMERA_RAYS);
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.TRIANGLE_VERTICES);
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.TRIANGLE_DATAS);
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.BVH_TREE);

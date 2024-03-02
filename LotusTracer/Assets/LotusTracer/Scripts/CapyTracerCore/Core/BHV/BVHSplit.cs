@@ -85,6 +85,10 @@ namespace CapyTracerCore.Core
                     
                     (int, float) splitInfo = GetAxisSplitScore(minCentroid, maxCentroid, triangles, tempNode.triangleIndices);
 
+                    // this means this split was invalid, so we exit splitting the whole node
+                    if(splitInfo.Item1 < 0 || splitInfo.Item1 > 2)
+                        return;
+                    
                     float splitPos = minCentroid[splitInfo.Item1] +
                                      (maxCentroid[splitInfo.Item1] - minCentroid[splitInfo.Item1]) * 0.5f;
                     

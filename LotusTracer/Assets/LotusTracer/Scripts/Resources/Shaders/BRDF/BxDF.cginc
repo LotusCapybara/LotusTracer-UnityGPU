@@ -55,14 +55,14 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
         pdf += tempPDF * data.probs.wSpecularReflection;
     }
 
-    if(!data.isReflection && data.probs.wTransmission > 0.0)
+    if( data.probs.wTransmission > 0.0)
     {
         Evaluate_Transmission(tempF, tempPDF, data, ev);    
        
         eval += tempF *  data.probs.wTransmission;
         pdf += tempPDF * data.probs.wTransmission;
     }
-
+    
     // todo: something is wrong with Clear Coat, it's "eating" energy
     // can't find if it's negative values or some exception or what
     // if( data.isReflection && data.probs.wClearCoat > 0.0)

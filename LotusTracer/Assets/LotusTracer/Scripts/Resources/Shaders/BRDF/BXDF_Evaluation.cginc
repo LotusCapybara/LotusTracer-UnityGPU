@@ -96,8 +96,8 @@ static void Evaluate_Transmission(inout float3 f, inout float pdf, inout Scatter
 
     float LoH = dot(data.L, data.H);
 
-    // float F =  DielectricFresnel(ev.VoH, data.eta);
-    float F =  SchlickFresnel(ev.VoH, data.eta);
+    float F =  DielectricFresnel(abs( ev.VoH), data.eta);
+    //float F =  SchlickFresnel(ev.VoH, data.eta);
     // could also use ggx on these but I think it's faster this way and it's fine
     float D = D_GTR( data.H.y, data.roughness * data.roughness);
     float G1 = G_Smith( abs(data.V), data.roughness * data.roughness);
@@ -108,7 +108,6 @@ static void Evaluate_Transmission(inout float3 f, inout float pdf, inout Scatter
     float jacobian = abs(LoH) / denom2; 
 
     f = pow(data.color, (float3) 0.5) * (V_ONE - (float3)F) * D * G1 * G2 * abs(ev.VoH) * jacobian * eta2 / abs(data.V.y * data.L.y);    
-
     // ------- pdf            
     pdf = (1.0 - F) *  G1 * max(0,  abs(ev.VoH)) * D * jacobian / data.V.y;     
 }

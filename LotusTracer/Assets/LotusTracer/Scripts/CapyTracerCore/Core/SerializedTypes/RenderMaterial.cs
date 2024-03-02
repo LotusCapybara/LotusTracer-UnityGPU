@@ -22,12 +22,12 @@ namespace CapyTracerCore.Core
         public float transmissionPower;
         public float mediumDensity;
         public float scatteringDirection;
-        public float maxScatteringDistance;
         
         public float roughness;
         public float clearCoat;
         public float clearCoatRoughness;
         public float metallic;
+        public float anisotropic;
         
         public int albedoMapIndex;
         public int albedoMapCanvasIndex;

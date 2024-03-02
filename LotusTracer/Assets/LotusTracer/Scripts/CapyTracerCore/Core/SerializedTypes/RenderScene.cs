@@ -7,7 +7,6 @@ namespace CapyTracerCore.Core
 {
     public class RenderScene
     {
-        public RenderRay[] cameraRays;
         public int width, height, totalPixels, maxBounces;
         
         public Texture2DArray textureArrayAlbedo;
@@ -46,12 +45,8 @@ namespace CapyTracerCore.Core
                 serializedScene.materials[m] = mat;
             }
             
-            int totalPixes = width * height;
-            
             // -------------- generation of rays
             renderCamera= new RenderCamera(width, height, serializedScene.camera);
-            cameraRays = new RenderRay[totalPixes];
-            UpdateCameraRays();
             
             // create scene textureDatas
             RenderSceneTextures textures = Resources.Load<RenderSceneTextures>($"RenderScenes/{sceneName}/{sceneName}_textures");
@@ -70,17 +65,6 @@ namespace CapyTracerCore.Core
             
             textureArrayEmission = CreateTextureArray(4096, 4096, textures.GetEmissionCanvasTextures(), AtlasFormats.R_CHANNEL_ONLY);
             textureDataEmission = textures.emissionTextureDatas.ToArray();
-        }
-
-        public void UpdateCameraRays()
-        {
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    cameraRays[y * width + x] = renderCamera.GetRay(x, y);
-                }
-            }
         }
 
         private Texture2DArray CreateTextureArray(int w, int h, List<Texture> fromTextures, TextureFormat format)
