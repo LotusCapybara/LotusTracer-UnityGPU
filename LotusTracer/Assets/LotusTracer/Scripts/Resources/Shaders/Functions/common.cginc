@@ -22,8 +22,6 @@ RenderRay GetCameraRay(uint3 id, inout uint randState)
     pathRay.direction.y += GetRandomMin1to1(randState) * 0.0001;
     pathRay.direction.z += GetRandomMin1to1(randState) * 0.0001;
     pathRay.direction = normalize(pathRay.direction);
-    
-    
 
     return pathRay;
 }
