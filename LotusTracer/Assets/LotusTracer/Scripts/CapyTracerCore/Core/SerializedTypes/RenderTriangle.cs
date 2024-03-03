@@ -148,7 +148,7 @@ namespace CapyTracerCore.Core
         {
             if (uv.x < - 0.2f || uv.x > 1.2f || uv.y < -0.2f || uv.y > 1.2f)
             {
-                throw new Exception("UDIM UV detected. UDIM are not supported");
+                // throw new Exception("UDIM UV detected. UDIM are not supported");
             }
             
             if (index == 0)

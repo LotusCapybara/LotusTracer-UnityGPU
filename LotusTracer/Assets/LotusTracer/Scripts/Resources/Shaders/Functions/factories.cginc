@@ -4,27 +4,11 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
 {
     float baseLuminance = Luminance(data.color);
 
-    // this is the refraction/refraction probability based on fresnel value
-    // I've seen this being applied on different places (like the transmission sample itself)
-    // and it seems to be working ok-ish here. I might refactor it later?
-    float transmissionProb = data.transmissionPower;
-    float specularF = 1.0;
-    if(transmissionProb > 0)
-    {
-        // I think some people use Dielectric Fresnel here, but it's not looking good for me
-        // I might be missing something
-        float f = SchlickFresnel(data.cSpec0, dot(data.V, data.WorldNormal));
-        if(GetRandom0to1(randState) < f)
-        {
-            transmissionProb = 0;
-        }
-    }
-    
     // weight of each of these models based on material properties
     SampleProbabilities prob;
-    prob.wDiffuseReflection  =  baseLuminance * (1.0 - data.metallic) * (1.0 -  transmissionProb);
-    prob.wSpecularReflection  = Luminance(data.cSpec0) * (1.0 - data.roughness) * specularF;
-    prob.wTransmission = baseLuminance * (1.0 - data.metallic) * transmissionProb;
+    prob.wDiffuseReflection  =  baseLuminance * (1.0 - data.metallic) * data.roughness * (1.0 -  data.transmissionPower);
+    prob.wSpecularReflection  = Luminance(data.cSpec0) * (1.0 - data.roughness);
+    prob.wTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower;
     prob.wClearCoat = 0.05 * data.clearCoat;    
     
     prob.totalW = prob.wDiffuseReflection + prob.wSpecularReflection + prob.wTransmission + prob.wClearCoat;
