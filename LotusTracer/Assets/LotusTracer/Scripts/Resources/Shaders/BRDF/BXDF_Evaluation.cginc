@@ -60,9 +60,7 @@ static void Evaluate_Specular(inout float3 f, inout float pdf, in ScatteringData
     float G2 = G_GGX(data.L, data.ax, data.ay);
     
     f = D * F * G1 * G2 / ( 4.0 * aNoV );
-
-    float EoH = abs(ev.VoH);
-    pdf = PDF_GGX(data) / (4.0  * EoH);
+    pdf = D * G1 / (4.0  * data.V.y * data.L.y);
 }
 
 // static void Evaluate_ClearCoat(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
@@ -106,7 +104,9 @@ static void Evaluate_Transmission(inout float3 f, inout float pdf, inout Scatter
     float eta2 = data.eta * data.eta;
     float jacobian = abs(LoH) / denom2; 
 
-    f = (V_ONE - (float3)F) * D * G1 * G2 * abs(ev.VoH) * jacobian * eta2 / abs(data.V.y * data.L.y);    
+    float3 T = pow(data.color, 0.7);
+    
+    f = T * (V_ONE - (float3)F) * D * G1 * G2 * abs(ev.VoH) * jacobian * eta2 / abs(data.V.y * data.L.y);    
     // ------- pdf            
     pdf = (1.0 - F) * G1 * max(0,  abs(ev.VoH)) * D * jacobian / data.V.y;     
 }

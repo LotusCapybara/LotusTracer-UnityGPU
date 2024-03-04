@@ -49,7 +49,7 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     
     if(data.isReflection && data.probs.wSpecularReflection > 0.0)
     {
-        float3 F = SchlickFresnel_V(data.cSpec0, dot(data.V, data.H) );
+        float3 F = SchlickFresnel_V(saturate(data.cSpec0), dot(data.V, data.H) );
         Evaluate_Specular(tempF, tempPDF, data, ev, F);
 
         eval += tempF *  data.probs.wSpecularReflection;

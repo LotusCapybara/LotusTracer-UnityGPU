@@ -47,6 +47,7 @@ struct RenderLight
     float intensity;
     float angle;
     int type;
+    int castShadows;
 };
 
 struct RenderMaterial

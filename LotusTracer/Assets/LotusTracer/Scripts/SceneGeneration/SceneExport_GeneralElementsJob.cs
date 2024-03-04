@@ -33,7 +33,8 @@ public static class SceneExport_GeneralElements_Job
                     range = lights[l].range,
                     angle = lights[l].spotAngle,
                     type = (int) lights[l].type,
-                    color = new float4(lights[l].color.r, lights[l].color.g, lights[l].color.b, 1f)
+                    color = new float4(lights[l].color.r, lights[l].color.g, lights[l].color.b, 1f),
+                    castShadows = (lights[l].shadows != LightShadows.None)? 1 : 0
                 };
             }
         }

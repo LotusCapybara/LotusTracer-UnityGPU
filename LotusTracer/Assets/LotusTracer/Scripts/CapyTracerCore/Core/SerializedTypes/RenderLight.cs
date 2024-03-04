@@ -20,5 +20,6 @@ namespace CapyTracerCore.Core
         public float intensity;
         public float angle;
         public int type;
+        public int castShadows;
     }
 }

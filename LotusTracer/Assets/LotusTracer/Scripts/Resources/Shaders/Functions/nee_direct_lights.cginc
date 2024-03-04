@@ -26,31 +26,34 @@ static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float b
 
     float3 tramissionPower = V_ONE;
 
-    TriangleHitInfo hitInfo =  (TriangleHitInfo) 0;
-    RenderRay shadowRay;    
-    shadowRay.direction = normalize(data.L);
-    shadowRay.origin = data.surfacePoint + data.L * EPSILON;
-
-    float totalDist = dist;
-    
-    for(int i = 0; i < 5; i++)
+    if(_Lights[lightIndex].castShadows != 0)
     {
-        bool didShadowHit = GetBounceHit(hitInfo, shadowRay, totalDist, false);
+        TriangleHitInfo hitInfo =  (TriangleHitInfo) 0;
+        RenderRay shadowRay;    
+        shadowRay.direction = normalize(data.L);
+        shadowRay.origin = data.surfacePoint + data.L * EPSILON;
 
-        RenderMaterial mat = _Materials[hitInfo.materialIndex];
+        float totalDist = dist;
+    
+        for(int i = 0; i < 5; i++)
+        {
+            bool didShadowHit = GetBounceHit(hitInfo, shadowRay, totalDist, false);
 
-        if(didShadowHit && mat.transmissionPower <= 0)
-            return V_ZERO;       
+            RenderMaterial mat = _Materials[hitInfo.materialIndex];
+
+            if(didShadowHit && mat.transmissionPower <= 0)
+                return V_ZERO;       
         
-        if(!didShadowHit || mat.emissiveIntensity > 0)
-            break;         
+            if(!didShadowHit || mat.emissiveIntensity > 0)
+                break;         
 
-        tramissionPower *= mat.color;
-        tramissionPower *= exp(- mat.color * max(0.1, mat.mediumDensity) * hitInfo.distance);
-        shadowRay.origin = hitInfo.position + shadowRay.direction * 2.0 * EPSILON;
+            tramissionPower *= mat.color;
+            tramissionPower *= exp(- mat.color * max(0.1, mat.mediumDensity) * hitInfo.distance);
+            shadowRay.origin = hitInfo.position + shadowRay.direction * 2.0 * EPSILON;
 
-        totalDist -= hitInfo.distance;
-    }
+            totalDist -= hitInfo.distance;
+        }
+    }    
     
     float3 lightBSDF = V_ZERO;
     float lightPDF = 0;

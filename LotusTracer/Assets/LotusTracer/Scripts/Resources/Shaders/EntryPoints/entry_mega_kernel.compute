@@ -96,7 +96,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                 bounceData.L = scatterDir;
 
                 throughput *= bounceData.color;
-                throughput *= exp(-(1.0 - bounceData.color) * scatterDist * bounceData.mediumDensity);
+                //throughput *= exp(-(1.0 - bounceData.color) * scatterDist * bounceData.mediumDensity);
                 
                 float3 directRadiance = GetLightsNEE(randState, bounceData, bouncePDF, true);
                 radiance += directRadiance * throughput;
@@ -111,8 +111,9 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                     break;
                 
                 throughput *= scatterF / bouncePDF;
-                
-                if(Luminance(throughput) <= 0)
+
+                float lum = Luminance(throughput);
+                if(lum <= 0 || lum > 100)
                     break;
 
                 b --;
