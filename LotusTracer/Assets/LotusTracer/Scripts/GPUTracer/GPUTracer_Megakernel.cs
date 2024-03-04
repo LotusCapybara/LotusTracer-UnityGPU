@@ -14,6 +14,8 @@ public class GPUTracer_Megakernel : MonoBehaviour
     public int totalIterations = 200;
 
     public TracerCamera tracerCamera;
+    public bool overrideCameraFov;
+    public float overridenFov = 60f;
 
     public bool createCameraDebugBuffers;
 
@@ -103,6 +105,9 @@ public class GPUTracer_Megakernel : MonoBehaviour
     private IEnumerator RenderRoutineMegaKernel()
     {
         totalTime = 0;
+
+        if (overrideCameraFov)
+            _renderScene.renderCamera.fov = overridenFov;
 
         _csMegaKernel.UpdateCameraGPUData();
         _csCameraBuffers.UpdateCameraGPUData();

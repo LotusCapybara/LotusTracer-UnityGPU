@@ -87,7 +87,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
             {
                 if(bounceData.emissionPower > 0)
                 {
-                    // radiance += throughput * bounceData.emissionPower * bounceData.color * bounceData.mediumDensity * hitInfo.distance;
+                    radiance += throughput * bounceData.emissionPower * bounceData.color * bounceData.mediumDensity * hitInfo.distance;
                 }
                 
                 pathRay.origin += pathRay.direction * scatterDist;

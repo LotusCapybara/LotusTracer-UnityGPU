@@ -10,6 +10,7 @@ Shader "LotusTracerLit"
 		_DiffuseModel("DiffuseModel", Integer) = 1
 		
 		_AlbedoMap("AlbedoMap", 2D) = "white" {}
+		[Toggle] _FlipGreen("FlipGreen", int) = 0
 		_NormalMap("NormalMap", 2D) = "bump" {}
 		_EmissionMap("EmissionMap", 2D) = "white" {}
 		_MetallicMap("MetallicMap", 2D) = "black" {}
@@ -326,6 +327,7 @@ Shader "LotusTracerLit"
 			float _AnisoPower;
 
 
+			int _FlipGreen;
 			int _DiffuseModel;
 			
 			#ifdef ASE_TRANSMISSION

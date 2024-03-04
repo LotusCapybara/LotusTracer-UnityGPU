@@ -34,7 +34,6 @@ public abstract class ComputeShaderHolder
     {
         _shader.SetInt("width", _scene.width);
         _shader.SetInt("height", _scene.height);
-        
         _shader.SetFloat("cameraFOV", _scene.renderCamera.fov );
         _shader.SetVector("cameraPos", _scene.renderCamera.position.toVector4() );
         _shader.SetVector("cameraForward", _scene.renderCamera.forward.toVector4() );

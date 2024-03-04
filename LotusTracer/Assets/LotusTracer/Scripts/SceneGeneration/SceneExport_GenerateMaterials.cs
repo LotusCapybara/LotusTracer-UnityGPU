@@ -62,6 +62,11 @@ public static class SceneExport_GenerateMaterials
             int diffuseModel = unityMaterials[m].GetInteger("_DiffuseModel");
             flags |= (0b1 <<  diffuseModel );
             
+            int flipNormalGreen = unityMaterials[m].GetInt("_FlipGreen");
+            if (flipNormalGreen != 0)
+                flags |= (0b1 <<  12 );
+                
+            
             // Debug.LogError($"---- {unityMaterials[m].name} ----" );
             // Debug.LogError($"total {flags}" );
             // Debug.LogError($"lambert: { ((flags & 0b1) == 1).ToString() }   b { Convert.ToString(flags, 2) }" );
