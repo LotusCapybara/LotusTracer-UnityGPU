@@ -43,7 +43,7 @@ static void Evaluate_Diffuse_OrenNayar(inout float3 f, inout float pdf, inout Sc
     pdf = ONE_OVER_PI;
 }
 
-static void Evaluate_Specular(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
+static void Evaluate_Specular(inout float3 f, inout float pdf, in ScatteringData data, in EvaluationVars ev, float3 F)
 {
     f = V_ZERO;
     pdf = 0;
@@ -52,15 +52,9 @@ static void Evaluate_Specular(inout float3 f, inout float pdf, inout ScatteringD
         return;
     
     float aNoV = abs(ev.NoV);
-    
-    // this is perfect internal reflection basically, I'm skipping it
     if(aNoV == 0)
         return;
-    
-    if( Luminance(data.cSpec0) <= 0 )
-        return;
-    
-    float3 F = SchlickFresnel_V(data.cSpec0, dot(data.V, data.H) );
+
     float D = D_GGX(data.H, data.ax, data.ay);
     float G1 = G_GGX(data.V, data.ax, data.ay);
     float G2 = G_GGX(data.L, data.ax, data.ay);
@@ -71,18 +65,18 @@ static void Evaluate_Specular(inout float3 f, inout float pdf, inout ScatteringD
     pdf = PDF_GGX(data) / (4.0  * EoH);
 }
 
-static void Evaluate_ClearCoat(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
-{
-    float aVOH = dot(data.V, data.H);
-    
-    float F = lerp(0.04, 1.0, SchlickWeight(aVOH));
-    float D = D_GTR( abs( data.H.y), data.clearCoatRoughness);
-    float G = G_Smith( abs(data.L.y), 0.25) * G_Smith(abs(data.V.y), 0.25);
-    float jacobian = 1.0 / (4.0 * aVOH);
-
-    f =  ((float3) F) * D * G;
-    pdf = D * data.H.y * jacobian;
-}
+// static void Evaluate_ClearCoat(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
+// {
+//     float aVOH = dot(data.V, data.H);
+//     
+//     float F = lerp(0.04, 1.0, SchlickWeight(aVOH));
+//     float D = D_GTR( abs( data.H.y), data.clearCoatRoughness);
+//     float G = G_Smith( abs(data.L.y), 0.25) * G_Smith(abs(data.V.y), 0.25);
+//     float jacobian = 1.0 / (4.0 * aVOH);
+//
+//     f =  ((float3) F) * D * G;
+//     pdf = F * D * data.H.y * jacobian;
+// }
 
 static void Evaluate_Transmission(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
@@ -92,10 +86,17 @@ static void Evaluate_Transmission(inout float3 f, inout float pdf, inout Scatter
     if(ev.NoV == 0)
         return;
 
-    float LoH = dot(data.L, data.H);
-
     float F =  DielectricFresnel(abs( ev.VoH), data.eta);
-    F *=  SchlickFresnel(ev.VoH, data.eta);
+    //float F = SchlickFresnel(data.cSpec0, abs( ev.VoH));
+    
+    if(data.isReflection)
+    {
+        Evaluate_Specular(f, pdf, data, ev, SchlickFresnel(data.cSpec0, abs( ev.VoH)));
+        pdf *= F;
+        return;
+    }
+
+    float LoH = dot(data.L, data.H);
     
     float D = D_GGX(data.H, data.ax, data.ay);
     float G1 = G_GGX(data.V, data.ax, data.ay);
@@ -105,9 +106,9 @@ static void Evaluate_Transmission(inout float3 f, inout float pdf, inout Scatter
     float eta2 = data.eta * data.eta;
     float jacobian = abs(LoH) / denom2; 
 
-    f =  D * G1 * G2 * abs(ev.VoH) * jacobian * eta2 / abs(data.V.y * data.L.y);    
+    f = (V_ONE - (float3)F) * D * G1 * G2 * abs(ev.VoH) * jacobian * eta2 / abs(data.V.y * data.L.y);    
     // ------- pdf            
-    pdf = (1.0 - F) *  G1 * max(0,  abs(ev.VoH)) * D * jacobian / data.V.y;     
+    pdf = (1.0 - F) * G1 * max(0,  abs(ev.VoH)) * D * jacobian / data.V.y;     
 }
 
 

@@ -49,7 +49,8 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     
     if(data.isReflection && data.probs.wSpecularReflection > 0.0)
     {
-        Evaluate_Specular(tempF, tempPDF, data, ev);
+        float3 F = SchlickFresnel_V(data.cSpec0, dot(data.V, data.H) );
+        Evaluate_Specular(tempF, tempPDF, data, ev, F);
 
         eval += tempF *  data.probs.wSpecularReflection;
         pdf += tempPDF * data.probs.wSpecularReflection;
@@ -57,8 +58,7 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
 
     if(data.probs.wTransmission > 0.0)
     {
-        Evaluate_Transmission(tempF, tempPDF, data, ev);    
-       
+        Evaluate_Transmission(tempF, tempPDF, data, ev);   
         eval += tempF *  data.probs.wTransmission;
         pdf += tempPDF * data.probs.wTransmission;
     }

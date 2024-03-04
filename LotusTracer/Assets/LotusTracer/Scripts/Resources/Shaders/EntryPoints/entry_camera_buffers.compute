@@ -172,8 +172,9 @@ void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
                 EvaluationVars ev = MakeEvaluationVars(scattering_data);
 
                 float3 f = V_ZERO;
-                float pdf = 0; 
-                Evaluate_Specular(f, pdf, scattering_data, ev );            
+                float pdf = 0;
+                float3 F = SchlickFresnel(scattering_data.cSpec0, dot(scattering_data.L, scattering_data.H)); // for dielectric and metallic                    
+                Evaluate_Specular(f, pdf, scattering_data, ev, F);            
                 finalColor = f / pdf;
             }
             break;
