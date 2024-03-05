@@ -53,7 +53,8 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         
         if (!GetBounceHit(hitInfo, pathRay, rayDistance, b == 0))
         {
-            // todo gather light from environment cube map, if any            
+            // todo use cube maps too?
+            radiance += throughput * ambientLightPower * ambientLightColor;
             break;
         }
 

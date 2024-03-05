@@ -22,6 +22,9 @@ public class GPUTracer_Megakernel : MonoBehaviour
     public bool overrideCameraFov;
     public float overridenFov = 60f;
 
+    public Color ambientLightColor = Color.white;
+    public float ambientLightPower = 1.0f;
+    
     public bool createCameraDebugBuffers;
 
     private int _width;
@@ -84,7 +87,9 @@ public class GPUTracer_Megakernel : MonoBehaviour
     private void LoadScene()
     {
         _renderScene = new RenderScene();
-        _renderScene.Load(sceneName, _width, _height, depthDiffuse, depthSpecular, depthTransmission);
+        _renderScene.Load(sceneName, _width, _height,
+            depthDiffuse, depthSpecular, depthTransmission, 
+            ambientLightColor, ambientLightPower);
         
         if(tracerCamera != null)
             tracerCamera.Initialize(_renderScene.renderCamera);

@@ -29,8 +29,12 @@ namespace CapyTracerCore.Core
 
         public SerializedScene_Data sceneData;
         public SerializedScene_Geometry sceneGeom;
+        
+        public Color ambientLightColor;
+        public float ambientLightPower;
 
-        public void Load(string sceneName, int width, int height, int diffDepth, int specDepth, int transDepth)
+        public void Load(string sceneName, int width, int height, int diffDepth, int specDepth, int transDepth,
+            Color ambientLightColor, float ambientLightPower)
         {
             this.width = width;
             this.height = height;
@@ -38,6 +42,8 @@ namespace CapyTracerCore.Core
             this.depthSpecular = specDepth;
             this.depthTransmission = transDepth;
             totalPixels = width * height;
+            this.ambientLightColor = ambientLightColor;
+            this.ambientLightPower = ambientLightPower;
 
             string pathData = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.dat");
             string pathGeometry = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.geom");

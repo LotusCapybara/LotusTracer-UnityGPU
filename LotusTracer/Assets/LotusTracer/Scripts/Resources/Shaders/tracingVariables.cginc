@@ -19,6 +19,8 @@ int iteration;
 float indirectBoost;
 int currentBounce;
 uint someSeed;
+float4 ambientLightColor;
+float ambientLightPower;
 // ------------------
 
 Texture2DArray<float4> _AtlasesAlbedo;

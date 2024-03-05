@@ -29,6 +29,8 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
         _shader.SetInt("qtyDirectLights", _scene.sceneData.qtyLights);
         _shader.SetInt("treeNodesQty", _scene.sceneGeom.qtyBVHNodes);
         _shader.SetInt("totalMaterials", _scene.sceneData.qtyMaterials);
+        _shader.SetVector("ambientLightColor", _scene.ambientLightColor);
+        _shader.SetFloat("ambientLightPower", _scene.ambientLightPower);   
         
         // adding all the texture maps
         _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_AtlasesAlbedo", _scene.textureArrayAlbedo);
