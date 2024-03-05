@@ -27,7 +27,8 @@ namespace CapyTracerCore.Core
         
         public RenderCamera renderCamera;
 
-        public SerializedScene serializedScene;
+        public SerializedScene_Data sceneData;
+        public SerializedScene_Geometry sceneGeom;
 
         public void Load(string sceneName, int width, int height, int diffDepth, int specDepth, int transDepth)
         {
@@ -38,18 +39,19 @@ namespace CapyTracerCore.Core
             this.depthTransmission = transDepth;
             totalPixels = width * height;
 
-            string scenePath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.dat");
-            serializedScene = SceneExporter.DeserializeScene(scenePath);
+            string pathData = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.dat");
+            string pathGeometry = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.geom");
+            (sceneData, sceneGeom) = SceneExporter.DeserializeScene(pathData, pathGeometry);
 
-            for (int m = 0; m < serializedScene.materials.Length; m++)
+            for (int m = 0; m < sceneData.materials.Length; m++)
             {
-                var mat = serializedScene.materials[m];
+                var mat = sceneData.materials[m];
                 mat.GenerateRuntime();
-                serializedScene.materials[m] = mat;
+                sceneData.materials[m] = mat;
             }
             
             // -------------- generation of rays
-            renderCamera= new RenderCamera(width, height, serializedScene.camera);
+            renderCamera= new RenderCamera(width, height, sceneData.camera);
             
             // create scene textureDatas
             RenderSceneTextures textures = Resources.Load<RenderSceneTextures>($"RenderScenes/{sceneName}/{sceneName}_textures");

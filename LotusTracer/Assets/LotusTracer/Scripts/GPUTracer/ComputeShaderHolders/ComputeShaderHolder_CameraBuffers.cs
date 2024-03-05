@@ -22,9 +22,9 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
         _shader.SetInt("_depthDiffuse", _scene.depthDiffuse);
         _shader.SetInt("_depthSpecular", _scene.depthSpecular);
         _shader.SetInt("_depthTransmission", _scene.depthTransmission);
-        _shader.SetInt("totalTriangles", _scene.serializedScene.qtyLights);
-        _shader.SetInt("treeNodesQty", _scene.serializedScene.qtyBVHNodes);
-        _shader.SetInt("totalMaterials", _scene.serializedScene.qtyMaterials);
+        _shader.SetInt("totalTriangles", _scene.sceneData.qtyLights);
+        _shader.SetInt("treeNodesQty", _scene.sceneGeom.qtyBVHNodes);
+        _shader.SetInt("totalMaterials", _scene.sceneData.qtyMaterials);
         
         SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureDebugBuffer", ERenderTextureType.Debug);
         

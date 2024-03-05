@@ -7,7 +7,8 @@ using Debug = UnityEngine.Debug;
 
 public class BVHVisualizer : MonoBehaviour
 {
-    public static SerializedScene s_serializedScene;
+    public static SerializedScene_Data s_serializedSceneData;
+    public static SerializedScene_Geometry s_serializedSceneGeometry;
     
     public string sceneName = "Classic-Cornell";
 
@@ -38,8 +39,10 @@ public class BVHVisualizer : MonoBehaviour
         
         Stopwatch stopwatch = Stopwatch.StartNew();
         
-        string scenePath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}.dat");
-        s_serializedScene = SceneExporter.DeserializeScene(scenePath);
+        string sceneDataPath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}.dat");
+        string sceneGeometryPath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}.geom");
+        (s_serializedSceneData, s_serializedSceneGeometry)
+            = SceneExporter.DeserializeScene(sceneDataPath, sceneGeometryPath);
         
         stopwatch.Stop();
         Debug.Log("Total Time: " + stopwatch.Elapsed.TotalSeconds);

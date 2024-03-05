@@ -10,8 +10,10 @@ public static class SceneExport_GatherTriangles
 {
     public static RenderTriangle[] s_gatheredTriangles;
     
-    public static void Export(SerializedScene scene, GameObject sceneContainer, List<Material> outUnityMaterials)
+    public static void Export(GameObject sceneContainer, List<Material> outUnityMaterials)
     {
+        SerializedScene_Data sceneData = SceneExporter.s_sceneData;
+        SerializedScene_Geometry sceneGeom = SceneExporter.s_sceneGeom;
         
         MeshRenderer[] meshes = sceneContainer.transform.GetComponentsInChildren<MeshRenderer>();
         
@@ -68,9 +70,9 @@ public static class SceneExport_GatherTriangles
         }
         
         s_gatheredTriangles = allTriangles.ToArray();
-        scene.qtyTriangles = allTriangles.Count;
-        scene.boundMin = sceneBounds.min;
-        scene.boundMax = sceneBounds.max;
+        sceneGeom.qtyTriangles = allTriangles.Count;
+        sceneGeom.boundMin = sceneBounds.min;
+        sceneGeom.boundMax = sceneBounds.max;
     }
 
     private static List<RenderTriangle> GetTrianglesForMesh(

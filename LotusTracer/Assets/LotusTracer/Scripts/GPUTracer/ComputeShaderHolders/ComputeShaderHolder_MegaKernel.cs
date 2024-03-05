@@ -25,10 +25,10 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
         _shader.SetInt("_depthDiffuse", _scene.depthDiffuse);
         _shader.SetInt("_depthSpecular", _scene.depthSpecular);
         _shader.SetInt("_depthTransmission", _scene.depthTransmission);
-        _shader.SetInt("totalTriangles", _scene.serializedScene.qtyTriangles);
-        _shader.SetInt("qtyDirectLights", _scene.serializedScene.qtyLights);
-        _shader.SetInt("treeNodesQty", _scene.serializedScene.qtyBVHNodes);
-        _shader.SetInt("totalMaterials", _scene.serializedScene.qtyMaterials);
+        _shader.SetInt("totalTriangles", _scene.sceneGeom.qtyTriangles);
+        _shader.SetInt("qtyDirectLights", _scene.sceneData.qtyLights);
+        _shader.SetInt("treeNodesQty", _scene.sceneGeom.qtyBVHNodes);
+        _shader.SetInt("totalMaterials", _scene.sceneData.qtyMaterials);
         
         // adding all the texture maps
         _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_AtlasesAlbedo", _scene.textureArrayAlbedo);

@@ -3,8 +3,11 @@ using CapyTracerCore.Core;
 
 public static class SceneExport_GenerateBVH
 {
-    public static void Export(List<BVHNode> sortedHeapNodes, SerializedScene scene)
+    public static void Export(List<BVHNode> sortedHeapNodes)
     {
+        SerializedScene_Data sceneData = SceneExporter.s_sceneData;
+        SerializedScene_Geometry sceneGeom = SceneExporter.s_sceneGeom;
+        
         // the next steps create the NativeArray of value type stack nodes.
         // also, it sorts the NativeArray of triangleIndices to be ordered in the same way their indices
         // are sorted inside the nodes. Basically, once this finishes, the array of triangleIndices will have
@@ -15,8 +18,6 @@ public static class SceneExport_GenerateBVH
         // line would include multiple triangleIndices at once, and since you are linearly iterating it, the chances
         // of the next triangle of being already in the cache increase, compared with having a non sorted array
         StackBVH4Node[] outNodes = new StackBVH4Node[sortedHeapNodes.Count];
-
-        
         
         List<int> sortedTriangles = new List<int>();
 
@@ -66,8 +67,8 @@ public static class SceneExport_GenerateBVH
             ti += qtyTriangles;
         }
 
-        scene.qtyBVHNodes = outNodes.Length;
-        scene.bvhNodes = outNodes;
+        sceneGeom.qtyBVHNodes = outNodes.Length;
+        sceneGeom.bvhNodes = outNodes;
 
         var sortedTrianglesArray = new RenderTriangle[sortedTriangles.Count];
         
@@ -77,7 +78,7 @@ public static class SceneExport_GenerateBVH
         {
             sortedTrianglesArray[t] = SceneExport_GatherTriangles.s_gatheredTriangles[sortedTriangles[t]];
             
-            if(scene.materials[ sortedTrianglesArray[t].materialIndex ].emissiveIntensity > 0)
+            if(sceneData.materials[ sortedTrianglesArray[t].materialIndex ].emissiveIntensity > 0)
                 emissiveTriangleIndices.Add(t);
         }
 
@@ -88,13 +89,15 @@ public static class SceneExport_GenerateBVH
         SceneExport_GatherTriangles.s_gatheredTriangles = sortedTrianglesArray;
     }
 
-    public static List<BVHNode> GenerateHeapNodes(SerializedScene scene, int bvhMaxDepth, int bvhMaxNodeTriangles)
+    public static List<BVHNode> GenerateHeapNodes(int bvhMaxDepth, int bvhMaxNodeTriangles)
     {
+        SerializedScene_Geometry sceneGeom = SceneExporter.s_sceneGeom;
+        
         // first I create a BVH tree using a BVHNode which is a heap based implementation
         // each node has pointers to the children. The thing is that to be used in the Burst jobs
         // I need to pass this to a value type array. This is common too with GPU data structures,
         // you'll find that's common to do this same process to pass kd trees to the GPU.
-        BVHNode heapNodeRoot = new BVHNode(new BoundsBox(scene.boundMin, scene.boundMax), scene.qtyTriangles);
+        BVHNode heapNodeRoot = new BVHNode(new BoundsBox(sceneGeom.boundMin, sceneGeom.boundMax), sceneGeom.qtyTriangles);
         BVHSplit.SplitNode(heapNodeRoot, bvhMaxDepth, bvhMaxNodeTriangles, SceneExport_GatherTriangles.s_gatheredTriangles);
 
         List<BVHNode> heapNodes = new List<BVHNode>();

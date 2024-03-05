@@ -6,8 +6,10 @@ using UnityEngine;
 
 public static class SceneExport_GeneralElements_Job
 {
-    public static void Export(SerializedScene scene, GameObject sceneContainer)
+    public static void Export(GameObject sceneContainer)
     {
+        SerializedScene_Data scene = SceneExporter.s_sceneData; 
+        
         Camera cam = sceneContainer.transform.GetComponentInChildren<Camera>();
         scene.camera = new SerializedCamera();
         scene.camera.forward = cam.transform.forward;

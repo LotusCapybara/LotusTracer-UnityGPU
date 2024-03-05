@@ -29,28 +29,28 @@ public class TracerComputeBuffers
         _buffers = new Dictionary<string, ComputeBuffer>();
         
         // triangle vertices
-        var bufferTriangleVertices = new ComputeBuffer(renderScene.serializedScene.qtyTriangles, Marshal.SizeOf<RenderTriangle_Vertices>());
-        bufferTriangleVertices.SetData(renderScene.serializedScene.triangleVertices);
+        var bufferTriangleVertices = new ComputeBuffer(renderScene.sceneGeom.qtyTriangles, Marshal.SizeOf<RenderTriangle_Vertices>());
+        bufferTriangleVertices.SetData(renderScene.sceneGeom.triangleVertices);
         _buffers.Add(BuffersNames.TRIANGLE_VERTICES, bufferTriangleVertices);
         
         // triangle datas
-        var bufferTriangleDatas = new ComputeBuffer(renderScene.serializedScene.qtyTriangles, Marshal.SizeOf<RenderTriangle_Data>());
-        bufferTriangleDatas.SetData(renderScene.serializedScene.triangleDatas);
+        var bufferTriangleDatas = new ComputeBuffer(renderScene.sceneGeom.qtyTriangles, Marshal.SizeOf<RenderTriangle_Data>());
+        bufferTriangleDatas.SetData(renderScene.sceneGeom.triangleDatas);
         _buffers.Add(BuffersNames.TRIANGLE_DATAS, bufferTriangleDatas);
         
         // bvh tree
-        var bufferBVH = new ComputeBuffer(renderScene.serializedScene.qtyBVHNodes, Marshal.SizeOf<StackBVH4Node>());
-        bufferBVH.SetData(renderScene.serializedScene.bvhNodes);
+        var bufferBVH = new ComputeBuffer(renderScene.sceneGeom.qtyBVHNodes, Marshal.SizeOf<StackBVH4Node>());
+        bufferBVH.SetData(renderScene.sceneGeom.bvhNodes);
         _buffers.Add(BuffersNames.BVH_TREE, bufferBVH);
         
         // materials
-        var bufferMaterials = new ComputeBuffer(renderScene.serializedScene.qtyMaterials, Marshal.SizeOf<SerializedMaterial>());
-        bufferMaterials.SetData(renderScene.serializedScene.materials);
+        var bufferMaterials = new ComputeBuffer(renderScene.sceneData.qtyMaterials, Marshal.SizeOf<SerializedMaterial>());
+        bufferMaterials.SetData(renderScene.sceneData.materials);
         _buffers.Add(BuffersNames.MATERIALS, bufferMaterials);
         
         // lights
-        var bufferLights = new ComputeBuffer(renderScene.serializedScene.qtyLights, Marshal.SizeOf<RenderLight>());
-        bufferLights.SetData(renderScene.serializedScene.lights);
+        var bufferLights = new ComputeBuffer(renderScene.sceneData.qtyLights, Marshal.SizeOf<RenderLight>());
+        bufferLights.SetData(renderScene.sceneData.lights);
         _buffers.Add(BuffersNames.LIGHTS, bufferLights);
         
         // create all texture data buffers

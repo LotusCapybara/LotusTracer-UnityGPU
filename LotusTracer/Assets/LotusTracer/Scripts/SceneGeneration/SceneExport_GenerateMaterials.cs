@@ -8,10 +8,10 @@ using UnityEngine;
 
 public static class SceneExport_GenerateMaterials
 {
-    public static void Export(SerializedScene scene, GameObject sceneContainer, List<Material> unityMaterials, bool generateDebugInfo)
+    public static void Export(GameObject sceneContainer, List<Material> unityMaterials, bool generateDebugInfo)
     {
-        // todo: packing mono atlases would be nice, for instance
-        // rgba = rough, metallic, emissive, something
+        SerializedScene_Data scene = SceneExporter.s_sceneData; 
+        
         RenderSceneTextures sceneTextures = ScriptableObject.CreateInstance<RenderSceneTextures>();
         
         List<Texture2D> texturesAlbedo = new List<Texture2D>();

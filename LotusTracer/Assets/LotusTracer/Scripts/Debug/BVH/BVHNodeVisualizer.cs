@@ -20,7 +20,7 @@ public class BVHNodeVisualizer : MonoBehaviour
         this.nodeIndex = nodeIndex;
         
 
-        ref StackBVH4Node node = ref BVHVisualizer.s_serializedScene.bvhNodes[nodeIndex];
+        ref StackBVH4Node node = ref BVHVisualizer.s_serializedSceneGeometry.bvhNodes[nodeIndex];
         
         bounds = node.bounds;
         isLeaf = ((node.data >> 31) & 0x1) == 1;
@@ -108,7 +108,7 @@ public class BVHNodeVisualizer : MonoBehaviour
     
     private void OnDrawGizmosSelected()
     {
-        ref StackBVH4Node node = ref BVHVisualizer.s_serializedScene.bvhNodes[nodeIndex];
+        ref StackBVH4Node node = ref BVHVisualizer.s_serializedSceneGeometry.bvhNodes[nodeIndex];
         if (isLeaf && node.qtyTriangles > 0 && showTriangles)
         {
             Color defaultColor = Gizmos.color;
@@ -117,12 +117,12 @@ public class BVHNodeVisualizer : MonoBehaviour
             {
                 
                 Gizmos.color = Color.white;
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedScene.triangleDatas[tIndex].centerPos, 0.05f);
+                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleDatas[tIndex].centerPos, 0.05f);
                 Gizmos.color = Color.yellow;
                 
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedScene.triangleVertices[tIndex].posA, 0.05f);
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedScene.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedScene.triangleVertices[tIndex].p0p1, 0.05f);
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedScene.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedScene.triangleVertices[tIndex].p0p2, 0.05f);
+                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA, 0.05f);
+                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p1, 0.05f);
+                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p2, 0.05f);
             }
 
             Gizmos.color = defaultColor;
