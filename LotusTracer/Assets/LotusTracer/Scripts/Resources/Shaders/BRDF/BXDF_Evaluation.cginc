@@ -1,6 +1,6 @@
 static void Evaluate_Diffuse_Lambert(inout float3 f, inout float pdf, inout ScatteringData data, in EvaluationVars ev)
 {
-    f +=  data.color * ONE_OVER_PI * abs(ev.NoL);
+    f += data.color * ONE_OVER_PI * abs(ev.NoL);
     
     pdf += ONE_OVER_PI;
 }
@@ -104,7 +104,7 @@ static void Evaluate_Transmission(inout float3 f, inout float pdf, inout Scatter
     float eta2 = data.eta * data.eta;
     float jacobian = abs(LoH) / denom2; 
 
-    float3 T = pow(data.color, 0.7);
+    float3 T = data.color; //pow(data.color, 0.7);
     
     f = T * (V_ONE - (float3)F) * D * G1 * G2 * abs(ev.VoH) * jacobian * eta2 / abs(data.V.y * data.L.y);    
     // ------- pdf            

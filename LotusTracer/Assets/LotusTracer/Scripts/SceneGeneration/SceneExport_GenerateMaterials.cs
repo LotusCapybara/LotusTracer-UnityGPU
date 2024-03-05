@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -60,6 +61,7 @@ public static class SceneExport_GenerateMaterials
             int flags = 0;
             
             int diffuseModel = (int) unityMaterials[m].GetFloat("_DIFFUSEMODEL");
+            
             flags |= (0b1 <<  diffuseModel );
             
             int flipNormalGreen = unityMaterials[m].GetInt("_FlipGreen");

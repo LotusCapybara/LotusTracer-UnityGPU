@@ -115,11 +115,7 @@ public class BVHNodeVisualizer : MonoBehaviour
             
             for(int tIndex = node.startIndex; tIndex < node.startIndex + node.qtyTriangles; tIndex++)
             {
-                
-                Gizmos.color = Color.white;
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleDatas[tIndex].centerPos, 0.05f);
                 Gizmos.color = Color.yellow;
-                
                 Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA, 0.05f);
                 Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p1, 0.05f);
                 Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p2, 0.05f);

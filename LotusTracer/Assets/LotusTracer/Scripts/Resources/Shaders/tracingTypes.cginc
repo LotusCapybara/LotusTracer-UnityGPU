@@ -28,7 +28,6 @@ struct RenderTriangleData
     float3 normalA;
     float3 normalB;
     float3 normalC;
-    float3 centerPos;
     int materialIndex;
     float2 textureUV0;
     float2 textureUV1;

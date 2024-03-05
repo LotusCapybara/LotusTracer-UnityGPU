@@ -20,7 +20,6 @@ namespace CapyTracerCore.Core
         public float3 normalA;
         public float3 normalB;
         public float3 normalC;
-        public float3 centerPos;
         public int materialIndex;
         public float2 textureUV0;
         public float2 textureUV1;

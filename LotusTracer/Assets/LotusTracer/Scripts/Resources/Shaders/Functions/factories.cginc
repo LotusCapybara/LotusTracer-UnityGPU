@@ -113,8 +113,8 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     data.metallic = saturate(data.metallic);
 
     float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
-    data.ax = max(0.001, mat.roughness / aspect);
-    data.ay = max(0.001, mat.roughness * aspect);
+    data.ax = max(0.000001, (mat.roughness * mat.roughness) / aspect);
+    data.ay = max(0.000001, (mat.roughness * mat.roughness) * aspect);
 
     // F0 for dielectrics can vary really based on the eta but I found that 0.1 is all right for
     // most cases in this implementation. It looks dielectric enough and the specularity is strong
