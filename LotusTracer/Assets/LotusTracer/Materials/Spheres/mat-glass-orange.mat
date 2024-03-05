@@ -8,10 +8,12 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: mat-glass-orange
-  m_Shader: {fileID: 4800000, guid: a763675a0bf51bd479ceff63856d5dfe, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: 8a51721ece5a96f44a215098323a430c,
+    type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _DIFFUSEMODEL_LAMBERT
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -115,12 +117,14 @@ Material:
     - _CoatRoughnessPower: 0
     - _Cull: 2
     - _Cutoff: 0.5
+    - _DIFFUSEMODEL: 0
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionPower: 0
     - _EnvironmentReflections: 1
+    - _FlipGreen: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
