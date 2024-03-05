@@ -39,10 +39,18 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
     bool isInsideMedium = false;
     int innerMediumBounces = 0;
 
-    maxBounces = _isCameraMoving ? max(3, maxBounces) : maxBounces;
+    int bouncesDiffuse = 0;
+    int bouncesSpecular = 0;
+    int bouncesTransmission = 0;
     
-    for(int b = 0; b < maxBounces; b++)
+    // no max general path bounces count. Instead
+    // it uses max per bsdf model (diffuse, specular, tramission)
+    // check at the end of this for
+    for(int b = 0;; b++)
     {
+        // if(_isCameraMoving && b >= 3)
+        //     break;
+        
         if (!GetBounceHit(hitInfo, pathRay, rayDistance, b == 0))
         {
             // todo gather light from environment cube map, if any            
@@ -120,6 +128,9 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                 innerMediumBounces++;
                 if(innerMediumBounces > MAX_MEDIUM_SCATTERS)
                     break;
+
+                if(++bouncesTransmission >= _depthTransmission)
+                    break;
             }
 
             continue;
@@ -162,7 +173,23 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
             if(!bounceData.isReflection && bounceData.mediumDensity > 0)
             {
                 isInsideMedium = true;
-            } 
+            }
+
+            if(bounceData.sampledType == SAMPLE_DIFFUSE)
+            {
+                if(++bouncesDiffuse >= _depthDiffuse)
+                    break;
+            }
+            if(bounceData.sampledType == SAMPLE_SPECULAR)
+            {
+                if(++bouncesSpecular >= _depthSpecular)
+                    break;
+            }
+            if(bounceData.sampledType == SAMPLE_TRANSMISSION)
+            {
+                if(++bouncesTransmission >= _depthTransmission)
+                    break;
+            }
         }
             
         // this is called Russian Roulette. If the throughput of a ray becomes too low, we randomly

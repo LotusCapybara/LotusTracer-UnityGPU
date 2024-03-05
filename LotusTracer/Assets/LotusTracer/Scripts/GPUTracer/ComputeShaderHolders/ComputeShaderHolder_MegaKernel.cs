@@ -22,7 +22,9 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
         _shader.SetInt("width", _scene.width);
         _shader.SetInt("height", _scene.height);
         _shader.SetInt("totalSize", _scene.totalPixels);
-        _shader.SetInt("maxBounces", _scene.maxBounces);
+        _shader.SetInt("_depthDiffuse", _scene.depthDiffuse);
+        _shader.SetInt("_depthSpecular", _scene.depthSpecular);
+        _shader.SetInt("_depthTransmission", _scene.depthTransmission);
         _shader.SetInt("totalTriangles", _scene.serializedScene.qtyTriangles);
         _shader.SetInt("qtyDirectLights", _scene.serializedScene.qtyLights);
         _shader.SetInt("treeNodesQty", _scene.serializedScene.qtyBVHNodes);

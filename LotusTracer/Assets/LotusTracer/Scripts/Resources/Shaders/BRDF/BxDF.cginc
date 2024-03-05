@@ -90,15 +90,18 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
     if(randomSample < data.probs.wRangeDiffuseReflection)
     {
         validSample = Sample_Diffuse(randState, data);
+        data.sampledType = SAMPLE_DIFFUSE;
     }
     else if(randomSample < data.probs.wRangeSpecularReflection)
     {
         // same direction for both dielectric and metallic speculars
         validSample = Sample_Specular(randState, data);
+        data.sampledType = SAMPLE_SPECULAR;
     }
     else if(randomSample < data.probs.wRangeTransmission)
     {
         validSample = Sample_Transmission(randState, data);
+        data.sampledType = SAMPLE_TRANSMISSION;
     }
     else // clear coat
     {

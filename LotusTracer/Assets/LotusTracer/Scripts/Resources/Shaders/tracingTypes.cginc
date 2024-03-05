@@ -168,6 +168,8 @@ struct ScatteringData
     bool isReflection; // reflection or refraction?
     bool isThin;
 
+    int sampledType;
+    
     SampleProbabilities probs;
 };
 

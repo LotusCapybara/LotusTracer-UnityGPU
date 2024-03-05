@@ -2,6 +2,9 @@
 
 
 // global shader data
+int _depthDiffuse = 3;
+int _depthSpecular = 3;
+int _depthTransmission = 12;
 bool _isCameraMoving;
 float width;
 float height;
@@ -11,7 +14,6 @@ float4 cameraPos;
 float4 cameraForward;
 float4 cameraUp;
 float4 cameraRight;
-int maxBounces;
 float totalSize;
 int iteration;
 float indirectBoost;

@@ -10,7 +10,12 @@ public class GPUTracer_Megakernel : MonoBehaviour
 {
     public string sceneName = "Classic-Cornell";
     public float maxTime = -1;
-    public int maxBounces = 5;
+    [Range(3, 10)]
+    public int depthDiffuse = 3;
+    [Range(3, 10)]
+    public int depthSpecular = 3;
+    [Range(5, 20)]
+    public int depthTransmission = 12;
     public int totalIterations = 200;
 
     public TracerCamera tracerCamera;
@@ -79,7 +84,7 @@ public class GPUTracer_Megakernel : MonoBehaviour
     private void LoadScene()
     {
         _renderScene = new RenderScene();
-        _renderScene.Load(sceneName, _width, _height, maxBounces);
+        _renderScene.Load(sceneName, _width, _height, depthDiffuse, depthSpecular, depthTransmission);
         
         if(tracerCamera != null)
             tracerCamera.Initialize(_renderScene.renderCamera);

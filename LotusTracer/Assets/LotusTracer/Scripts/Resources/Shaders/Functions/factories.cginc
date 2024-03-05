@@ -31,7 +31,8 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     ScatteringData data;
     data.isReflection = false;
     data.L = (float) 0;
-    data.H = (float) 0;    
+    data.H = (float) 0;
+    data.sampledType = 0;
     
     data.surfacePoint = hitInfo.position;
     data.V = hitInfo.backRayDirection;

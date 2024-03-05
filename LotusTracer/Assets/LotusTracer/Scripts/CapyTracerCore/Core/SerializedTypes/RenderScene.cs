@@ -7,7 +7,8 @@ namespace CapyTracerCore.Core
 {
     public class RenderScene
     {
-        public int width, height, totalPixels, maxBounces;
+        public int width, height, totalPixels;
+        public int depthDiffuse, depthSpecular, depthTransmission;
         
         public Texture2DArray textureArrayAlbedo;
         public TextureData[] textureDataAlbedo;
@@ -28,11 +29,13 @@ namespace CapyTracerCore.Core
 
         public SerializedScene serializedScene;
 
-        public void Load(string sceneName, int width, int height, int maxBounces)
+        public void Load(string sceneName, int width, int height, int diffDepth, int specDepth, int transDepth)
         {
             this.width = width;
             this.height = height;
-            this.maxBounces = maxBounces;
+            this.depthDiffuse = diffDepth;
+            this.depthSpecular = specDepth;
+            this.depthTransmission = transDepth;
             totalPixels = width * height;
 
             string scenePath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.dat");
