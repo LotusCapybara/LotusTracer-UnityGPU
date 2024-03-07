@@ -119,5 +119,10 @@ namespace CapyTracerCore.Core
                 min, min + new float3(size.x, 0, 0), min + new float3(0, 0, size.z), min + new float3(size.x, 0, size.z),
                 max, max - new float3(size.x, 0, 0), max - new float3(0, 0, size.z), max - new float3(size.x, 0, size.z));
         }
+
+        public string ToString()
+        {
+            return $"{min.ToString()}:{max.ToString()}";
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace CapyTracerCore.Core
 {
@@ -13,7 +14,7 @@ namespace CapyTracerCore.Core
         public List<BVHNode> children;
         public int depth;
         public int firstChildIndex;
-        public int splitAxis;
+        public bool expanded = false;
         public bool isLeaf;
         public List<int> triangleIndices;
 
@@ -36,6 +37,8 @@ namespace CapyTracerCore.Core
             
             if (isLeaf)
             {
+                expanded = triangleIndices.Count > 0;
+                
                 foreach(int tIndex in triangleIndices)
                 {
                     bounds.ExpandWithPoint(allTriangles[tIndex].posA);
@@ -45,15 +48,23 @@ namespace CapyTracerCore.Core
             }
             else
             {
+                expanded = true;
+                
                 for(int i = 0; i < children.Count; i++)
                     children[i].FinishGeneration(allTriangles);
         
                 for (int i = 0; i < children.Count; i++)
                 {
-                    if (!children[i].isLeaf || children[i].triangleIndices.Count > 0)
+                    if (children[i].expanded)
                     {
                         bounds.ExpandWithBounds(children[i].bounds);    
                     }
+                }
+
+                if (float.IsInfinity(bounds.min.x))
+                {
+                    isLeaf = true;
+                    expanded = false;
                 }
                     
             }

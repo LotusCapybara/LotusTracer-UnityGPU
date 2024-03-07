@@ -216,11 +216,8 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
         int ptr = shortStack[stackIndex--];
     
         BVH4Node node = _AccelTree[ptr];
-
-        if(!DoesRayHitBounds(ray, node.bounds))
-            continue;
         
-        bool isLeaf = (node.data >> 31) & 0x1;
+        bool isLeaf = (node.data & 0x1) == 1;
 
         [branch]
         if (isLeaf)
@@ -240,7 +237,9 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
         {
             for(int ch = 0; ch < 4; ch++)
             {
-                const bool isTraversable =  (node.data >> (30 - ch)) & 0x1 ;
+                bool isTraversable =  ((node.data >> (ch + 1)) & 0x1)  == 1;                
+                isTraversable = isTraversable && DoesRayHitBounds(ray, _AccelTree[node.startIndex + ch].bounds);                    
+                
                 if(isTraversable)
                     shortStack[++stackIndex] = node.startIndex + ch;
             }

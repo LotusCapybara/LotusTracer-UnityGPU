@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CapyTracerCore.Core;
+using UnityEngine;
 
 public static class SceneExport_GenerateBVH
 {
@@ -35,8 +36,7 @@ public static class SceneExport_GenerateBVH
                 sortedTriangles.Add(originalTIndex);
             }
 
-            uint nodeData = 0;
-            nodeData = heapNode.isLeaf ? nodeData | 0x80000000 : nodeData & 0x7FFFFFFF;
+            uint nodeData = (uint) (heapNode.isLeaf ? 1 : 0);
 
             if (!heapNode.isLeaf)
             {
@@ -44,21 +44,16 @@ public static class SceneExport_GenerateBVH
                 {
                     if (!heapNode.children[ch].isLeaf ||
                         (heapNode.children[ch].isLeaf && heapNode.children[ch].triangleIndices.Count > 0))
-                        nodeData = (uint)(nodeData | (0x1 << (30 - ch)));
+                        nodeData |= (uint)(0x1 << (ch + 1));
                 }
             }
-            //
-            // string debst = "";
-            // for (int b = 0; b < 32; b++)
-            //     debst += (nodeData >> (31 - b)) & 0x1;
-            //
-            // Debug.LogError(debst);
-
+            
             StackBVH4Node stackNode = new StackBVH4Node
             {
                 data = nodeData,
                 startIndex = heapNode.isLeaf ? ti : heapNode.firstChildIndex,
                 qtyTriangles = qtyTriangles,
+                // depth = heapNode.depth,
                 bounds = heapNode.bounds
             };
 

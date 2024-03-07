@@ -11,9 +11,14 @@ public class BVHVisualizerEditor : Editor
         
         BVHVisualizer visualizer = (target as BVHVisualizer);
         
-        if (GUILayout.Button("Generate"))
+        if (GUILayout.Button("GenerateVisualization Debug File"))
         {
-            visualizer.Generate();
+            visualizer.GenerateDebugFile();
+        }
+        
+        if (GUILayout.Button("GenerateVisualization Visualization"))
+        {
+            visualizer.GenerateVisualization();
         }
         
         if (GUILayout.Button("Clear"))

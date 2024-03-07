@@ -1,13 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using CapyTracerCore.Core;
-using Unity.Mathematics;
 using UnityEngine;
+
+#if  UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class BVHNodeVisualizer : MonoBehaviour
 {
-    public bool showTriangles;
+    public bool showDebugTriangles;
     public bool isLeaf;
     public int triangles;
+    public string dataBinary;
+    public float gizmoSize = 0.06f;
 
     public Transform prefabBounds;
 
@@ -23,14 +29,15 @@ public class BVHNodeVisualizer : MonoBehaviour
         ref StackBVH4Node node = ref BVHVisualizer.s_serializedSceneGeometry.bvhNodes[nodeIndex];
         
         bounds = node.bounds;
-        isLeaf = ((node.data >> 31) & 0x1) == 1;
+        dataBinary = Convert.ToString(node.data, 2);
+        isLeaf = (node.data & 0b1) == 1;
 
         triangles = 0;
 
         if (isLeaf)
         {
             triangles = node.qtyTriangles;
-            gameObject.name = $"Leaf:" + triangles.ToString();
+            gameObject.name = $"Leaf-{depth}:" + triangles.ToString();
             return;
         }
 
@@ -48,6 +55,7 @@ public class BVHNodeVisualizer : MonoBehaviour
 
             var boundMeshFilter = nodeVisualizer.gameObject.AddComponent<MeshFilter>();
             var boundMesh = nodeVisualizer.gameObject.AddComponent<MeshRenderer>();
+            // boundMesh.enabled = false;
 
             boundMeshFilter.sharedMesh = prefabBounds.GetComponent<MeshFilter>().sharedMesh;
             boundMesh.sharedMaterial = prefabBounds.GetComponent<MeshRenderer>().sharedMaterial;
@@ -61,6 +69,7 @@ public class BVHNodeVisualizer : MonoBehaviour
             {
                 nodeVisualizer.transform.position = Vector3.zero;
                 nodeVisualizer.transform.localScale = Vector3.zero;
+                nodeVisualizer.gameObject.SetActive(false);
             }
         }
     }
@@ -105,23 +114,28 @@ public class BVHNodeVisualizer : MonoBehaviour
         // Debug.Log($"Bounds:  min={node.bounds.min}   max={node.bounds.max}");
         
     }
-    
+
+#if  UNITY_EDITOR    
     private void OnDrawGizmosSelected()
     {
+        if(!showDebugTriangles)
+            return;
+        
         ref StackBVH4Node node = ref BVHVisualizer.s_serializedSceneGeometry.bvhNodes[nodeIndex];
-        if (isLeaf && node.qtyTriangles > 0 && showTriangles)
+        if (isLeaf && node.qtyTriangles > 0)
         {
             Color defaultColor = Gizmos.color;
             
             for(int tIndex = node.startIndex; tIndex < node.startIndex + node.qtyTriangles; tIndex++)
             {
                 Gizmos.color = Color.yellow;
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA, 0.05f);
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p1, 0.05f);
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p2, 0.05f);
+                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA, gizmoSize);
+                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p1, gizmoSize);
+                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p2, gizmoSize);
             }
 
             Gizmos.color = defaultColor;
         }
     }
+#endif    
 }

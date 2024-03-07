@@ -24,9 +24,8 @@ public class SceneExporter : MonoBehaviour
     public int bvhMaxNodeTriangles = 3;
 
     public bool generateDebugInfo;
-    [FormerlySerializedAs("ignoreCreateGeometry")]
+    
     public bool ignoreCreateTextures;
-    [FormerlySerializedAs("ignoreReCreateTextures")]
     public bool ignoreCreateGeometry;
     
     private void CreateSceneAsset()
