@@ -10,7 +10,6 @@ public abstract class ComputeShaderHolder
     protected ComputeShader _shader;
     protected Dictionary<string, int> _kernelIds;
     protected RenderScene _scene;
-    protected TracerTextures _texturesHolder;
     protected TracerComputeBuffers _buffers;
     protected TracerTextures _tracerTextures;
     

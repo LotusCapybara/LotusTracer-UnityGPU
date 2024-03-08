@@ -50,9 +50,6 @@ RWTexture2D<float4> _DebugTexture;
 RWTexture2D<float4> _SamplingBufferPrev;
 RWTexture2D<float4> _SamplingBuffer;
 
-// ldr for rendering with the color space you expect to see on screen
-RWTexture2D<float4> _LDRFinalBuffer;
-
 // these buffers contain Scene information such as geometry, BVH, Lights, etc
 
 uint totalTriangles;

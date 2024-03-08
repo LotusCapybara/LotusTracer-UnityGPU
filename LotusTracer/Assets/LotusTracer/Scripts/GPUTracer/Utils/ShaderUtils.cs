@@ -10,4 +10,17 @@ public static class ShaderUtils
         rt.Create();
         return rt;
     }
+    
+    public static RenderTexture GetTemporary(int width, int height, Color color, RenderTextureFormat format, RenderTextureReadWrite space)
+    {
+        RenderTexture rt  = RenderTexture.GetTemporary(width, height, 0, format, space);
+        rt.enableRandomWrite = true;
+        rt.Create();
+        RenderTexture activeRenderTexture = RenderTexture.active;
+        RenderTexture.active = rt;
+        GL.Clear(true, true, color); 
+        RenderTexture.active = activeRenderTexture;
+        
+        return rt;
+    }
 }

@@ -5,10 +5,9 @@
 #include "../tracingVariables.cginc"
 #include "../Functions/common.cginc"
 #include "../Functions/fresnel.cginc"
+#include "../BRDF/bsdf_functions.cginc"
 #include "../Functions/factories.cginc"
 #include "../Functions/intersection.cginc"
-#include "../BRDF/bsdf_functions.cginc"
-#include "../Functions/post_processing.cginc"
 #include "../BRDF/BxDF.cginc"
 
 #define DEBUG_TYPE_COLOR 0
@@ -183,6 +182,5 @@ void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
         }
     }
 
-    _TextureDebugBuffer[id.xy] = float4(finalColor.xyz, 1);
-    _TextureDebugBuffer[id.xy] = ACESFilter( _TextureDebugBuffer[id.xy] );
+    _TextureDebugBuffer[id.xy] = float4(finalColor.xyz, 1);    
 }

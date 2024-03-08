@@ -3,7 +3,8 @@ using UnityEngine;
 
 public enum ERenderTextureType
 {
-    Final, SamplerBuffer, SamplerBufferPrev, Debug
+    Final, SamplerBuffer, SamplerBufferPrev, Debug,
+    BloomBrightness, BloomBrightnessBlur, PostProcessInput_1, PostProcessOutput_1
 }
 
 public enum EDebugBufferType
@@ -33,6 +34,17 @@ public class TracerTextures
             { ERenderTextureType.Debug, 
                 ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
            
+            { ERenderTextureType.BloomBrightness, 
+                ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
+            
+            { ERenderTextureType.BloomBrightnessBlur, 
+                ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
+            
+            { ERenderTextureType.PostProcessInput_1, 
+                ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
+            
+            { ERenderTextureType.PostProcessOutput_1, 
+                ShaderUtils.Create(width, height, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear, false)},
         };
         
         // Initialize all black

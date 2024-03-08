@@ -4,7 +4,6 @@ using UnityEngine;
 public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
 {
     public const string KERNEL_MEGA_PATH_TRACE = "Kernel_MegaPathTrace";
-    public const string KERNEL_ACCUMULATE_FINAL = "Kernel_AccumulateFinalTexture";
 
     public ComputeShaderHolder_MegaKernel(string shaderName, RenderScene renderScene,
         TracerComputeBuffers buffers, TracerTextures tracerTextures) : 
@@ -16,7 +15,6 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
     {
         // kernels
         _kernelIds.Add(KERNEL_MEGA_PATH_TRACE, _shader.FindKernel(KERNEL_MEGA_PATH_TRACE));
-        _kernelIds.Add(KERNEL_ACCUMULATE_FINAL, _shader.FindKernel(KERNEL_ACCUMULATE_FINAL));
         
         // shader variables
         _shader.SetInt("width", _scene.width);
@@ -50,6 +48,7 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
         
         // Mega Kernel
         SetTexture(KERNEL_MEGA_PATH_TRACE, "_SamplingBuffer", ERenderTextureType.SamplerBuffer);
+        SetTexture(KERNEL_MEGA_PATH_TRACE, "_SamplingBufferPrev", ERenderTextureType.SamplerBufferPrev);
         SetTexture(KERNEL_MEGA_PATH_TRACE, "_DebugTexture", ERenderTextureType.Debug);
         
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.TRIANGLE_VERTICES);
@@ -57,10 +56,5 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.BVH_TREE);
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.MATERIALS);
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.LIGHTS);
-        
-        // Accumulation Kernel Buffers
-        SetTexture(KERNEL_ACCUMULATE_FINAL, "_SamplingBuffer", ERenderTextureType.SamplerBuffer);
-        SetTexture(KERNEL_ACCUMULATE_FINAL, "_SamplingBufferPrev", ERenderTextureType.SamplerBufferPrev);
-        SetTexture(KERNEL_ACCUMULATE_FINAL, "_LDRFinalBuffer", ERenderTextureType.Final);
     }
 }

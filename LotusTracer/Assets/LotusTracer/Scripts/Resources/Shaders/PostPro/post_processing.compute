@@ -1,0 +1,121 @@
+#pragma kernel CleanBrightnessBuffer
+#pragma kernel CreateBrightnessBuffer
+#pragma kernel BlurBrightnessBuffer
+#pragma kernel ApplyBoom
+#pragma kernel ApplyCameraExposure
+#pragma kernel ApplyACES
+
+#include "../constants.cginc"
+#include "../Functions/common.cginc"
+
+float strength;
+float threshold;
+float radius;
+float resolution;
+int width;
+int height;
+float2 blurDirection;
+
+RWTexture2D<float4> _BrightnessBuffer;
+RWTexture2D<float4> _BrightnessBlurBuffer;
+
+RWTexture2D<float4> _InputBuffer1;
+RWTexture2D<float4> _OutputBuffer1;
+
+[numthreads(8, 8, 1)]
+void CleanBrightnessBuffer(uint3 id : SV_DispatchThreadID)
+{
+    _BrightnessBuffer[id.xy] = float4(0, 0, 0, 1);
+    _BrightnessBlurBuffer[id.xy] = float4(0, 0, 0, 1);
+}
+
+[numthreads(8, 8, 1)]
+void CreateBrightnessBuffer(uint3 id : SV_DispatchThreadID)
+{
+    strength = max(strength, 0.0);
+    threshold = max(threshold, 0.0);
+
+    float4 colorTexture = _InputBuffer1[id.xy];
+
+    float4 returnCol = Luminance( colorTexture.rgb ) > threshold  ?
+        float4(  strength * colorTexture.rgb , 1.0 ) : float4( 0.0 , 0.0 , 0.0 , 1.0 );
+    
+    _BrightnessBuffer[id.xy] = returnCol;
+}
+
+float3 BloomStepSample(uint2 coords, float blur, float2 dir)
+{
+    float stepConstants[5];
+    stepConstants[4] = 0.0162162162;
+    stepConstants[3] = 0.0540540541;
+    stepConstants[2] = 0.1216216216;
+    stepConstants[1] = 0.1945945946;
+    stepConstants[0] = 0.2270270270;
+
+    float3 sum = float3(0, 0, 0);
+    float4 color ;
+    
+    for(int i = 4; i >= 1; i--)
+    {
+        uint2 offset = uint2(i * blur * dir.x, i * blur * dir.y);
+        uint2 targetCoords = coords - offset;
+        targetCoords.x = clamp(targetCoords.x, 0, width - 1);
+        targetCoords.y = clamp(targetCoords.y, 0, height - 1);
+        
+        color = _BrightnessBuffer[targetCoords].rgba;
+        sum += color.rgb * stepConstants[i];
+    }
+
+    sum += _BrightnessBuffer[coords].rgb * stepConstants[0];
+    
+    for(int i = 1; i <= 4; i++)
+    {
+        uint2 offset = uint2(i * blur * dir.x, i * blur * dir.y);
+        uint2 targetCoords = coords + offset;
+        targetCoords.x = clamp(targetCoords.x, 0, width - 1);
+        targetCoords.y = clamp(targetCoords.y, 0, height - 1);
+        
+        color = _BrightnessBuffer[targetCoords].rgba;
+        sum += color.rgb * stepConstants[i];
+    }
+    
+    return sum; 
+}
+
+[numthreads(8, 8, 1)]
+void BlurBrightnessBuffer(uint3 id : SV_DispatchThreadID)
+{
+    float blur = radius/resolution;
+
+    float3 color =  BloomStepSample(id.xy, blur, blurDirection);
+    _BrightnessBlurBuffer[id.xy] = float4(color.rgb, 1.0);
+}
+
+[numthreads(8, 8, 1)]
+void ApplyBoom(uint3 id : SV_DispatchThreadID)
+{
+    _OutputBuffer1[id.xy] = float4( _InputBuffer1[id.xy].rgb + _BrightnessBlurBuffer[id.xy].rgb , 1.0 );
+}
+
+[numthreads(8, 8, 1)]
+void ApplyCameraExposure(uint3 id : SV_DispatchThreadID)
+{
+    // Using exp to simulate camera-like exposure adjustment
+    // I could have created a variable uExposure or fStops, but I decided
+    // to re-utilize this one instead
+    float exp = pow(2.0, strength);
+    _OutputBuffer1[id.xy] = float4(_InputBuffer1[id.xy].rgb * exp, 1.0);
+}
+
+[numthreads(8, 8, 1)]
+void ApplyACES(uint3 id : SV_DispatchThreadID)
+{
+    float3 col = _InputBuffer1[id.xy];
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
+    float3 toneMapped = saturate((col * (a * col + b)) / (col * (c * col + d) + e));    
+    _OutputBuffer1[id.xy] = float4(toneMapped.rgb, 1.0);
+}

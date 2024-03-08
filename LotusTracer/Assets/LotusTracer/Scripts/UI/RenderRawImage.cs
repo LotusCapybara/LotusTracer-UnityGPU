@@ -14,11 +14,11 @@ public class RenderRawImage : MonoBehaviour
     [SerializeField]
     private GPUTracer_Megakernel tracerMegakernel;
 
+    [SerializeField]
     private RawImage _rawImage;
 
     private void Start()
     {
-        _rawImage = GetComponent<RawImage>();
         _rawImage.color = Color.white;
     }
 

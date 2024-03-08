@@ -27,6 +27,13 @@ public class GPUTracer_Megakernel : MonoBehaviour
     
     public bool createCameraDebugBuffers;
 
+    public float bloomStrength = 1f;
+    public float bloomThreshold = 1f;
+    public float bloomRadius = 1;
+    
+    [Range(-2f, 2f)]
+    public float ppCameraExposure = 0;
+
     private int _width;
     private int _height;
     
@@ -37,7 +44,7 @@ public class GPUTracer_Megakernel : MonoBehaviour
     private ComputeShaderHolder_CameraBuffers _csCameraBuffers;
     private ComputeShaderHolder_MegaKernel _csMegaKernel;
 
-    private ComputeShaderHolder_Bloom _csBloom;
+    private ComputeShaderHolder_PostProcess _csPostProcess;
 
     private RenderScene _renderScene;
     private TracerTextures _textures;
@@ -107,7 +114,7 @@ public class GPUTracer_Megakernel : MonoBehaviour
         _csMegaKernel = 
             new ComputeShaderHolder_MegaKernel("Shaders/EntryPoints/entry_mega_kernel", _renderScene,_computeBuffers, _textures);
 
-        _csBloom = new ComputeShaderHolder_Bloom("Shaders/PostPro/pp_bloom", _renderScene, _computeBuffers, _textures);
+        _csPostProcess = new ComputeShaderHolder_PostProcess("Shaders/PostPro/post_processing", _renderScene, _computeBuffers, _textures);
     }
     
     // this routine executes all the iterations of rendering in compute shaders
@@ -140,9 +147,19 @@ public class GPUTracer_Megakernel : MonoBehaviour
                 _csMegaKernel.shader.SetInt("iteration", _indirectIteration);
                 
                 _csMegaKernel.DispatchKernelFull(ComputeShaderHolder_MegaKernel.KERNEL_MEGA_PATH_TRACE, _width, _height);
-                _csMegaKernel.DispatchKernelFull(ComputeShaderHolder_MegaKernel.KERNEL_ACCUMULATE_FINAL, _width, _height);
-            
-                //_csBloom.ExecuteBloom();
+
+                _csPostProcess.ResetFrame();
+                
+                if (!tracerCamera.isMoving)
+                {
+                    _csPostProcess.bloomStrength = bloomStrength;
+                    _csPostProcess.bloomThreshold = bloomThreshold;
+                    _csPostProcess.bloomRadius = bloomRadius;
+                    _csPostProcess.ppCameraExposure = ppCameraExposure;
+                    _csPostProcess.ExecuteKernels();
+                }
+                
+                _csPostProcess.ToneMapToLDR();
             
                 _indirectIteration++;
                 totalTime = _stopwatch.Elapsed.TotalSeconds;
@@ -177,7 +194,7 @@ public class GPUTracer_Megakernel : MonoBehaviour
             _csMegaKernel.UpdateCameraGPUData();
             _csCameraBuffers.UpdateCameraGPUData();
             yield return null;
-            // CreateCameraDebugBuffers();
+            
             _wasCameraMovingLastFrame = true;
         }
         else if (_wasCameraMovingLastFrame)

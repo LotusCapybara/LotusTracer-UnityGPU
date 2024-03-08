@@ -114,5 +114,5 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
     
     ScatteringToWorld(data);
 
-    return isValid;
+    return isValid && validSample;
 }

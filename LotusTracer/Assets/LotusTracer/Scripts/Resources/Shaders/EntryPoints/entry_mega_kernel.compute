@@ -1,19 +1,17 @@
 #pragma target 6.0
 
 #pragma kernel Kernel_MegaPathTrace
-#pragma kernel Kernel_AccumulateFinalTexture
 
 #include "../constants.cginc"
 #include "../tracingTypes.cginc"
 #include "../tracingVariables.cginc"
 #include "../Functions/common.cginc"
 #include "../Functions/fresnel.cginc"
-#include "../Functions/factories.cginc"
 #include "../BRDF/bsdf_functions.cginc"
+#include "../Functions/factories.cginc"
 #include "../Functions/intersection.cginc"
 #include "../BRDF/BxDF.cginc"
 #include "../Functions/nee_direct_lights.cginc"
-#include "../Functions/post_processing.cginc"
 
 [numthreads(8,8,1)]
 void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
@@ -48,9 +46,6 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
     // check at the end of this for
     for(int b = 0;; b++)
     {
-        // if(_isCameraMoving && b >= 3)
-        //     break;
-        
         if (!GetBounceHit(hitInfo, pathRay, rayDistance, b == 0))
         {
             // todo use cube maps too?
@@ -67,12 +62,7 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
 
         bounceData = MakeScatteringData(randState, hitInfo);
 
-        // self emission
-        if(bounceData.emissionPower > 0 && bounceData.transmissionPower <= 0.1)
-        {
-            radiance += throughput * bounceData.emissionPower * bounceData.color;
-            break;
-        }
+        
         
                    
         // this part of code checks if the path is inside a scattering medium (like water, gelly.. basically translucent
@@ -121,10 +111,6 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
                 
                 throughput *= scatterF / bouncePDF;
 
-                float lum = Luminance(throughput);
-                if(lum <= 0 || lum > 100)
-                    break;
-
                 b --;
                 innerMediumBounces++;
                 if(innerMediumBounces > MAX_MEDIUM_SCATTERS)
@@ -139,6 +125,14 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
 
         isInsideMedium = false;
         innerMediumBounces = 0;
+
+        // self emission
+        if(bounceData.emissionPower > 0)
+        {
+            radiance += throughput * bounceData.emissionPower * bounceData.color;
+            break;
+        }
+        
 
         // Note here on Emissive Materials MIS
         // Some implementations seem to also add a direct sample towards emissive meshes/triangles
@@ -212,29 +206,11 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
         }
     }
 
-    if(Luminance(throughput) > 10)
-        return;
+    radiance = min(radiance, 50);
     
-    _SamplingBuffer[id.xy] = float4( radiance.xyz , 1) ;
-}
-
-
-[numthreads(8,8,1)]
-void Kernel_AccumulateFinalTexture (uint3 id : SV_DispatchThreadID)
-{
-    float iterationWeight = 1.0 / (iteration + 1.0);
-
-    
-    
-    _SamplingBuffer[id.xy] = _SamplingBufferPrev[id.xy] * (1.0 - iterationWeight) + (_SamplingBuffer[id.xy] * iterationWeight);
+    float iterationWeight = 1.0 / (iteration + 1.0);   
+    float3 accumulated = _SamplingBufferPrev[id.xy] * (1.0 - iterationWeight) + (radiance.xyz * iterationWeight);
+    _SamplingBuffer[id.xy] = float4(accumulated.xyz, 1);
     _SamplingBufferPrev[id.xy] = _SamplingBuffer[id.xy];
     
-    
-    // ldr for rendering with the color space you expect to see on screen
-
-    // todo: re add aces after being "sure" models are fine
-    float4 finalColor =  ACESFilter(_SamplingBuffer[id.xy]);
-
-    // float4 finalColor =  _SamplingBuffer[id.xy];    
-    _LDRFinalBuffer[id.xy] = finalColor;
 }
