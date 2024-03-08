@@ -12,12 +12,13 @@
 ## Images
 Example images. Assets were taken from Sketchfab, please follow these amazing creators.
 
-![Image](https://i.gyazo.com/47511db2c23eed9a0bf2cece43392842.jpg)
+![Image](https://i.gyazo.com/38410bf230a6c959e83f7db609b77d04.jpg)
 Asset courtesy of [Adrian Carter](https://sketchfab.com/Adrian.Carter3D).
+Original art from Square (Chronno Trigger)
 
-![Image](https://i.gyazo.com/01231894434f969b6f34f662abb5454f.jpg)
+![Image](https://i.gyazo.com/7d521643791533d8e780414af6f43ecf.jpg)
 Asset courtesy of [JuanG3D](https://sketchfab.com/juang3d).
-
+Original art from Epic (Fall Guys)
 
 ## About
 
