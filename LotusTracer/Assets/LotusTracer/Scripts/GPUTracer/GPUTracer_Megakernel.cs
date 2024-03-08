@@ -8,6 +8,7 @@ using Random = UnityEngine.Random;
 // I'd like to implement a Wavefront version of the tracer at some point
 public class GPUTracer_Megakernel : MonoBehaviour
 {
+    [Header("Path Tracer")]
     public string sceneName = "Classic-Cornell";
     public float maxTime = -1;
     [Range(3, 10)]
@@ -18,15 +19,16 @@ public class GPUTracer_Megakernel : MonoBehaviour
     public int depthTransmission = 12;
     public int totalIterations = 200;
 
+    [Header("Scene")]
     public TracerCamera tracerCamera;
     public bool overrideCameraFov;
     public float overridenFov = 60f;
 
     public Color ambientLightColor = Color.white;
     public float ambientLightPower = 1.0f;
-    
-    public bool createCameraDebugBuffers;
 
+    [Header("Post Processing")]
+    public bool enabledPostProcessing = true;
     public float bloomStrength = 1f;
     public float bloomThreshold = 1f;
     public float bloomRadius = 1;
@@ -34,6 +36,9 @@ public class GPUTracer_Megakernel : MonoBehaviour
     [Range(-2f, 2f)]
     public float ppCameraExposure = 0;
 
+    [Header("Debug")]
+    public bool createCameraDebugBuffers;
+    
     private int _width;
     private int _height;
     
@@ -150,7 +155,7 @@ public class GPUTracer_Megakernel : MonoBehaviour
 
                 _csPostProcess.ResetFrame();
                 
-                if (!tracerCamera.isMoving)
+                if (enabledPostProcessing && !tracerCamera.isMoving)
                 {
                     _csPostProcess.bloomStrength = bloomStrength;
                     _csPostProcess.bloomThreshold = bloomThreshold;
@@ -176,6 +181,8 @@ public class GPUTracer_Megakernel : MonoBehaviour
 
         totalTime = _stopwatch.Elapsed.TotalSeconds;
         averageSampleTime = totalTime / indirectIteration;
+        
+        SaveImage("-final");
         
         Debug.Log("Finished");
     }
@@ -217,5 +224,10 @@ public class GPUTracer_Megakernel : MonoBehaviour
         if(!createCameraDebugBuffers)
             return;
         _csCameraBuffers.DispatchKernelFull(ComputeShaderHolder_CameraBuffers.KERNEL_DEBUG_TEXTURES, _width, _height);
+    }
+
+    public void SaveImage(string nameSubfix = "")
+    {
+        RenderSaver.SaveTexture(sceneName + nameSubfix, _textures.textures[ERenderTextureType.Final]);
     }
 }

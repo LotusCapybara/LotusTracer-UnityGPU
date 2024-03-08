@@ -5,6 +5,9 @@ Assets/DevScenes.meta
 Assets/DebugTemp/
 Assets/DebugTemp.meta
 
+Assets/Renders/
+Assets/Renders.meta
+
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #
