@@ -40,7 +40,6 @@ float3 RandomDirectionInHemisphereCosWeighted(inout uint state)
     return normalize( dir );
 }
 
-
 float3 SphericalUniformSample(inout uint randState)
 {
     float theta = acos(1.0 - 2.0 * GetRandom0to1(randState));

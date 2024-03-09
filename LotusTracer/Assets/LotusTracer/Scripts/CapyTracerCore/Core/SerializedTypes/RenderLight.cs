@@ -21,5 +21,8 @@ namespace CapyTracerCore.Core
         public float angle;
         public int type;
         public int castShadows;
+        public int receiveHits;
+        public float radius;
+        public float area;
     }
 }

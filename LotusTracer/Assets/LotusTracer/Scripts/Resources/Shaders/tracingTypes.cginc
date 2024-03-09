@@ -47,6 +47,9 @@ struct RenderLight
     float angle;
     int type;
     int castShadows;
+    int receiveHits;
+    float radius;
+    float area;
 };
 
 struct RenderMaterial
@@ -93,7 +96,8 @@ struct BVH4Node
 
 struct TriangleHitInfo
 {
-    int isFrontFace;
+    bool isTriangle; // either triangle or sdf (for point lights, etc)
+    bool isFrontFace;
     float distance;
     float3 normal;
     float3 tangent;

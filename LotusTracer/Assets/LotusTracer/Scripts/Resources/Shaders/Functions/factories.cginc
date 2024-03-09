@@ -26,7 +26,19 @@ SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData 
 
 ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitInfo)
 {
-    RenderMaterial mat = _Materials[hitInfo.materialIndex];
+    RenderMaterial mat;
+
+    if(hitInfo.isTriangle)
+    {
+        mat = _Materials[hitInfo.materialIndex];        
+    }
+    else
+    {
+        mat = (RenderMaterial) -1;
+        mat.color = _Lights[hitInfo.materialIndex].color;
+        mat.emissiveIntensity = _Lights[hitInfo.materialIndex].intensity;
+        mat.mediumDensity = 0;
+    }
     
     ScatteringData data;
     data.isReflection = false;

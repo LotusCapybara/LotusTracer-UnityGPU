@@ -27,16 +27,35 @@ public static class SceneExport_GeneralElements_Job
 
             for (int l = 0; l < lights.Length; l++)
             {
+                LotusLight lotusLight = lights[l].transform.GetComponent<LotusLight>();
+                if (lotusLight == null)
+                {
+                    lotusLight = lights[l].gameObject.AddComponent<LotusLight>();
+                    lotusLight.intensity = lights[l].intensity;
+                    lotusLight.radius = 0.1f;
+                }
+
+                switch (lights[l].type)
+                {
+                    case LightType.Point:
+                        lotusLight.area = 4f * math.PI * lotusLight.radius * lotusLight.radius;
+                        break;
+                }
+                
+                
                 scene.lights[l] = new RenderLight
                 {
                     position = lights[l].transform.position,
                     forward = lights[l].transform.forward,
-                    intensity = lights[l].intensity,
+                    intensity = lotusLight.intensity,
                     range = lights[l].range,
                     angle = lights[l].spotAngle,
                     type = (int) lights[l].type,
-                    color = new float4(lights[l].color.r, lights[l].color.g, lights[l].color.b, 1f),
-                    castShadows = (lights[l].shadows != LightShadows.None)? 1 : 0
+                    color = new float4(lotusLight.color.r, lotusLight.color.g, lotusLight.color.b, 1f),
+                    castShadows = (lights[l].shadows != LightShadows.None)? 1 : 0,
+                    receiveHits = lotusLight.receiveHits ? 1 : 0,
+                    radius = lotusLight.radius,
+                    area = lotusLight.area
                 };
             }
         }

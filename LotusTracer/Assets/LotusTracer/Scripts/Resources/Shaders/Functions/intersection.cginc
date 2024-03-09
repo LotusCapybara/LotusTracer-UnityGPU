@@ -1,4 +1,40 @@
 
+float RayToSphere(in RenderRay ray, in float3 center, float radius)
+{
+    // solutions for t if the ray intersects
+    float t0, t1; 
+
+    float radius2 = radius * radius;
+    
+    // geometric solution
+    float3 L = center - ray.origin;
+    float tca = dot(L, ray.direction);
+    float d2 = dot(L, L) - tca * tca;    
+
+    if (d2 > radius2)
+        return -1.0;
+    
+    float thc = sqrt(radius2 - d2);
+    t0 = tca - thc;
+    t1 = tca + thc;
+    
+    if (t0 > t1)
+    {
+        float temp = t1;
+        t1 = t0;
+        t0 = temp;
+    }
+
+    if (t0 < 0)
+    {
+        t0 = t1; // if t0 is negative, let's use t1 instead
+        if (t0 < 0)
+            return -1; // both t0 and t1 are negative
+    }
+    
+    return t0; 
+}
+
 float RayDistanceToBounds(in RenderRay ray, in BoundsBox bounds)
 {
     float tmin = - INFINITY;
@@ -210,6 +246,20 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
     
     float closestDistance = maxDistance;
     int hittingTriangleIndex = -1;
+    int hittingLightIndex = -1;
+
+    for(int l = 0; l < qtyDirectLights; l++)
+    {
+        if(_Lights[l].receiveHits)
+        {
+            float hitDist = RayToSphere(ray, _Lights[l].position, _Lights[l].radius);
+            if(hitDist > 0)
+            {
+                hittingLightIndex = l;
+                closestDistance = hitDist;
+            }    
+        }
+    }
     
     while (stackIndex >= 0 && stackIndex < BVH_STACK_SIZE)
     {
@@ -249,8 +299,27 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
     [branch]
     if (hittingTriangleIndex >= 0)
     {
+        hitInfo.isTriangle = true;
         GetTriangleHitInfo(hittingTriangleIndex, ray, maxDistance, hitInfo);
+        return true;        
     }
 
-    return hittingTriangleIndex >= 0;
+    if(hittingLightIndex >= 0)
+    {
+        hitInfo.isTriangle = false;
+        hitInfo.isFrontFace = true;
+        hitInfo.distance = closestDistance;
+        hitInfo.normal = - ray.direction;
+        hitInfo.backRayDirection = - ray.direction;
+        hitInfo.position = _Lights[hittingLightIndex].position;
+
+        hitInfo.triangleIndex = - 1;
+        hitInfo.materialIndex = hittingLightIndex;
+        hitInfo.textureUV = float2(0, 0);
+
+        CreateCoordinateSystem(hitInfo.normal, hitInfo.tangent, hitInfo.biTangent);
+        return true;
+    }
+    
+    return false;
 }

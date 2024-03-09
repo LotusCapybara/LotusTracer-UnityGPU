@@ -25,6 +25,7 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
         _shader.SetInt("totalTriangles", _scene.sceneData.qtyLights);
         _shader.SetInt("treeNodesQty", _scene.sceneGeom.qtyBVHNodes);
         _shader.SetInt("totalMaterials", _scene.sceneData.qtyMaterials);
+        _shader.SetInt("qtyDirectLights", _scene.sceneData.qtyLights);
         
         SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureDebugBuffer", ERenderTextureType.Debug);
         
@@ -42,6 +43,8 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
         
         _shader.SetTexture(_kernelIds[KERNEL_DEBUG_TEXTURES], "_AtlasesEmission", _scene.textureArrayEmission);
         SetBuffer(KERNEL_DEBUG_TEXTURES, BuffersNames.MAP_DATA_EMISSION);
+        
+        SetBuffer(KERNEL_DEBUG_TEXTURES, BuffersNames.LIGHTS);
         
 
         // buffers for each kernel

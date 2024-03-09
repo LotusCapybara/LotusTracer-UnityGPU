@@ -113,9 +113,12 @@ namespace CapyTracerCore.Core
             light.range = reader.ReadSingle();
             light.intensity = reader.ReadSingle();
             light.angle = reader.ReadSingle();
-            
             light.type = reader.ReadInt32();
-
+            light.castShadows = reader.ReadInt32();
+            light.receiveHits = reader.ReadInt32();
+            light.radius = reader.ReadSingle();
+            light.area = reader.ReadSingle();
+            
             return light;
         }
      

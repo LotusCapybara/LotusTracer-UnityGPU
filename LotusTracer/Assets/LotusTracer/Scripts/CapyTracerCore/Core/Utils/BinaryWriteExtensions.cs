@@ -94,6 +94,10 @@ namespace CapyTracerCore.Core
             writer.Write(light.intensity);
             writer.Write(light.angle);
             writer.Write(light.type);
+            writer.Write(light.castShadows);
+            writer.Write(light.receiveHits);
+            writer.Write(light.radius);
+            writer.Write(light.area);
         }
         
         public static void WriteBinary(this StackBVH4Node node, BinaryWriter writer)

@@ -1,3 +1,39 @@
+struct LightSample
+{
+    float3 normal;
+    float3 emission;
+    float3 direction;
+    float dist;
+    float pdf;
+};
+
+static LightSample GetPointLightContribution(inout uint randState, in ScatteringData data, in RenderLight light)
+{
+    float lightCenterToSurface = data.surfacePoint - light.position;
+    float distToLightCenter = length(lightCenterToSurface);
+    lightCenterToSurface /= distToLightCenter;
+
+    float3 sampledDir = SphericalUniformSample(randState);
+
+    float3 T;
+    float3 B;
+    CreateCoordinateSystem(lightCenterToSurface, T, B);
+    sampledDir = ToLocal(T, B, lightCenterToSurface, sampledDir);
+
+    float3 lightSurfacePos = light.position + sampledDir * light.radius;
+
+    LightSample lightSample;
+    lightSample.direction = lightSurfacePos - data.surfacePoint;
+    lightSample.dist = length(lightSample.direction);
+    float distSq = lightSample.dist * lightSample.dist;
+
+    lightSample.direction /= lightSample.dist;
+    lightSample.normal = normalize(lightSurfacePos - light.position);
+    lightSample.emission = light.color * light.intensity / distSq;
+    lightSample.pdf = INV_4_PI; 
+
+    return lightSample;
+}
 
 static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float bouncePDF, bool comesFromMedium)
 {
@@ -14,15 +50,16 @@ static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float b
     int lightIndex = (int)(GetRandom0to1(randState) * qtyDirectLights);
     lightIndex = clamp(lightIndex, 0, qtyDirectLights - 1);
 
-    float3 surfacePoint = data.surfacePoint + data.WorldNormal * EPSILON;
+
     
-    data.L = normalize(_Lights[lightIndex].position - surfacePoint);
+    
+
+    LightSample lightSample = GetPointLightContribution(randState, data, _Lights[lightIndex]);
+    float3 lightContribution = lightSample.emission;
+
+    data.L = lightSample.direction;
     data.H = normalize(data.L + data.V);
     data.isReflection = dot(data.L, data.WorldNormal) > 0;
-
-    float dist = distance(data.surfacePoint, _Lights[lightIndex].position);
-
-    float3 lightContribution = _Lights[lightIndex].color * _Lights[lightIndex].intensity /  (dist * dist);  // GetLightColorContribution(lightIndex, data, dist);
 
     float3 tramissionPower = V_ONE;
 
@@ -33,7 +70,7 @@ static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float b
         shadowRay.direction = normalize(data.L);
         shadowRay.origin = data.surfacePoint + data.L * EPSILON;
 
-        float totalDist = dist;
+        float totalDist = lightSample.dist;
     
         for(int i = 0; i < 5; i++)
         {
@@ -72,7 +109,7 @@ static float3 GetLightsNEE(inout uint randState, in ScatteringData data, float b
     if(lightPDF > 0)
     {
         float mis = PowerHeuristic(bouncePDF, lightPDF);
-        radiance += lightContribution * mis * lightBSDF / lightPDF;    
+        radiance += lightContribution * mis * lightBSDF / lightSample.pdf;    
     }
 
     return radiance * tramissionPower;
