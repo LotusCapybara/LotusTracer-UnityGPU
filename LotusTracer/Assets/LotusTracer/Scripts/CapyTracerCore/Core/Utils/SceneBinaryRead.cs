@@ -22,6 +22,16 @@ namespace CapyTracerCore.Core
             return f3;
         }
         
+        public static uint3 ReadUInt3(BinaryReader reader)
+        {
+            uint3 u2 = new uint3();
+            u2.x = reader.ReadUInt32();
+            u2.y =  reader.ReadUInt32();
+            u2.z =  reader.ReadUInt32();
+            return u2;
+        }
+        
+        
         public static float4 ReadFloat4(BinaryReader reader)
         {
             float4 f4 = float4.zero;
@@ -130,8 +140,15 @@ namespace CapyTracerCore.Core
             node.startIndex = reader.ReadInt32();
             node.qtyTriangles = reader.ReadInt32();
 
-            node.bounds = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
-
+            node.bounds1 = ReadUInt3(reader);
+            node.bounds2 = ReadUInt3(reader);
+            node.bounds3 = ReadUInt3(reader);
+            node.bounds4 = ReadUInt3(reader);
+            node.bounds5 = ReadUInt3(reader);
+            node.bounds6 = ReadUInt3(reader);
+            node.bounds7 = ReadUInt3(reader);
+            node.bounds8 = ReadUInt3(reader);
+            
             return node;
         }
         

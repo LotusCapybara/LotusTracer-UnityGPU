@@ -1,14 +1,11 @@
 ﻿using System.Collections.Generic;
-using Unity.Mathematics;
-using UnityEngine;
 
 namespace CapyTracerCore.Core
 {
 
     public class BVHNode
     {
-        public static readonly int QTY_SPLITS = 2;
-        public static readonly int QTY_CHILDREN = (int) math.pow(2, QTY_SPLITS);
+        public static readonly int QTY_SPLITS = 3;
         
         public BoundsBox bounds;
         public List<BVHNode> children;

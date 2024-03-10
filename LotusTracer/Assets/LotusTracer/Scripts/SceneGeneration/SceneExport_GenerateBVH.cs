@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CapyTracerCore.Core;
+using Unity.Mathematics;
 using UnityEngine;
 
 public static class SceneExport_GenerateBVH
@@ -23,6 +24,9 @@ public static class SceneExport_GenerateBVH
         List<int> sortedTriangles = new List<int>();
 
         int ti = 0;
+
+        var sceneBounds = sortedHeapNodes[0].bounds;
+        var sceneExtends = sortedHeapNodes[0].bounds.GetSize();
 
         for (int i = 0; i < sortedHeapNodes.Count; i++)
         {
@@ -52,15 +56,39 @@ public static class SceneExport_GenerateBVH
             {
                 data = nodeData,
                 startIndex = heapNode.isLeaf ? ti : heapNode.firstChildIndex,
-                qtyTriangles = qtyTriangles,
-                // depth = heapNode.depth,
-                bounds = heapNode.bounds
+                qtyTriangles = qtyTriangles
             };
+
+            if (heapNode.children == null || heapNode.children.Count <= 0)
+            {
+                stackNode.bounds1 = new uint3();
+                stackNode.bounds2 = new uint3();
+                stackNode.bounds3 = new uint3();
+                stackNode.bounds4 = new uint3();
+                stackNode.bounds5 = new uint3();
+                stackNode.bounds6 = new uint3();
+                stackNode.bounds7 = new uint3();
+                stackNode.bounds8 = new uint3();
+            }
+            else
+            {
+                stackNode.bounds1 = BVHUtils.Compress(heapNode.children[0].bounds, sceneBounds, sceneExtends);
+                stackNode.bounds2 = BVHUtils.Compress(heapNode.children[1].bounds, sceneBounds, sceneExtends);
+                stackNode.bounds3 = BVHUtils.Compress(heapNode.children[2].bounds, sceneBounds, sceneExtends);
+                stackNode.bounds4 = BVHUtils.Compress(heapNode.children[3].bounds, sceneBounds, sceneExtends);
+                stackNode.bounds5 = BVHUtils.Compress(heapNode.children[4].bounds, sceneBounds, sceneExtends);
+                stackNode.bounds6 = BVHUtils.Compress(heapNode.children[5].bounds, sceneBounds, sceneExtends);
+                stackNode.bounds7 = BVHUtils.Compress(heapNode.children[6].bounds, sceneBounds, sceneExtends);
+                stackNode.bounds8 = BVHUtils.Compress(heapNode.children[7].bounds, sceneBounds, sceneExtends);
+            }
 
             outNodes[i] = stackNode;
 
             ti += qtyTriangles;
         }
+
+        sceneGeom.boundMin = sceneBounds.min - new float3(0.001f, 0.001f, 0.001f);
+        sceneGeom.boundMax = sceneBounds.max + new float3(0.001f, 0.001f, 0.001f);
 
         sceneGeom.qtyBVHNodes = outNodes.Length;
         sceneGeom.bvhNodes = outNodes;

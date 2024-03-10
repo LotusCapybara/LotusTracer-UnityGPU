@@ -1,4 +1,27 @@
 
+float4 _decompressionProduct;
+
+static BoundsBox Decompress(in uint3 compressedCoords)
+{
+    BoundsBox sceneBounds = _SceneBounds[0];
+    float3 bias = sceneBounds.min;
+    float3 scale = _decompressionProduct;
+        
+    uint3 minCompressed = compressedCoords & 0xFFFF;
+    uint3 maxCompressed = (compressedCoords >> 16) & 0xFFFF;        
+        
+        
+    float3 min = (minCompressed * scale) + bias;
+    float3 max = (maxCompressed * scale) + bias;
+
+    BoundsBox bounds;
+    bounds.min = min - (float3) 0.001;
+    bounds.max = max + (float3) 0.001;
+    
+    return bounds;
+}
+
+
 float RayToSphere(in RenderRay ray, in float3 center, float radius)
 {
     // solutions for t if the ray intersects
@@ -285,13 +308,29 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
         }
         else
         {
-            for(int ch = 0; ch < 4; ch++)
+            BoundsBox bounds[8];
+            bool isTrasversable[8];
+            
+            for(int ch = 0; ch < 8; ch++)
             {
-                bool isTraversable =  ((node.data >> (ch + 1)) & 0x1)  == 1;                
-                isTraversable = isTraversable && DoesRayHitBounds(ray, _AccelTree[node.startIndex + ch].bounds);                    
-                
-                if(isTraversable)
+                isTrasversable[ch] =  ((node.data >> (ch + 1)) & 0x1)  == 1;                
+            }
+
+            bounds[0] = Decompress(node.bounds1);
+            bounds[1] = Decompress(node.bounds2);
+            bounds[2] = Decompress(node.bounds3);
+            bounds[3] = Decompress(node.bounds4);
+            bounds[4] = Decompress(node.bounds5);
+            bounds[5] = Decompress(node.bounds6);
+            bounds[6] = Decompress(node.bounds7);
+            bounds[7] = Decompress(node.bounds8);
+            
+            for(int ch = 0; ch < 8; ch++)
+            {
+                if(isTrasversable[ch] && DoesRayHitBounds(ray, bounds[ch]))
+                {
                     shortStack[++stackIndex] = node.startIndex + ch;
+                }                    
             }
         }       
     }    

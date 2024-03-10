@@ -25,6 +25,13 @@ namespace CapyTracerCore.Core
             writer.Write(f4.z);
             writer.Write(f4.w);
         }
+        
+        public static void WriteBinary(this uint3 u3, BinaryWriter writer)
+        {
+            writer.Write(u3.x);
+            writer.Write(u3.y);
+            writer.Write(u3.z);
+        }
     
         public static void WriteBinary(this SerializedMaterial mat, BinaryWriter writer)
         {
@@ -105,8 +112,14 @@ namespace CapyTracerCore.Core
             writer.Write(node.data);
             writer.Write(node.startIndex);
             writer.Write(node.qtyTriangles);
-            node.bounds.min.WriteBinary(writer);
-            node.bounds.max.WriteBinary(writer);
+            node.bounds1.WriteBinary(writer);
+            node.bounds2.WriteBinary(writer);
+            node.bounds3.WriteBinary(writer);
+            node.bounds4.WriteBinary(writer);
+            node.bounds5.WriteBinary(writer);
+            node.bounds6.WriteBinary(writer);
+            node.bounds7.WriteBinary(writer);
+            node.bounds8.WriteBinary(writer);
         }
     }
 }

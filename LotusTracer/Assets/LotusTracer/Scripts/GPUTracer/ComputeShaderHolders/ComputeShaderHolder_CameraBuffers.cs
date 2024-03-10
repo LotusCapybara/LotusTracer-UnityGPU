@@ -1,4 +1,6 @@
 ﻿using CapyTracerCore.Core;
+using Unity.Mathematics;
+using UnityEngine;
 
 public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
 {
@@ -27,6 +29,14 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
         _shader.SetInt("totalMaterials", _scene.sceneData.qtyMaterials);
         _shader.SetInt("qtyDirectLights", _scene.sceneData.qtyLights);
         
+        BoundsBox sceneBounds = new BoundsBox(_scene.sceneGeom.boundMin, _scene.sceneGeom.boundMax);
+        sceneBounds.min -= new float3(0.1f, 0.1f, 0.1f);
+        sceneBounds.max += new float3(0.1f, 0.1f, 0.1f);
+        
+        Vector3 sceneExtends = sceneBounds.GetSize();
+        _shader.SetVector("_decompressionProduct", new Vector4(sceneExtends.x, sceneExtends.y, sceneExtends.z) / 65535f);
+        
+        
         SetTexture(KERNEL_DEBUG_TEXTURES, "_TextureDebugBuffer", ERenderTextureType.Debug);
         
         _shader.SetTexture(_kernelIds[KERNEL_DEBUG_TEXTURES], "_AtlasesAlbedo", _scene.textureArrayAlbedo);
@@ -46,6 +56,7 @@ public class ComputeShaderHolder_CameraBuffers : ComputeShaderHolder
         
         SetBuffer(KERNEL_DEBUG_TEXTURES, BuffersNames.LIGHTS);
         
+        SetBuffer(KERNEL_DEBUG_TEXTURES, BuffersNames.SCENE_BOUNDS);
 
         // buffers for each kernel
         foreach (var kvpKernels in _kernelIds)

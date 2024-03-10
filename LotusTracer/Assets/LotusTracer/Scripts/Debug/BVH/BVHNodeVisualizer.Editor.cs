@@ -15,6 +15,7 @@ public class BVHNodeVisualizerEditor : Editor
         {
             visualizer.PrintDebug();
         }
+        
     }
 }
 #endif

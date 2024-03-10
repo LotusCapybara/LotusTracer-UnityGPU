@@ -21,7 +21,9 @@ int currentBounce;
 uint someSeed;
 float4 ambientLightColor;
 float ambientLightPower;
+
 // ------------------
+StructuredBuffer<BoundsBox> _SceneBounds;
 
 Texture2DArray<float4> _AtlasesAlbedo;
 SamplerState sampler_AtlasesAlbedo;

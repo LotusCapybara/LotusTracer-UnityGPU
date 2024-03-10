@@ -1,4 +1,5 @@
 ﻿using CapyTracerCore.Core;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
@@ -28,7 +29,15 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
         _shader.SetInt("treeNodesQty", _scene.sceneGeom.qtyBVHNodes);
         _shader.SetInt("totalMaterials", _scene.sceneData.qtyMaterials);
         _shader.SetVector("ambientLightColor", _scene.ambientLightColor);
-        _shader.SetFloat("ambientLightPower", _scene.ambientLightPower);   
+        _shader.SetFloat("ambientLightPower", _scene.ambientLightPower);
+
+        BoundsBox sceneBounds = new BoundsBox(_scene.sceneGeom.boundMin, _scene.sceneGeom.boundMax);
+        Vector3 sceneExtends = sceneBounds.GetSize();
+        sceneBounds.min -= new float3(0.1f, 0.1f, 0.1f);
+        sceneBounds.max += new float3(0.1f, 0.1f, 0.1f);
+        _shader.SetVector("_decompressionProduct", new Vector4(sceneExtends.x, sceneExtends.y, sceneExtends.z) / 65535f);
+
+        _shader.SetVector("_SceneExtends", new Vector4(sceneExtends.x, sceneExtends.y, sceneExtends.z, 0));
         
         // adding all the texture maps
         _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_AtlasesAlbedo", _scene.textureArrayAlbedo);
@@ -56,5 +65,6 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.BVH_TREE);
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.MATERIALS);
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.LIGHTS);
+        SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.SCENE_BOUNDS);
     }
 }

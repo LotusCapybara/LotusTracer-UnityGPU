@@ -25,6 +25,11 @@ public class BVHVisualizerEditor : Editor
         {
             visualizer.ClearChildren();
         }
+        
+        if (GUILayout.Button("Test Compression"))
+        {
+            visualizer.TestCompression();
+        }
     }
 }
 #endif

@@ -13,6 +13,8 @@ public class BuffersNames
     public const string MATERIALS = "_Materials";
     public const string LIGHTS = "_Lights";
     
+    public const string SCENE_BOUNDS = "_SceneBounds";
+    
     public const string MAP_DATA_ALBEDO = "_MapDatasAlbedo";
     public const string MAP_DATA_NORMAL = "_MapDatasNormal";
     public const string MAP_DATA_ROUGHNESS = "_MapDatasRoughness";
@@ -52,6 +54,11 @@ public class TracerComputeBuffers
         var bufferLights = new ComputeBuffer(renderScene.sceneData.qtyLights, Marshal.SizeOf<RenderLight>());
         bufferLights.SetData(renderScene.sceneData.lights);
         _buffers.Add(BuffersNames.LIGHTS, bufferLights);
+        
+        // scene bounds
+        var sceneBounds = new ComputeBuffer(1, Marshal.SizeOf<BoundsBox>());
+        sceneBounds.SetData(new[]{ new BoundsBox(renderScene.sceneGeom.boundMin, renderScene.sceneGeom.boundMax)});
+        _buffers.Add(BuffersNames.SCENE_BOUNDS, sceneBounds);
         
         // create all texture data buffers
         CreateAtlasDataBuffer(BuffersNames.MAP_DATA_ALBEDO, renderScene.textureDataAlbedo);
