@@ -68,27 +68,43 @@ public class BVHVisualizer : MonoBehaviour
 
         for (int i = 0; i < 100; i++)
         {
-            BoundsBox testBounds = new BoundsBox();
+            BoundsBox parentBounds = BoundsBox.AS_SHRINK;;
+            BoundsBox[] bounds8 = new BoundsBox[8];
+
+            for (int b = 0; b < 8; b++)
+            {
+                BoundsBox testBounds = new BoundsBox();
             
-            testBounds.min = new float3(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
-            testBounds.max = new float3(Random.Range(testBounds.min.x, 1f), Random.Range(testBounds.min.y, 1f), Random.Range(testBounds.min.z, 1f));
-            testBounds.min = sceneBounds.min + (testBounds.min * sceneBounds.GetSize());
-            testBounds.max = sceneBounds.min + (testBounds.max * sceneBounds.GetSize());
+                testBounds.min = new float3(Random.Range(-10f, 10f), Random.Range(-10f, 1f), Random.Range(-10f, 10f));
+                testBounds.max = new float3(
+                    Random.Range(testBounds.min.x, testBounds.min.x + 10f), 
+                    Random.Range(testBounds.min.y, testBounds.min.y + 10f),
+                    Random.Range(testBounds.min.z, testBounds.min.z + 10f));
 
-            str.Append($"- bounds: {testBounds.ToString()} \n");
-            var compressed = BVHUtils.Compress(testBounds, sceneBounds, sceneBounds.GetSize());
-            str.Append($"- compressed: {compressed} \n");
-            var decompressed = BVHUtils.Decompress(compressed, sceneBounds, sceneBounds.GetSize());
-            str.Append($"- decompressed: {decompressed.ToString()} \n");
-            float errorMin = Vector3.Distance(testBounds.min, decompressed.min);
-            float errorMax = Vector3.Distance(testBounds.max, decompressed.max);
-            str.Append($"dist.  min: {errorMin}  max:  {errorMax}\n\n");
+                if (b > 0)
+                {
+                    testBounds.min += bounds8[b - 1].max;
+                    testBounds.max += bounds8[b - 1].max;
+                }
+                
+                bounds8[b] = testBounds;
+                
+                parentBounds.ExpandWithBounds(testBounds);
+            }
 
-            maxErrorMin = math.max(maxErrorMin, errorMin);
-            maxErrorMax = math.max(maxErrorMax, errorMax);
+            StackBVH4Node compressed = BVHUtils.Compress(bounds8, parentBounds);
+            BoundsBox[] decompressed = BVHUtils.Decompress(compressed);
+
+
+            str.Append($"- parent: {parentBounds.ToString()} \n\n");
             
-            str.Append("\n\n");
+            for (int b = 0; b < 8; b++)
+            {
+                str.Append($"- before {b}: {bounds8[b].ToString()} \n");
+                str.Append($"- after {b}: {decompressed[b].ToString()} \n\n");    
+            }
 
+            str.Append($"--------------------------------\n\n\n\n");
         }
 
         Debug.LogError($"Compression Error.   Min: {maxErrorMin}   Max: {maxErrorMax}");

@@ -41,6 +41,8 @@ public static class SceneExport_GenerateBVH
             }
 
             uint nodeData = (uint) (heapNode.isLeaf ? 1 : 0);
+            
+            BoundsBox[] childrenBounds = new BoundsBox[8];
 
             if (!heapNode.isLeaf)
             {
@@ -49,6 +51,8 @@ public static class SceneExport_GenerateBVH
                     if (!heapNode.children[ch].isLeaf ||
                         (heapNode.children[ch].isLeaf && heapNode.children[ch].triangleIndices.Count > 0))
                         nodeData |= (uint)(0x1 << (ch + 1));
+
+                    childrenBounds[ch] = heapNode.children[ch].bounds;
                 }
             }
             
@@ -56,30 +60,33 @@ public static class SceneExport_GenerateBVH
             {
                 data = nodeData,
                 startIndex = heapNode.isLeaf ? ti : heapNode.firstChildIndex,
-                qtyTriangles = qtyTriangles
+                qtyTriangles = qtyTriangles,
+                boundsMin = heapNode.bounds.min,
+                extends = heapNode.bounds.GetSize()
             };
-
+    
             if (heapNode.children == null || heapNode.children.Count <= 0)
             {
-                stackNode.bounds1 = new uint3();
-                stackNode.bounds2 = new uint3();
-                stackNode.bounds3 = new uint3();
-                stackNode.bounds4 = new uint3();
-                stackNode.bounds5 = new uint3();
-                stackNode.bounds6 = new uint3();
-                stackNode.bounds7 = new uint3();
-                stackNode.bounds8 = new uint3();
+                stackNode.xMins = new uint2();
+                stackNode.xMaxs = new uint2();
+                stackNode.yMins = new uint2();
+                stackNode.yMaxs = new uint2();
+                stackNode.zMins = new uint2();
+                stackNode.zMaxs = new uint2();
             }
             else
             {
-                stackNode.bounds1 = BVHUtils.Compress(heapNode.children[0].bounds, sceneBounds, sceneExtends);
-                stackNode.bounds2 = BVHUtils.Compress(heapNode.children[1].bounds, sceneBounds, sceneExtends);
-                stackNode.bounds3 = BVHUtils.Compress(heapNode.children[2].bounds, sceneBounds, sceneExtends);
-                stackNode.bounds4 = BVHUtils.Compress(heapNode.children[3].bounds, sceneBounds, sceneExtends);
-                stackNode.bounds5 = BVHUtils.Compress(heapNode.children[4].bounds, sceneBounds, sceneExtends);
-                stackNode.bounds6 = BVHUtils.Compress(heapNode.children[5].bounds, sceneBounds, sceneExtends);
-                stackNode.bounds7 = BVHUtils.Compress(heapNode.children[6].bounds, sceneBounds, sceneExtends);
-                stackNode.bounds8 = BVHUtils.Compress(heapNode.children[7].bounds, sceneBounds, sceneExtends);
+                heapNode.bounds = new BoundsBox(
+                    heapNode.bounds.min + (F3.ONE * -0.001f),
+                    heapNode.bounds.max + (F3.ONE * 0.001f)); 
+                
+                StackBVH4Node tempStackNode = BVHUtils.Compress(childrenBounds, heapNode.bounds);
+                stackNode.xMins = tempStackNode.xMins;
+                stackNode.xMaxs = tempStackNode.xMaxs;
+                stackNode.yMins = tempStackNode.yMins;
+                stackNode.yMaxs = tempStackNode.yMaxs;
+                stackNode.zMins = tempStackNode.zMins;
+                stackNode.zMaxs = tempStackNode.zMaxs;
             }
 
             outNodes[i] = stackNode;
@@ -87,8 +94,8 @@ public static class SceneExport_GenerateBVH
             ti += qtyTriangles;
         }
 
-        sceneGeom.boundMin = sceneBounds.min - new float3(0.001f, 0.001f, 0.001f);
-        sceneGeom.boundMax = sceneBounds.max + new float3(0.001f, 0.001f, 0.001f);
+        sceneGeom.boundMin = sceneBounds.min;
+        sceneGeom.boundMax = sceneBounds.max;
 
         sceneGeom.qtyBVHNodes = outNodes.Length;
         sceneGeom.bvhNodes = outNodes;

@@ -16,15 +16,15 @@ namespace CapyTracerCore.Core
         public int qtyTriangles;
 
         public float3 boundsMin;
+        public float3 extends;
         
-        // bounds of all the children
-        public uint3 bounds1;
-        public uint3 bounds2;
-        public uint3 bounds3;
-        public uint3 bounds4;
-        public uint3 bounds5;
-        public uint3 bounds6;
-        public uint3 bounds7;
-        public uint3 bounds8;
+        public uint2 xMins;
+        public uint2 xMaxs;
+
+        public uint2 yMins;
+        public uint2 yMaxs;
+        
+        public uint2 zMins;
+        public uint2 zMaxs;
     }
 }

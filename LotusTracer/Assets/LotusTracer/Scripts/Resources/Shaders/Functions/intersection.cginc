@@ -1,26 +1,23 @@
 
-float4 _decompressionProduct;
-
-static BoundsBox Decompress(in uint3 compressedCoords)
+void Decompress(inout BoundsBox outBounds[8], in BVH4Node node)
 {
-    BoundsBox sceneBounds = _SceneBounds[0];
-    float3 bias = sceneBounds.min;
-    float3 scale = _decompressionProduct;
-        
-    uint3 minCompressed = compressedCoords & 0xFFFF;
-    uint3 maxCompressed = (compressedCoords >> 16) & 0xFFFF;        
-        
-        
-    float3 min = (minCompressed * scale) + bias;
-    float3 max = (maxCompressed * scale) + bias;
+    uint3 quantizedMins[8];
+    uint3 quantizedMaxs[8];
 
-    BoundsBox bounds;
-    bounds.min = min - (float3) 0.001;
-    bounds.max = max + (float3) 0.001;
-    
-    return bounds;
+    for (int i = 0; i < 4; i++)
+    {
+        quantizedMins[i] = uint3((node.xMins.x >> (8 * i) )& 0xFF, (node.yMins.x >> (8 * i) )& 0xFF, (node.zMins.x >> (8 * i) )& 0xFF);
+        quantizedMaxs[i] = uint3((node.xMaxs.x >> (8 * i) )& 0xFF, (node.yMaxs.x >> (8 * i) )& 0xFF, (node.zMaxs.x >> (8 * i) )& 0xFF);
+        quantizedMins[i + 4] = uint3((node.xMins.y >> (8 * i) )& 0xFF, (node.yMins.y >> (8 * i) )& 0xFF, (node.zMins.y >> (8 * i) )& 0xFF);
+        quantizedMaxs[i + 4] = uint3((node.xMaxs.y >> (8 * i) )& 0xFF, (node.yMaxs.y >> (8 * i) )& 0xFF, (node.zMaxs.y >> (8 * i) )& 0xFF);
+    }
+        
+    for (int i = 0; i < 8; i++)
+    {
+        outBounds[i].min  = ((float3) quantizedMins[i] / 255.0 ) * node.extends + node.boundsMin - float3(0.001, 0.001, 0.001);
+        outBounds[i].max  = ((float3) quantizedMaxs[i] / 255.0 ) * node.extends + node.boundsMin - float3(0.001, 0.001, 0.001);
+    }
 }
-
 
 float RayToSphere(in RenderRay ray, in float3 center, float radius)
 {
@@ -109,27 +106,18 @@ float RayDistanceToBounds(in RenderRay ray, in BoundsBox bounds)
     return tmin;
 }
 
-bool DoesRayHitBounds(in RenderRay r, in BoundsBox b)
+bool DoesRayHitBounds(in RenderRay r, in float3 minBound, in float3 maxBound)
 {
     float3 invDirection = 1.0 / r.direction;
+
+    float3 t1 = (minBound - r.origin) * invDirection;
+    float3 t2 = (maxBound - r.origin) * invDirection;
     
-    float tx1 = (b.min.x - r.origin.x) * invDirection.x;
-    float tx2 = (b.max.x - r.origin.x) * invDirection.x;
-
-    float tmin = min(tx1, tx2);
-    float tmax = max(tx1, tx2);
-
-    float ty1 = (b.min.y - r.origin.y) * invDirection.y;
-    float ty2 = (b.max.y - r.origin.y) * invDirection.y;
-
-    tmin = max(tmin, min(ty1, ty2));
-    tmax = min(tmax, max(ty1, ty2));
-
-    float tz1 = (b.min.z - r.origin.z) * invDirection.z;
-    float tz2 = (b.max.z - r.origin.z) * invDirection.z;
-
-    tmin = max(tmin, min(tz1, tz2));
-    tmax = min(tmax, max(tz1, tz2));
+    float3 tmin3 = min(t1, t2);
+    float3 tmax3 = max(t1, t2);
+    
+    float tmin = max(max(tmin3.x, tmin3.y), tmin3.z);
+    float tmax = min(min(tmax3.x, tmax3.y), tmax3.z);
     
     return tmax >= tmin;
 }
@@ -263,6 +251,8 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
 
 bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDistance, bool isFirstBounce)
 {
+    float3 invDirection = 1.0 / ray.direction;
+    
     uint shortStack[BVH_STACK_SIZE];
     int stackIndex = 0;
     shortStack[stackIndex] = 0;
@@ -308,29 +298,44 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
         }
         else
         {
-            BoundsBox bounds[8];
-            bool isTrasversable[8];
-            
-            for(int ch = 0; ch < 8; ch++)
+            uint3 quantizedMins[8];
+            uint3 quantizedMaxs[8];
+
+            [unroll]
+            for (int i = 0; i < 4; i++)
             {
-                isTrasversable[ch] =  ((node.data >> (ch + 1)) & 0x1)  == 1;                
+                quantizedMins[i] = uint3((node.xMins.x >> (8 * i) )& 0xFF, (node.yMins.x >> (8 * i) )& 0xFF, (node.zMins.x >> (8 * i) )& 0xFF);
+                quantizedMaxs[i] = uint3((node.xMaxs.x >> (8 * i) )& 0xFF, (node.yMaxs.x >> (8 * i) )& 0xFF, (node.zMaxs.x >> (8 * i) )& 0xFF);
+                quantizedMins[i + 4] = uint3((node.xMins.y >> (8 * i) )& 0xFF, (node.yMins.y >> (8 * i) )& 0xFF, (node.zMins.y >> (8 * i) )& 0xFF);
+                quantizedMaxs[i + 4] = uint3((node.xMaxs.y >> (8 * i) )& 0xFF, (node.yMaxs.y >> (8 * i) )& 0xFF, (node.zMaxs.y >> (8 * i) )& 0xFF);
             }
 
-            bounds[0] = Decompress(node.bounds1);
-            bounds[1] = Decompress(node.bounds2);
-            bounds[2] = Decompress(node.bounds3);
-            bounds[3] = Decompress(node.bounds4);
-            bounds[4] = Decompress(node.bounds5);
-            bounds[5] = Decompress(node.bounds6);
-            bounds[6] = Decompress(node.bounds7);
-            bounds[7] = Decompress(node.bounds8);
-            
-            for(int ch = 0; ch < 8; ch++)
+            [unroll]
+            for (int i = 0; i < 8; i++)
             {
-                if(isTrasversable[ch] && DoesRayHitBounds(ray, bounds[ch]))
+                
+                float3 minBound  = ((float3) quantizedMins[i] * 0.0039215686 ) * node.extends + node.boundsMin;
+                float3 maxBound  = ((float3) quantizedMaxs[i] * 0.0039215686 ) * node.extends + node.boundsMin;
+
+                // intersection check
+
+                float3 t1 = (minBound - ray.origin) * invDirection;
+                float3 t2 = (maxBound - ray.origin) * invDirection;
+    
+                float3 tmin3 = min(t1, t2);
+                float3 tmax3 = max(t1, t2);
+    
+                float tmin = max(max(tmin3.x, tmin3.y), tmin3.z);
+                float tmax = min(min(tmax3.x, tmax3.y), tmax3.z);
+    
+                bool intersects = tmax >= tmin;
+
+                bool isTrasversable =  ((node.data >> (i + 1)) & 0x1)  == 1; 
+                
+                if(intersects && isTrasversable)
                 {
-                    shortStack[++stackIndex] = node.startIndex + ch;
-                }                    
+                    shortStack[++stackIndex] = node.startIndex + i;
+                } 
             }
         }       
     }    

@@ -99,16 +99,14 @@ struct BVH4Node
     uint data;
     int startIndex;
     int qtyTriangles;
-
-    // bounds of all the children
-    uint3 bounds1;
-    uint3 bounds2;
-    uint3 bounds3;
-    uint3 bounds4;
-    uint3 bounds5;
-    uint3 bounds6;
-    uint3 bounds7;
-    uint3 bounds8;    
+    float3 boundsMin;
+    float3 extends;        
+    uint2 xMins;
+    uint2 xMaxs;
+    uint2 yMins;
+    uint2 yMaxs;        
+    uint2 zMins;
+    uint2 zMaxs; 
 };
 
 struct TriangleHitInfo

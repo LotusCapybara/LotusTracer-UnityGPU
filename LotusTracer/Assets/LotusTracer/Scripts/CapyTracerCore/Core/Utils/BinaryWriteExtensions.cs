@@ -26,12 +26,27 @@ namespace CapyTracerCore.Core
             writer.Write(f4.w);
         }
         
+        public static void WriteBinary(this uint2 u2, BinaryWriter writer)
+        {
+            writer.Write(u2.x);
+            writer.Write(u2.y);
+        }
+        
         public static void WriteBinary(this uint3 u3, BinaryWriter writer)
         {
             writer.Write(u3.x);
             writer.Write(u3.y);
             writer.Write(u3.z);
         }
+        
+        public static void WriteBinary(this uint4 u4, BinaryWriter writer)
+        {
+            writer.Write(u4.x);
+            writer.Write(u4.y);
+            writer.Write(u4.z);
+            writer.Write(u4.w);
+        }
+        
     
         public static void WriteBinary(this SerializedMaterial mat, BinaryWriter writer)
         {
@@ -112,14 +127,16 @@ namespace CapyTracerCore.Core
             writer.Write(node.data);
             writer.Write(node.startIndex);
             writer.Write(node.qtyTriangles);
-            node.bounds1.WriteBinary(writer);
-            node.bounds2.WriteBinary(writer);
-            node.bounds3.WriteBinary(writer);
-            node.bounds4.WriteBinary(writer);
-            node.bounds5.WriteBinary(writer);
-            node.bounds6.WriteBinary(writer);
-            node.bounds7.WriteBinary(writer);
-            node.bounds8.WriteBinary(writer);
+            
+            node.boundsMin.WriteBinary(writer);
+            node.extends.WriteBinary(writer);
+        
+            node.xMins.WriteBinary(writer);
+            node.xMaxs.WriteBinary(writer);
+            node.yMins.WriteBinary(writer);
+            node.yMaxs.WriteBinary(writer);
+            node.zMins.WriteBinary(writer);
+            node.zMaxs.WriteBinary(writer);
         }
     }
 }

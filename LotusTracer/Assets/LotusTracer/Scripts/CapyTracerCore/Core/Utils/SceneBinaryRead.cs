@@ -22,15 +22,32 @@ namespace CapyTracerCore.Core
             return f3;
         }
         
-        public static uint3 ReadUInt3(BinaryReader reader)
+        public static uint2 ReadUInt2(BinaryReader reader)
         {
-            uint3 u2 = new uint3();
+            uint2 u2 = new uint2();
             u2.x = reader.ReadUInt32();
             u2.y =  reader.ReadUInt32();
-            u2.z =  reader.ReadUInt32();
             return u2;
         }
         
+        public static uint3 ReadUInt3(BinaryReader reader)
+        {
+            uint3 u3 = new uint3();
+            u3.x = reader.ReadUInt32();
+            u3.y =  reader.ReadUInt32();
+            u3.z =  reader.ReadUInt32();
+            return u3;
+        }
+        
+        public static uint4 ReadUInt4(BinaryReader reader)
+        {
+            uint4 u4 = new uint4();
+            u4.x = reader.ReadUInt32();
+            u4.y =  reader.ReadUInt32();
+            u4.z =  reader.ReadUInt32();
+            u4.w =  reader.ReadUInt32();
+            return u4;
+        }
         
         public static float4 ReadFloat4(BinaryReader reader)
         {
@@ -140,14 +157,15 @@ namespace CapyTracerCore.Core
             node.startIndex = reader.ReadInt32();
             node.qtyTriangles = reader.ReadInt32();
 
-            node.bounds1 = ReadUInt3(reader);
-            node.bounds2 = ReadUInt3(reader);
-            node.bounds3 = ReadUInt3(reader);
-            node.bounds4 = ReadUInt3(reader);
-            node.bounds5 = ReadUInt3(reader);
-            node.bounds6 = ReadUInt3(reader);
-            node.bounds7 = ReadUInt3(reader);
-            node.bounds8 = ReadUInt3(reader);
+            node.boundsMin = ReadFloat3(reader);
+            node.extends = ReadFloat3(reader);
+        
+            node.xMins = ReadUInt2(reader);
+            node.xMaxs = ReadUInt2(reader);
+            node.yMins = ReadUInt2(reader);
+            node.yMaxs = ReadUInt2(reader);
+            node.zMins = ReadUInt2(reader);
+            node.zMaxs = ReadUInt2(reader);
             
             return node;
         }
