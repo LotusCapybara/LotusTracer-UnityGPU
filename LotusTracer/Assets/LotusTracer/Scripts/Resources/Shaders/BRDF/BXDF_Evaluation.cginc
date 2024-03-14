@@ -85,11 +85,11 @@ static void Evaluate_Transmission(inout float3 f, inout float pdf, inout Scatter
         return;
 
     float F =  DielectricFresnel(abs( ev.VoH), data.eta);
-    //float F = SchlickFresnel(data.cSpec0, abs( ev.VoH));
     
     if(data.isReflection)
     {
-        Evaluate_Specular(f, pdf, data, ev, SchlickFresnel(data.cSpec0, abs( ev.VoH)));
+        float3 Fv = SchlickFresnel_V(saturate(data.cSpec0), ev.VoH );
+        Evaluate_Specular(f, pdf, data, ev, Fv);
         pdf *= F;
         return;
     }

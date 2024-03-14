@@ -192,6 +192,8 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
     hitInfo.normal = normalize(  tri.normalA * ( 1 - u - v) + tri.normalB * u + tri.normalC * v );
     hitInfo.tangent = normalize( tri.tangentA * ( 1 - u - v) + tri.tangentB * u + tri.tangentC * v );
 
+    hitInfo.vertexColor = tri.vertexColor;
+    
     float crossSign = -1;
     float3 biTangentA = normalize(crossSign  * cross(tri.normalA, tri.tangentA));
     float3 biTangentB = normalize(crossSign  * cross(tri.normalB, tri.tangentB));

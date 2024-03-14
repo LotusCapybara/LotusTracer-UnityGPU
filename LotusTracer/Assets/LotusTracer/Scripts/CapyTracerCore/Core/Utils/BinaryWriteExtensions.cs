@@ -78,6 +78,7 @@ namespace CapyTracerCore.Core
             t.tangentA.WriteBinary(writer);
             t.tangentB.WriteBinary(writer);
             t.tangentC.WriteBinary(writer);
+            t.vertexColor.WriteBinary(writer);
             writer.Write(t.materialIndex);
             t.textureUV0.WriteBinary(writer);
             t.textureUV1.WriteBinary(writer);

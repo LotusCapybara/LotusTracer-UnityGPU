@@ -27,6 +27,7 @@ namespace CapyTracerCore.Core
         public float3 tangentA;
         public float3 tangentB;
         public float3 tangentC;
+        public float3 vertexColor;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -39,6 +40,7 @@ namespace CapyTracerCore.Core
         public float3 normalB;
         public float3 normalC;
         public float3 centerPos;
+        public float3 vertexColor;
         public int materialIndex;
         public float2 textureUV0;
         public float2 textureUV1;

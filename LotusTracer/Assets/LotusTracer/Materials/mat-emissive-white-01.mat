@@ -14,7 +14,9 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _DIFFUSEMODEL_LAMBERT
-  m_InvalidKeywords: []
+  - _ENABLEVERTEXCOLORS
+  m_InvalidKeywords:
+  - _ENABLE_VERTEX_COLORS
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -122,13 +124,16 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EmissionPower: 20
+    - _ENABLEVERTEXCOLORS: 1
+    - _ENABLE_VERTEX_COLORS: 1
+    - _EmissionPower: 10
     - _EnvironmentReflections: 1
     - _FlipGreen: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _IOR: 1
+    - _InvertRoughnessMap: 0
     - _IsThin: 0
     - _MaxScatteringDistance: 0
     - _MediumDensity: 0

@@ -36,31 +36,42 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     // by skipping those factors, however I found too easy to forget things and make energy go crazy, so I opted
     // for not using implicit simplifications for now
     
-    if(data.isReflection && data.probs.wDiffuseReflection > 0.0)
+    if(data.isReflection && data.probs.prDiffuse > 0.0)
     {
         if( ((data.flags >> 1) & 0x1)  == 1)
             Evaluate_Diffuse_OrenNayar(tempF, tempPDF, data, ev);
         else 
             Evaluate_Diffuse_Lambert(tempF, tempPDF, data, ev);
 
-        eval += tempF * data.probs.wDiffuseReflection;
-        pdf += tempPDF * data.probs.wDiffuseReflection;
+        eval += tempF * data.probs.wDielectric;
+        pdf += tempPDF * data.probs.prDiffuse;
     }
     
-    if(data.isReflection && data.probs.wSpecularReflection > 0.0)
+    if(data.isReflection && data.probs.prDielectric > 0.0)
     {
-        float3 F = SchlickFresnel_V(saturate(data.cSpec0), dot(data.V, data.H) );
+        float3 F = SchlickFresnel_V(saturate(data.cSpec0), ev.VoH );
         Evaluate_Specular(tempF, tempPDF, data, ev, F);
 
-        eval += tempF *  data.probs.wSpecularReflection;
-        pdf += tempPDF * data.probs.wSpecularReflection;
+        eval += tempF *  data.probs.wDielectric;
+        pdf += tempPDF * data.probs.prDielectric;
     }
 
-    if(data.probs.wTransmission > 0.0)
+    if(data.isReflection && data.probs.prMetallic > 0.0)
     {
+        float3 F = lerp(data.color, V_ONE, SchlickWeight(ev.VoH));
+        Evaluate_Specular(tempF, tempPDF, data, ev, F);
+
+        eval += tempF *  data.probs.wMetal;
+        pdf += tempPDF * data.probs.prMetallic;
+    }
+    
+
+    if(data.probs.prGlass > 0.0)
+    {
+        
         Evaluate_Transmission(tempF, tempPDF, data, ev);   
-        eval += tempF *  data.probs.wTransmission;
-        pdf += tempPDF * data.probs.wTransmission;
+        eval += tempF *  data.probs.wGlass;
+        pdf += tempPDF * data.probs.prGlass;
     }
     
     // todo: something is wrong with Clear Coat, it's "eating" energy
@@ -82,28 +93,26 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
     ScatteringToLocal(data);
     
     bool validSample = false;
-
-    if(data.probs.totalW <= 0)
-        return false;
     
     float randomSample = GetRandom0to1(randState);
-    if(randomSample < data.probs.wRangeDiffuseReflection)
+    if(randomSample < data.probs.prRange_Diffuse)
     {
         validSample = Sample_Diffuse(randState, data);
         data.sampledType = SAMPLE_DIFFUSE;
     }
-    else if(randomSample < data.probs.wRangeSpecularReflection)
+    // both dielectric and metallic
+    else if(randomSample < data.probs.prRange_Metallic)
     {
         // same direction for both dielectric and metallic speculars
         validSample = Sample_Specular(randState, data);
         data.sampledType = SAMPLE_SPECULAR;
     }
-    else if(randomSample < data.probs.wRangeTransmission)
+    else if(randomSample < data.probs.prRange_Glass)
     {
         validSample = Sample_Transmission(randState, data);
         data.sampledType = SAMPLE_TRANSMISSION;
     }
-    else // clear coat
+    else if(randomSample < data.probs.prRange_ClearCoat)
     {
         validSample = Sample_ClearCoat(randState, data);
     }

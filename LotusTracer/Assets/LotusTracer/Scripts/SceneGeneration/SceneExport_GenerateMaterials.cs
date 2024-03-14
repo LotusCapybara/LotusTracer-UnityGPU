@@ -67,7 +67,10 @@ public static class SceneExport_GenerateMaterials
             int flipNormalGreen = unityMaterials[m].GetInt("_FlipGreen");
             if (flipNormalGreen != 0)
                 flags |= (0b1 <<  12 );
-                
+
+            int oneMinusRoughMap = unityMaterials[m].GetInt("_InvertRoughnessMap");
+            if (oneMinusRoughMap != 0)
+                flags |= (0b1 <<  13 );
             
             // Debug.LogError($"---- {unityMaterials[m].name} ----" );
             // Debug.LogError($"total {flags}" );

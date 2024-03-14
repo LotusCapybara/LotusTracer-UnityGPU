@@ -35,6 +35,7 @@ struct RenderTriangleData
     float3 tangentA;
     float3 tangentB;
     float3 tangentC;
+    float3 vertexColor;
 };
 
 struct RenderLight
@@ -103,6 +104,7 @@ struct TriangleHitInfo
     float3 tangent;
     float3 biTangent;
     float3 position;
+    float3 vertexColor;
         
     // inverse direction of the ray that made this hit
     float3 backRayDirection;
@@ -114,17 +116,21 @@ struct TriangleHitInfo
 
 struct SampleProbabilities
 {
-    float wDiffuseReflection;
-    float wSpecularReflection;
-    float wTransmission;    
-    float wClearCoat;
+    float wDielectric;
+    float wMetal;
+    float wGlass;
 
-    float totalW;
-    float wRangeDiffuseReflection;
-    float wRangeSpecularReflection;
-    float wRangeTransmission;
-    float wRangeClearCoat;
-    
+    float prDiffuse;
+    float prDielectric;
+    float prMetallic;
+    float prGlass;
+    float prClearCoat;
+
+    float prRange_Diffuse;
+    float prRange_Dielectric;
+    float prRange_Metallic;
+    float prRange_Glass;
+    float prRange_ClearCoat;
 };
 
 struct EvaluationVars

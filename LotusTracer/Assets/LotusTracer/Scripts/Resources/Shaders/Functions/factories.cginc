@@ -2,27 +2,44 @@
 
 SampleProbabilities CreateProbabilities(inout uint randState, in ScatteringData data)
 {
-    float baseLuminance = Luminance(data.color);
-
     // weight of each of these models based on material properties
-    SampleProbabilities prob;
-    prob.wDiffuseReflection  =  baseLuminance * (1.0 - data.metallic) * data.roughness * (1.0 -  data.transmissionPower);
-    prob.wSpecularReflection  = Luminance(data.cSpec0) * (1.0 - data.roughness);
-    prob.wTransmission = baseLuminance * (1.0 - data.metallic) * data.transmissionPower;
-    prob.wClearCoat = 0.05 * data.clearCoat;    
+    // I was using a more straight forward weight sampling, but I found this implementation online
+    // (GLSL-Pathtracer from tigrazone) and I liked it.
+    // I dont know if it's based on something else, but I like the idea of have overall weights and then
+    // probabilities based on the "bigger" lobes. Also I was not too happy with how dielectric vs metallic
+    // looked and I thought by separating it more clearly like this I can improve it a bit
     
-    prob.totalW = prob.wDiffuseReflection + prob.wSpecularReflection + prob.wTransmission + prob.wClearCoat;
+    SampleProbabilities prob;
+    prob.wDielectric = (1.0 - data.metallic) * (1.0 - data.transmissionPower);
+    prob.wMetal = data.metallic;
+    prob.wGlass = (1.0 - data.metallic) * data.transmissionPower;
 
-    float invWTotal = 1.0 / prob.totalW;
+    // Lobe probabilities
+    float schlickWt = SchlickWeight(data.V.y);
 
-    prob.wRangeDiffuseReflection  = prob.wDiffuseReflection * invWTotal;
-    prob.wRangeSpecularReflection = prob.wRangeDiffuseReflection + prob.wSpecularReflection * invWTotal;
-    prob.wRangeTransmission = prob.wRangeSpecularReflection + prob.wTransmission * invWTotal;
-    prob.wRangeClearCoat = 1.0;
+    prob.prDiffuse =  prob.wDielectric * Luminance(data.color);
+    prob.prDielectric = prob.wDielectric * Luminance(lerp(data.cSpec0, V_ONE, schlickWt));
+    prob.prMetallic = prob.wMetal * Luminance(lerp(data.color, V_ONE, schlickWt));
+    prob.prGlass = prob.wGlass;
+    prob.prClearCoat = 0.25 * data.clearCoat;
+    
+    float invWTotal = 1.0 /
+        (prob.prDiffuse + prob.prDielectric + prob.prMetallic + prob.prGlass + prob.prClearCoat);
+
+    prob.prDiffuse *= invWTotal;
+    prob.prDielectric *= invWTotal;
+    prob.prMetallic *= invWTotal;
+    prob.prGlass *= invWTotal;
+    prob.prClearCoat *= invWTotal;
+
+    prob.prRange_Diffuse = prob.prDiffuse;
+    prob.prRange_Dielectric = prob.prRange_Diffuse + prob.prDielectric;
+    prob.prRange_Metallic = prob.prRange_Dielectric + prob.prMetallic;
+    prob.prRange_Glass = prob.prRange_Metallic + prob.prGlass;
+    prob.prRange_ClearCoat = prob.prRange_Glass + prob.prClearCoat;
     
     return prob;
 }
-
 
 ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitInfo)
 {
@@ -48,7 +65,7 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
     
     data.surfacePoint = hitInfo.position;
     data.V = hitInfo.backRayDirection;
-    data.color = mat.color;
+    data.color = mat.color * hitInfo.vertexColor;
     
     data.WorldNormal = hitInfo.isFrontFace ? hitInfo.normal : - hitInfo.normal;
     data.WorldTangent = hitInfo.tangent;
@@ -92,8 +109,13 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
         float2 targetUV = PackedUV(texture_data, hitInfo.textureUV);        
         int atlasIndex = texture_data.atlasIndex;
 
-        data.roughness *= _AtlasesRoughness
+        data.roughness = _AtlasesRoughness
             .SampleLevel(sampler_AtlasesRoughness, float3(targetUV.x, targetUV.y, atlasIndex) , 0).rgb;
+
+        if( ((mat.flags >> 13) & 0x1) == 1)
+            data.roughness = V_ONE - data.roughness;
+
+        data.roughness *= mat.roughness;
     }   
 
     if(mat.metalMapIndex >= 0)

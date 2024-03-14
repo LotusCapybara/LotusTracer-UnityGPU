@@ -43,6 +43,7 @@ public static class SceneExport_GatherTriangles
             Vector3[] verticesA = meshDef.vertices;
             Vector3[] normalsA = meshDef.normals;
             Vector4[] tangentsA = meshDef.tangents;
+            Color[] vertexColorsA = meshDef.colors;
             
             for (int subMesh = 0; subMesh < meshDef.subMeshCount; subMesh++)
             {
@@ -52,10 +53,12 @@ public static class SceneExport_GatherTriangles
                 int materialIndex =  (ushort)outUnityMaterials.FindIndex(mat => mat.name == meshes[m].sharedMaterials[subMesh].name);
                 int[] triangles = meshDef.GetTriangles(subMesh);
                 
+                bool useVertexColor = outUnityMaterials[materialIndex].GetInt("_UseVertexColors") != 0;
+                
                 allTasks.Add(
                     Task.Run(() => GetTrianglesForMesh(
                         transformPos, transformScale, transformRotation,
-                        verticesA, normalsA, tangentsA, triangles, subMeshUvs, materialIndex, isInvisibleLightBouncer
+                        verticesA, normalsA, tangentsA, triangles, subMeshUvs, vertexColorsA, materialIndex, isInvisibleLightBouncer, useVertexColor
                         )
                     ));
             }
@@ -77,8 +80,8 @@ public static class SceneExport_GatherTriangles
 
     private static List<RenderTriangle> GetTrianglesForMesh(
         Vector3 transformPos, Vector3 transformScale, Quaternion transformRotation,
-        in Vector3[] vertices, in Vector3[] normals, in Vector4[] tangents, in int[] triangles, List<Vector2> uvs, int materialIndex,
-        bool isInvisibleLightBouncer)
+        in Vector3[] vertices, in Vector3[] normals, in Vector4[] tangents, in int[] triangles, List<Vector2> uvs, Color[] vertexColors,
+        int materialIndex, bool isInvisibleLightBouncer, bool usesVertexColor)
     {
         List<RenderTriangle> allTriangles = new List<RenderTriangle>();
         
@@ -89,6 +92,7 @@ public static class SceneExport_GatherTriangles
             RenderTriangle newTriangle = new RenderTriangle();
             newTriangle.materialIndex = materialIndex;
             newTriangle.flags = 0;
+            newTriangle.vertexColor = usesVertexColor ? new float3(0, 0, 0) : new float3(1, 1, 1);
 
             if(isInvisibleLightBouncer)
                 newTriangle.flags |= 0b1;
@@ -117,6 +121,12 @@ public static class SceneExport_GatherTriangles
                 // apply translation
                 pos += transformPos;
 
+                if (usesVertexColor && vertexColors.Length > triangles[st + i])
+                {
+                    var vColor = vertexColors[triangles[st + i]];
+                    newTriangle.vertexColor += new float3(vColor.r, vColor.g, vColor.b);
+                }
+
                 newTriangle.centerPos += (float3)pos;
 
                 newTriangle.SetVertexPos(i, pos);
@@ -129,7 +139,14 @@ public static class SceneExport_GatherTriangles
                     newTriangle.SetTextureUV(i, new float2());
                 
             }
+            
+            
             newTriangle.centerPos *= 0.3333f;
+
+            if (usesVertexColor)
+            {
+                newTriangle.vertexColor *= 0.33333f;
+            }
 
             // just for testing stuff, some scenes will look fine even without good tangents
             // ValidateIsOrthogonal(newTriangle.normalA, newTriangle.tangentA, "NormalA", "TangentA");

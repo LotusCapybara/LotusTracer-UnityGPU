@@ -93,6 +93,7 @@ namespace CapyTracerCore.Core
             td.tangentA = ReadFloat3(reader);
             td.tangentB = ReadFloat3(reader);
             td.tangentC = ReadFloat3(reader);
+            td.vertexColor = ReadFloat3(reader);
             
             td.materialIndex = reader.ReadInt32();
             td.textureUV0 = ReadFloat2(reader);

@@ -49,6 +49,7 @@ namespace CapyTracerCore.Core
         // from back to front (so watch this in inverse)
         // bits: 0, 1, 2: for diffuse model (lambert, oren-nayar, disney)
         // bit: 12 - if on: flip normal green channel
+        // bit: 13 - if on: one minus rough map
         public int flags;
         
         public void GenerateRuntime()
