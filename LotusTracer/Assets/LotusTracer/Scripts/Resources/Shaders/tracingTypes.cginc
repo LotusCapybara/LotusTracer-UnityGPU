@@ -65,6 +65,7 @@ struct RenderMaterial
     float clearCoatRoughness;
     float metallic;
     float anisotropic;
+    float normalStrength;
         
     int albedoMapIndex;
     int albedoMapCanvasIndex;

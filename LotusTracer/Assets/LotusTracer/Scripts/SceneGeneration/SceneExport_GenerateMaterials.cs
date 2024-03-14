@@ -57,6 +57,8 @@ public static class SceneExport_GenerateMaterials
             float mediumDensity = unityMaterials[m].GetFloat("_MediumDensity");
             float scatteringDirection = unityMaterials[m].GetFloat("_ScatteringDirection");
             // int isThin = unityMaterials[m].GetInt("_IsThin");
+            
+            float normalStrength = unityMaterials[m].GetFloat("_NormalStrength");
 
             int flags = 0;
             
@@ -101,7 +103,8 @@ public static class SceneExport_GenerateMaterials
                 transmissionPower = transmissionPower,
                 mediumDensity = mediumDensity,
                 scatteringDirection = scatteringDirection,
-                flags = flags
+                flags = flags,
+                normalStrength = normalStrength
             };
             
             scene.materials[m] = renderMaterial;

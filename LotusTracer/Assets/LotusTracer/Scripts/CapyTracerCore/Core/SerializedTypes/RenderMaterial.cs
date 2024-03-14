@@ -28,6 +28,7 @@ namespace CapyTracerCore.Core
         public float clearCoatRoughness;
         public float metallic;
         public float anisotropic;
+        public float normalStrength;
         
         public int albedoMapIndex;
         public int albedoMapCanvasIndex;

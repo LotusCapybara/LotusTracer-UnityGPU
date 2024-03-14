@@ -38,6 +38,7 @@ namespace CapyTracerCore.Core
             writer.Write(mat.clearCoatRoughness);
             writer.Write(mat.metallic);
             writer.Write(mat.anisotropic);
+            writer.Write(mat.normalStrength);
             writer.Write(mat.albedoMapIndex);
             writer.Write(mat.albedoMapCanvasIndex);
             writer.Write(mat.normalMapIndex);

@@ -46,6 +46,7 @@ namespace CapyTracerCore.Core
             mat.clearCoatRoughness = reader.ReadSingle();
             mat.metallic = reader.ReadSingle();
             mat.anisotropic = reader.ReadSingle();
+            mat.normalStrength = reader.ReadSingle();
             mat.albedoMapIndex = reader.ReadInt32();
             mat.albedoMapCanvasIndex = reader.ReadInt32();
             mat.normalMapIndex = reader.ReadInt32();
