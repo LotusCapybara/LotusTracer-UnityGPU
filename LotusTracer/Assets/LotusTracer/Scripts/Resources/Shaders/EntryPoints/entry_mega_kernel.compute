@@ -48,8 +48,25 @@ void Kernel_MegaPathTrace (uint3 id : SV_DispatchThreadID)
     {
         if (!GetBounceHit(hitInfo, pathRay, rayDistance, b == 0))
         {
-            // todo use cube maps too?
-            radiance += throughput * ambientLightPower * ambientLightColor;
+            float4 ambient;
+
+            if(_HasCubeMap)
+            {
+                if(b == 0 && _IgnoreCubeInImage != 0)
+                {
+                    ambient = ambientLightColor;
+                }
+                else
+                {
+                    ambient = ambientLightPower * _CubeMap.SampleLevel(sampler_CubeMap, -pathRay.direction, 0);    
+                }
+            }
+            else
+            {
+                ambient = ambientLightPower * ambientLightColor;
+            }
+            
+            radiance += throughput * ambient;
             break;
         }
 

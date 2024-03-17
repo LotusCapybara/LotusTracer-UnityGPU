@@ -24,6 +24,8 @@ public class GPUTracer_Megakernel : MonoBehaviour
     public bool overrideCameraFov;
     public float overridenFov = 60f;
 
+    public Cubemap cubeMap;
+    public bool ignoreCubeInImage;
     public Color ambientLightColor = Color.white;
     public float ambientLightPower = 1.0f;
 
@@ -102,6 +104,9 @@ public class GPUTracer_Megakernel : MonoBehaviour
         _renderScene.Load(sceneName, _width, _height,
             depthDiffuse, depthSpecular, depthTransmission, 
             ambientLightColor, ambientLightPower);
+
+        _renderScene.cubeMap = cubeMap;
+        _renderScene.ignoreCubeInImage = ignoreCubeInImage;
         
         if(tracerCamera != null)
             tracerCamera.Initialize(_renderScene.renderCamera);

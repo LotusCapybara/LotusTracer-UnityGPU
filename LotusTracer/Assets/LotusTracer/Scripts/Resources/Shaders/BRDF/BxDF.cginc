@@ -67,8 +67,7 @@ void GetBSDF_F(inout uint randState, inout ScatteringData data, out float3 eval,
     
 
     if(data.probs.prGlass > 0.0)
-    {
-        
+    {        
         Evaluate_Transmission(tempF, tempPDF, data, ev);   
         eval += tempF *  data.probs.wGlass;
         pdf += tempPDF * data.probs.prGlass;
@@ -109,7 +108,8 @@ bool GetBSDF_Sample(inout uint randState, inout ScatteringData data)
     }
     else if(randomSample < data.probs.prRange_Glass)
     {
-        validSample = Sample_Transmission(randState, data);
+        float scaledR = (randomSample - data.probs.prRange_Metallic) / (data.probs.prRange_Glass - data.probs.prRange_Metallic);        
+        validSample = Sample_Transmission(randState, data, scaledR);
         data.sampledType = SAMPLE_TRANSMISSION;
     }
     else if(randomSample < data.probs.prRange_ClearCoat)

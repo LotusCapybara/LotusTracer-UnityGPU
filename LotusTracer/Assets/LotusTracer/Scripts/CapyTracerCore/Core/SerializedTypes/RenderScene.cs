@@ -29,7 +29,9 @@ namespace CapyTracerCore.Core
 
         public SerializedScene_Data sceneData;
         public SerializedScene_Geometry sceneGeom;
-        
+
+        public Cubemap cubeMap;
+        public bool ignoreCubeInImage;
         public Color ambientLightColor;
         public float ambientLightPower;
 

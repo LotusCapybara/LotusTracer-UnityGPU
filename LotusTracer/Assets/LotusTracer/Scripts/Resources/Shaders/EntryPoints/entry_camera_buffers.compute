@@ -42,7 +42,9 @@ float3 Get_BVHDensity (uint3 id)
     {
         BVH4Node node = _AccelTree[i];
 
-        if(DoesRayHitBounds(pathRay, node.bounds))
+        bool isTraversable =  (node.data & 0x1)  == 1;      
+
+        if(isTraversable && DoesRayHitBounds(pathRay, node.bounds))
         {
             qtyHits++;
         }
@@ -126,7 +128,7 @@ void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
             
             case DEBUG_TYPE_DIELECTRIC_FRESNEL:
                 ScatteringToLocal(scattering_data);
-                finalColor = DielectricFresnel( dot(scattering_data.V, scattering_data.H) , scattering_data.eta);
+                finalColor = DielectricFresnel( abs(dot(scattering_data.V, scattering_data.H)) , scattering_data.eta);
             break;
             
             case DEBUG_TYPE_BVH_DENSITY:

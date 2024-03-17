@@ -140,6 +140,7 @@ Material:
     - _Metallic: 0
     - _MetallicPower: 0
     - _Mode: 0
+    - _NormalStrength: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _QueueControl: 0
@@ -156,6 +157,7 @@ Material:
     - _Surface: 0
     - _TransmissionPower: 0
     - _UVSec: 0
+    - _UseVertexColors: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:

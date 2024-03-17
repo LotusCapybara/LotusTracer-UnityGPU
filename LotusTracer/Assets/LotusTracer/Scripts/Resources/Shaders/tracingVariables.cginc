@@ -21,6 +21,10 @@ int currentBounce;
 uint someSeed;
 float4 ambientLightColor;
 float ambientLightPower;
+int _HasCubeMap;
+int _IgnoreCubeInImage;
+SamplerState sampler_CubeMap;
+TextureCube<float4> _CubeMap;
 // ------------------
 
 Texture2DArray<float4> _AtlasesAlbedo;

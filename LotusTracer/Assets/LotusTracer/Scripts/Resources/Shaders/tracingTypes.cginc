@@ -172,6 +172,8 @@ struct ScatteringData
     float ax;
     float ay;
     float eta;
+    float ior1;
+    float ior2;
 
     uint flags;
 

@@ -90,6 +90,8 @@ ScatteringData MakeScatteringData(inout uint randState, in TriangleHitInfo hitIn
 
     mat.ior = data.transmissionPower > 0.0 ? clamp(mat.ior, 1.0001, 2.0) : mat.ior;
     data.eta = hitInfo.isFrontFace ? 1.0 / mat.ior  : mat.ior;
+    data.ior1 =  hitInfo.isFrontFace ? 1.0 : mat.ior;
+    data.ior2 =  hitInfo.isFrontFace ? mat.ior : 1.0;
     // data.isThin = mat.thi // todo: use material flags to check if it's thin
     data.isThin  = false;
     

@@ -53,6 +53,31 @@ float3 Sample_GGX_Microfacet(inout uint randState, float ax, float ay)
     
 }
 
+// same as Sample_GGX_Microfacet but using Visible Normal Distribution Function
+// I think it looks a bit better so I'm using mostly this one
+float3 Sample_GGX_Microfacet_VNDF(inout uint randState, in float3 V, float ax, float ay)
+{
+    float r1 = GetRandom0to1(randState);
+    float r2 = GetRandom0to1(randState);
+    
+    float3 H = normalize(float3(ax * V.x, V.y, ay * V.z));
+
+    float lensq = H.x * H.x + H.z * H.z;
+    float3 T1 = lensq > 0 ? float3(-H.z, 0 , H.x) * rsqrt(lensq) : float3(1, 0, 0);
+    float3 T2 = cross(H, T1);
+
+    float r = sqrt(r1);
+    float phi = 2.0 * PI * r2;
+    float t1 = r * cos(phi);
+    float t2 = r * sin(phi);
+    float s = 0.5 * (1.0 + H.y);
+    t2 = (1.0 - s) * sqrt(1.0 - t1 * t1) + s * t2;
+
+    float3 nH = t1 * T1 + t2 * T2 + sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2)) * H;
+
+    return normalize(float3(ax * nH.x, max(0.0, nH.y), ay * nH.z ));
+}
+
 float PDF_GGX(in ScatteringData data)
 {
     return D_GGX(data.H, data.ax, data.ay) * abs(data.H.y);

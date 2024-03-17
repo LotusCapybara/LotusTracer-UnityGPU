@@ -46,6 +46,16 @@ public class ComputeShaderHolder_MegaKernel : ComputeShaderHolder
         _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_AtlasesEmission", _scene.textureArrayEmission);
         SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.MAP_DATA_EMISSION);
         
+        _shader.SetInt("_HasCubeMap", _scene.cubeMap != null ? 1:0);
+        _shader.SetInt("_IgnoreCubeInImage", _scene.ignoreCubeInImage ? 1:0);
+        
+        if(_scene.cubeMap != null)
+            _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_CubeMap", _scene.cubeMap);
+        else
+            _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_CubeMap", new Cubemap(64, TextureFormat.RGB24, 0));
+        
+        
+        
         // Mega Kernel
         SetTexture(KERNEL_MEGA_PATH_TRACE, "_SamplingBuffer", ERenderTextureType.SamplerBuffer);
         SetTexture(KERNEL_MEGA_PATH_TRACE, "_SamplingBufferPrev", ERenderTextureType.SamplerBufferPrev);

@@ -15,8 +15,9 @@ bool Sample_Diffuse(inout uint randState, inout ScatteringData data)
 //uses BRDF microfacet sampling to sample reflection for both dielectric and metallic materials
 bool Sample_Specular(inout uint randState, inout ScatteringData data)
 {
-    // -- Sample visible distribution of normals
-    float3 facetH = Sample_GGX_Microfacet(randState, data.ax, data.ax);
+    // I'll create some option in the shader to use one or the other?
+    float3 facetH = Sample_GGX_Microfacet_VNDF(randState, data.V, data.ax, data.ax);
+    // float3 facetH =  Sample_GGX_Microfacet(randState, data.ax, data.ay);
 
     if(facetH.y < 0)
         facetH.y = - facetH.y;
@@ -42,15 +43,18 @@ bool Sample_ClearCoat(inout uint randState, inout ScatteringData data)
     return true;
 }
 
-bool Sample_Transmission(inout uint randState, inout ScatteringData data)
+bool Sample_Transmission(inout uint randState, inout ScatteringData data, float scaledR)
 {    
+    // float3 facetH =  Sample_GGX_Microfacet_VNDF(randState, data.V, data.ax, data.ay);
     float3 facetH =  Sample_GGX_Microfacet(randState, data.ax, data.ay);
     if(facetH.y < 0)
         facetH = -facetH;
+    
+    float F0 = pow((data.ior1 - data.ior2) / (data.ior1 + data.ior2), 2.0); 
+    float F = SchlickFresnel(F0, abs(dot(data.V, facetH)));
 
-    float F = DielectricFresnel( max(0.95, abs(dot(facetH, data.V))) , data.eta);
-
-    if(GetRandom0to1(randState) < F)
+    
+    if(scaledR < F)
     {
         data.L = normalize(reflect(-data.V, facetH));
         data.H = normalize(data.L + data.V);
