@@ -10,10 +10,12 @@ public class RenderRawImage : MonoBehaviour
     [SerializeField]
     private EDebugBufferType _debugBufferType;
     
-    [FormerlySerializedAs("_tracer")]
     [SerializeField]
     private GPUTracer_Megakernel tracerMegakernel;
 
+    [SerializeField]
+    private GPUTracer_WaveFront tracerWaveFront;
+    
     [SerializeField]
     private RawImage _rawImage;
 
@@ -24,9 +26,11 @@ public class RenderRawImage : MonoBehaviour
 
     private void Update()
     {
-        tracerMegakernel.isRenderingDebug = _textureType == ERenderTextureType.Debug;
-        tracerMegakernel.debugType = _debugBufferType;
+        // tracerMegakernel.isRenderingDebug = _textureType == ERenderTextureType.Debug;
+        // tracerMegakernel.debugType = _debugBufferType;
+        //
+        // _rawImage.texture = tracerMegakernel.GetRenderTexture(_textureType);
         
-        _rawImage.texture = tracerMegakernel.GetRenderTexture(_textureType);
+        _rawImage.texture = tracerWaveFront.GetRenderTexture(_textureType);
     }
 }

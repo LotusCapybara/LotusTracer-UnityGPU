@@ -6,6 +6,7 @@ namespace CapyTracerCore.Core
     [StructLayout(LayoutKind.Sequential)]
     public struct RenderRay
     {
+        int pixelIndex;
         public float3 origin;
         public float3 direction;
     }

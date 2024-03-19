@@ -126,7 +126,7 @@ Material:
     - _DstBlendAlpha: 0
     - _ENABLEVERTEXCOLORS: 1
     - _ENABLE_VERTEX_COLORS: 1
-    - _EmissionPower: 10
+    - _EmissionPower: 2
     - _EnvironmentReflections: 1
     - _FlipGreen: 0
     - _GlossMapScale: 1

@@ -1,0 +1,200 @@
+#pragma target 6.0
+
+#pragma kernel Kernel_WF_InitIteration
+#pragma kernel Kernel_WF_GenerateRays
+#pragma kernel Kernel_WF_IntersectGeometry
+#pragma kernel Kernel_WF_BounceBsdf
+#pragma kernel Kernel_WF_AccumulateImageBuffer
+
+#include "../constants.cginc"
+#include "../tracingTypes.cginc"
+#include "../tracingVariables.cginc"
+#include "../Functions/common.cginc"
+#include "../Functions/fresnel.cginc"
+#include "../BRDF/bsdf_functions.cginc"
+#include "../Functions/factories.cginc"
+#include "../Functions/intersection.cginc"
+#include "../BRDF/BxDF.cginc"
+#include "../Functions/nee_direct_lights.cginc"
+
+struct BufferSizes
+{
+    int qtyRays;
+    int qtyBounceHits;
+    int qtyValidSamples;
+};
+
+struct BounceHitInfo
+{
+    int pixelIndex;
+    TriangleHitInfo hitInfo;
+};
+
+struct BounceSample
+{
+    int pixelIndex;
+    float3 sampledDir;
+    float3 sampledPos;
+};
+
+
+int _bounceIndex;
+
+RWStructuredBuffer<BufferSizes> _BufferSizes;
+
+RWStructuredBuffer<RenderRay> _BounceRays;
+
+int _qtyBounceHits;
+RWStructuredBuffer<BounceHitInfo> _BounceHits;
+
+RWStructuredBuffer<float3> _RadianceAcc;
+
+RWStructuredBuffer<BounceSample> _BounceSamples;
+RWStructuredBuffer<float4> _Throughput;
+
+
+[numthreads(1, 1,1)]
+void Kernel_WF_InitIteration (uint3 id : SV_DispatchThreadID)
+{
+    for(int i = 0; i < 30; i++)
+    {
+        _BufferSizes[i].qtyRays = 0;
+        _BufferSizes[i].qtyBounceHits = 0;
+        _BufferSizes[i].qtyValidSamples = 0;
+    }
+
+    for(int p = 0; p < totalSize; p++)
+    {
+        _RadianceAcc[p] = float3(0, 0, 0);
+        _BounceSamples[p].pixelIndex = p;
+        _Throughput[p] = (float4) 1.0;
+    }
+}
+
+[numthreads(8,8,1)]
+void Kernel_WF_GenerateRays (uint3 id : SV_DispatchThreadID)
+{
+    int index = id.y * width + id.x;
+    uint randState = id.x * someSeed + id.y * someSeed + iteration * someSeed + index;
+
+    if(_bounceIndex == 0)
+    {
+        RenderRay ray = GetCameraRay(id, randState);
+        ray.pixelIndex = index;
+
+        int rayIndex;
+        InterlockedAdd(_BufferSizes[0].qtyRays, 1, rayIndex);        
+        _BounceRays[rayIndex] = ray;
+    }
+    else if(index < _BufferSizes[_bounceIndex].qtyValidSamples)
+    {
+        int rayIndex;
+        InterlockedAdd(_BufferSizes[_bounceIndex].qtyRays, 1, rayIndex);
+
+        RenderRay ray;
+        ray.pixelIndex = _BounceSamples[index].pixelIndex;
+        ray.origin = _BounceSamples[index].sampledPos;
+        ray.direction = _BounceSamples[index].sampledDir;
+        
+        _BounceRays[rayIndex] = ray;
+    }
+}
+
+[numthreads(8,8,1)]
+void Kernel_WF_IntersectGeometry (uint3 id : SV_DispatchThreadID)
+{
+    int index = id.y * width + id.x;
+
+    if(index >= _BufferSizes[_bounceIndex].qtyRays)
+        return;    
+    
+    
+    TriangleHitInfo hitInfo;
+    bool didHit = GetBounceHit(hitInfo, _BounceRays[index], INFINITY, false);
+
+    if(didHit)
+    {
+        BounceHitInfo bounce_hit_info;
+        bounce_hit_info.pixelIndex = _BounceRays[index].pixelIndex;
+        bounce_hit_info.hitInfo = hitInfo;
+
+        int hitIndex;
+        InterlockedAdd(_BufferSizes[_bounceIndex].qtyBounceHits, 1, hitIndex);        
+        _BounceHits[hitIndex] = bounce_hit_info;
+    }    
+}
+
+[numthreads(8,8,1)]
+void Kernel_WF_BounceBsdf (uint3 id : SV_DispatchThreadID)
+{
+    int index = id.y * width + id.x;
+
+    if(index >= _BufferSizes[_bounceIndex].qtyBounceHits)
+        return; 
+
+    
+    
+    uint randState = id.x * someSeed + id.y * someSeed + iteration * someSeed + index;
+    ScatteringData bounceData = MakeScatteringData(randState, _BounceHits[index].hitInfo);
+
+    
+    int pixelIndex = _BounceHits[index].pixelIndex;
+    float4 throughput = _Throughput[pixelIndex];
+
+    if(bounceData.emissionPower > 0)
+    {
+        _RadianceAcc[pixelIndex].rgb += throughput.rgb * bounceData.emissionPower * bounceData.color;
+        return;
+    }
+    
+    float3 bounceBSDF;
+    float bouncePDF;
+
+    bool validSample = GetBSDF_Sample(randState, bounceData);
+    if(!validSample)
+        return;
+    GetBSDF_F(randState, bounceData, bounceBSDF, bouncePDF);
+    if(bouncePDF <= 0)
+        return;
+
+    throughput.rgb *=  bounceBSDF / bouncePDF;
+    throughput.a = bouncePDF;
+
+       
+    
+    if(_bounceIndex > 3)
+    {
+        // q would be "the probabilities of continuing the path"
+        float q = min(MaxComponent(throughput.rgb) + 0.01, 0.9);
+        if (GetRandom0to1(randState) > q)
+            return;
+    
+        // like we do with all contributions, we should divide by the current probability
+        // we do this to "balance" probabilities with the ones we terminated. If we didnt' do this
+        // we would be introducing bias towards the paths that were continued
+        throughput.rgb /= q;
+    }
+
+    _Throughput[pixelIndex] = throughput;   
+
+    BounceSample bounce_sample;
+    bounce_sample.pixelIndex = pixelIndex;
+    bounce_sample.sampledDir = bounceData.L; 
+    bounce_sample.sampledPos = bounceData.surfacePoint + bounceData.WorldNormal * 2.0 * EPSILON;
+    
+    int sampleIndex;
+    InterlockedAdd(_BufferSizes[_bounceIndex + 1].qtyValidSamples, 1, sampleIndex);              
+    _BounceSamples[sampleIndex] = bounce_sample;
+}
+
+
+[numthreads(8,8,1)]
+void Kernel_WF_AccumulateImageBuffer (uint3 id : SV_DispatchThreadID)
+{
+    int index = id.y * width + id.x;
+
+    float iterationWeight = 1.0 / (iteration + 1.0);   
+    float3 accumulated = _SamplingBufferPrev[id.xy] * (1.0 - iterationWeight) + (_RadianceAcc[index].rgb * iterationWeight);
+    _SamplingBuffer[id.xy] = float4(accumulated.xyz, 1);
+    _SamplingBufferPrev[id.xy] = _SamplingBuffer[id.xy];    
+}

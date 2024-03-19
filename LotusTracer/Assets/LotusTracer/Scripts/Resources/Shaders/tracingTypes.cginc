@@ -11,6 +11,7 @@ struct TextureData
 
 struct RenderRay
 {
+    int pixelIndex;
     float3 origin;
     float3 direction;
 };

@@ -4,9 +4,11 @@ using UnityEngine.Serialization;
 
 public class GPUTraceDebug : MonoBehaviour
 {
-    [FormerlySerializedAs("_tracer")]
     [SerializeField]
     private GPUTracer_Megakernel tracerMegakernel;
+    
+    [SerializeField]
+    private GPUTracer_WaveFront tracerWaveFront;
 
     [SerializeField]
     private TextMeshProUGUI _textTotalTime;
@@ -19,8 +21,8 @@ public class GPUTraceDebug : MonoBehaviour
 
     private void Update()
     {
-        _textTotalTime.text = $"Total Time:  {tracerMegakernel.totalTime:F4}";
-        _textIteration.text = $"Iteration {tracerMegakernel.indirectIteration.ToString()}";
-        _textAverageTime.text = $"Avg Time:  {tracerMegakernel.averageSampleTime:F6}";
+        _textTotalTime.text = $"Total Time:  {tracerWaveFront.totalTime:F4}";
+        _textIteration.text = $"Iteration {tracerWaveFront.indirectIteration.ToString()}";
+        _textAverageTime.text = $"Avg Time:  {tracerWaveFront.averageSampleTime:F6}";
     }
 }
