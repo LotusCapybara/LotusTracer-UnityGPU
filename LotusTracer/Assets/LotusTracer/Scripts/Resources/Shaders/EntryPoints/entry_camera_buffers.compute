@@ -40,12 +40,10 @@ float3 Get_BVHDensity (uint3 id)
     
     for(int i = 0; i < treeNodesQty; i++)
     {
-        BVH4Node node = _AccelTree[i];
-
-        bool isTraversable =  (node.data & 0x1)  == 1;      
-
-        // float dist;
-        // if(isTraversable && DoesRayHitBounds(pathRay, node.bounds, dist))
+        // BVH4Node node = _AccelTree[i];
+        // const BoundsBox nodeBounds = Decompress(node.compressedBounds);
+        //
+        // if(DoesRayHitBounds(pathRay, nodeBounds))
         // {
         //     qtyHits++;
         // }

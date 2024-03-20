@@ -26,6 +26,7 @@ int _IgnoreCubeInImage;
 SamplerState sampler_CubeMap;
 TextureCube<float4> _CubeMap;
 // ------------------
+StructuredBuffer<BoundsBox> _SceneBounds;
 
 Texture2DArray<float4> _AtlasesAlbedo;
 SamplerState sampler_AtlasesAlbedo;

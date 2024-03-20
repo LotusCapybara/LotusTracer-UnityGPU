@@ -21,14 +21,14 @@ public class BVHNodeVisualizer : MonoBehaviour
     public BoundsBox bounds;
     private List<BVHNodeVisualizer> children;
     
-    public void SetNode(int nodeIndex, int depth)
+    public void SetNode(int nodeIndex, int depth, BoundsBox newBounds)
     {
         this.nodeIndex = nodeIndex;
         
 
         ref StackBVH4Node node = ref BVHVisualizer.s_serializedSceneGeometry.bvhNodes[nodeIndex];
-        
-        // bounds = node.bounds;
+
+        bounds = newBounds; 
         dataBinary = Convert.ToString(node.data, 2);
         isLeaf = (node.data & 0b1) == 1;
 
@@ -47,10 +47,41 @@ public class BVHNodeVisualizer : MonoBehaviour
         
         int startChildIndex = node.startIndex;
         
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 8; i++)
         {
             BVHNodeVisualizer nodeVisualizer = Instantiate(this);
-            nodeVisualizer.SetNode(startChildIndex + i, depth + 1);
+
+            BoundsBox childBounds = BoundsBox.AS_SHRINK;
+
+            // switch (i)
+            // {
+            //     case 0:
+            //         childBounds = BVHUtils.Decompress(node.bounds1, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
+            //         break;
+            //     case 1:
+            //         childBounds = BVHUtils.Decompress(node.bounds2, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
+            //         break;
+            //     case 2:
+            //         childBounds = BVHUtils.Decompress(node.bounds3, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
+            //         break;
+            //     case 3:
+            //         childBounds = BVHUtils.Decompress(node.bounds4, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
+            //         break;
+            //     case 4:
+            //         childBounds = BVHUtils.Decompress(node.bounds5, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
+            //         break;
+            //     case 5:
+            //         childBounds = BVHUtils.Decompress(node.bounds6, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
+            //         break;
+            //     case 6:
+            //         childBounds = BVHUtils.Decompress(node.bounds7, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
+            //         break;
+            //     case 7:
+            //         childBounds = BVHUtils.Decompress(node.bounds8, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
+            //         break;
+            // }
+            //
+            nodeVisualizer.SetNode(startChildIndex + i, depth + 1, childBounds);
             children.Add(nodeVisualizer);
 
             var boundMeshFilter = nodeVisualizer.gameObject.AddComponent<MeshFilter>();

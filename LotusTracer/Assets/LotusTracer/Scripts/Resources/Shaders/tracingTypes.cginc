@@ -1,4 +1,6 @@
 
+
+
 struct TextureData
 {
     int index;
@@ -88,20 +90,28 @@ struct BoundsBox
     float3 max;
 };
 
+struct SceneData
+{
+    BoundsBox bounds;
+    float3 extends;
+};
+
 struct BVH4Node
 {
     // bit 1: is Leaf?
     uint data;
     int startIndex;
     int qtyTriangles;
-    BoundsBox bounds0;
-    BoundsBox bounds1;
-    BoundsBox bounds2;
-    BoundsBox bounds3;
-    BoundsBox bounds4;
-    BoundsBox bounds5;
-    BoundsBox bounds6;
-    BoundsBox bounds7;
+    float3 boundsMin;
+    float3 extends;        
+    uint4 bb0;
+    uint4 bb1;
+    uint4 bb2;
+    uint4 bb3;
+    uint4 bb4;
+    uint4 bb5;
+    uint4 bb6;
+    uint4 bb7;
 };
 
 struct TriangleHitInfo

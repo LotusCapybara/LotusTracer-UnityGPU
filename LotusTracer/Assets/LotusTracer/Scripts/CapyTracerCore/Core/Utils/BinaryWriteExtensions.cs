@@ -25,6 +25,28 @@ namespace CapyTracerCore.Core
             writer.Write(f4.z);
             writer.Write(f4.w);
         }
+        
+        public static void WriteBinary(this uint2 u2, BinaryWriter writer)
+        {
+            writer.Write(u2.x);
+            writer.Write(u2.y);
+        }
+        
+        public static void WriteBinary(this uint3 u3, BinaryWriter writer)
+        {
+            writer.Write(u3.x);
+            writer.Write(u3.y);
+            writer.Write(u3.z);
+        }
+        
+        public static void WriteBinary(this uint4 u4, BinaryWriter writer)
+        {
+            writer.Write(u4.x);
+            writer.Write(u4.y);
+            writer.Write(u4.z);
+            writer.Write(u4.w);
+        }
+        
     
         public static void WriteBinary(this SerializedMaterial mat, BinaryWriter writer)
         {
@@ -108,29 +130,17 @@ namespace CapyTracerCore.Core
             writer.Write(node.startIndex);
             writer.Write(node.qtyTriangles);
             
-            node.bounds0.min.WriteBinary(writer);
-            node.bounds0.max.WriteBinary(writer);
-            
-            node.bounds1.min.WriteBinary(writer);
-            node.bounds1.max.WriteBinary(writer);
-            
-            node.bounds2.min.WriteBinary(writer);
-            node.bounds2.max.WriteBinary(writer);
-            
-            node.bounds3.min.WriteBinary(writer);
-            node.bounds3.max.WriteBinary(writer);
-            
-            node.bounds4.min.WriteBinary(writer);
-            node.bounds4.max.WriteBinary(writer);
-            
-            node.bounds5.min.WriteBinary(writer);
-            node.bounds5.max.WriteBinary(writer);
-            
-            node.bounds6.min.WriteBinary(writer);
-            node.bounds6.max.WriteBinary(writer);
-            
-            node.bounds7.min.WriteBinary(writer);
-            node.bounds7.max.WriteBinary(writer);
+            node.boundsMin.WriteBinary(writer);
+            node.extends.WriteBinary(writer);
+        
+            node.bb0.WriteBinary(writer);
+            node.bb1.WriteBinary(writer);
+            node.bb2.WriteBinary(writer);
+            node.bb3.WriteBinary(writer);
+            node.bb4.WriteBinary(writer);
+            node.bb5.WriteBinary(writer);
+            node.bb6.WriteBinary(writer);
+            node.bb7.WriteBinary(writer);
         }
     }
 }

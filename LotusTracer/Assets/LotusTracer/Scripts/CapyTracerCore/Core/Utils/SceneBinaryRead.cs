@@ -22,6 +22,33 @@ namespace CapyTracerCore.Core
             return f3;
         }
         
+        public static uint2 ReadUInt2(BinaryReader reader)
+        {
+            uint2 u2 = new uint2();
+            u2.x = reader.ReadUInt32();
+            u2.y =  reader.ReadUInt32();
+            return u2;
+        }
+        
+        public static uint3 ReadUInt3(BinaryReader reader)
+        {
+            uint3 u3 = new uint3();
+            u3.x = reader.ReadUInt32();
+            u3.y =  reader.ReadUInt32();
+            u3.z =  reader.ReadUInt32();
+            return u3;
+        }
+        
+        public static uint4 ReadUInt4(BinaryReader reader)
+        {
+            uint4 u4 = new uint4();
+            u4.x = reader.ReadUInt32();
+            u4.y =  reader.ReadUInt32();
+            u4.z =  reader.ReadUInt32();
+            u4.w =  reader.ReadUInt32();
+            return u4;
+        }
+        
         public static float4 ReadFloat4(BinaryReader reader)
         {
             float4 f4 = float4.zero;
@@ -132,15 +159,18 @@ namespace CapyTracerCore.Core
             node.startIndex = reader.ReadInt32();
             node.qtyTriangles = reader.ReadInt32();
 
-            node.bounds0 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
-            node.bounds1 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
-            node.bounds2 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
-            node.bounds3 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
-            node.bounds4 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
-            node.bounds5 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
-            node.bounds6 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
-            node.bounds7 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
-
+            node.boundsMin = ReadFloat3(reader);
+            node.extends = ReadFloat3(reader);
+        
+            node.bb0 = ReadUInt4(reader);
+            node.bb1 = ReadUInt4(reader);
+            node.bb2 = ReadUInt4(reader);
+            node.bb3 = ReadUInt4(reader);
+            node.bb4 = ReadUInt4(reader);
+            node.bb5 = ReadUInt4(reader);
+            node.bb6 = ReadUInt4(reader);
+            node.bb7 = ReadUInt4(reader);
+            
             return node;
         }
         

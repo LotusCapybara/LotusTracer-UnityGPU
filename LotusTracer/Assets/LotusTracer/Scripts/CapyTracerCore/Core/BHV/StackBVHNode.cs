@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using Unity.Mathematics;
 
 namespace CapyTracerCore.Core
 {
@@ -13,13 +14,18 @@ namespace CapyTracerCore.Core
         public uint data;
         public int startIndex;
         public int qtyTriangles;
-        public BoundsBox bounds0;
-        public BoundsBox bounds1;
-        public BoundsBox bounds2;
-        public BoundsBox bounds3;
-        public BoundsBox bounds4;
-        public BoundsBox bounds5;
-        public BoundsBox bounds6;
-        public BoundsBox bounds7;
+
+        public float3 boundsMin;
+        public float3 extends;
+
+        public uint4 bb0;
+        public uint4 bb1;
+        public uint4 bb2;
+        public uint4 bb3;
+        public uint4 bb4;
+        public uint4 bb5;
+        public uint4 bb6;
+        public uint4 bb7;
+      
     }
 }

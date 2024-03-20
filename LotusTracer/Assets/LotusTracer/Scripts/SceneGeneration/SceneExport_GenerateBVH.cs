@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CapyTracerCore.Core;
+using Unity.Mathematics;
 using UnityEngine;
 
 public static class SceneExport_GenerateBVH
@@ -24,6 +25,9 @@ public static class SceneExport_GenerateBVH
 
         int ti = 0;
 
+        var sceneBounds = sortedHeapNodes[0].bounds;
+        var sceneExtends = sortedHeapNodes[0].bounds.GetSize();
+
         for (int i = 0; i < sortedHeapNodes.Count; i++)
         {
             BVHNode heapNode = sortedHeapNodes[i];
@@ -43,6 +47,8 @@ public static class SceneExport_GenerateBVH
             // 1-8: is the children at index traversable?
             
             uint nodeData = (uint) (heapNode.isLeaf ? 1 : 0);
+            
+            BoundsBox[] childrenBounds = new BoundsBox[8];
 
             if (!heapNode.isLeaf)
             {
@@ -53,6 +59,8 @@ public static class SceneExport_GenerateBVH
                     
                     if(isTraversable)
                         nodeData |= (uint)(0x1 << (ch + 1));
+
+                    childrenBounds[ch] = heapNode.children[ch].bounds;
                 }
             }
             
@@ -60,22 +68,52 @@ public static class SceneExport_GenerateBVH
             {
                 data = nodeData,
                 startIndex = heapNode.isLeaf ? ti : heapNode.firstChildIndex,
-                qtyTriangles = qtyTriangles
+                qtyTriangles = qtyTriangles,
+                boundsMin = heapNode.bounds.min,
+                extends = heapNode.bounds.GetSize()
             };
+    
+            if (heapNode.children == null || heapNode.children.Count <= 0)
+            {
+                stackNode.bb0 = new uint4();
+                stackNode.bb1 = new uint4();
+                stackNode.bb2 = new uint4();
+                stackNode.bb3 = new uint4();
+                stackNode.bb4 = new uint4();
+                stackNode.bb5 = new uint4();
+                stackNode.bb6 = new uint4();
+                stackNode.bb7 = new uint4();
+            }
+            else
+            {
+                heapNode.bounds = new BoundsBox(
+                    heapNode.bounds.min + (F3.ONE * -0.001f),
+                    heapNode.bounds.max + (F3.ONE * 0.001f)); 
+                
+                StackBVH4Node tempStackNode = BVHUtils.Compress(childrenBounds, heapNode.bounds);
+                
+                float3 parentMin = heapNode.bounds.min;
+                float3 parentSize = heapNode.bounds.GetSize();
+                stackNode.boundsMin = parentMin;
+                stackNode.extends = parentSize;
+                stackNode.bb0 = tempStackNode.bb0;
+                stackNode.bb1 = tempStackNode.bb1;
+                stackNode.bb2 = tempStackNode.bb2;
+                stackNode.bb3 = tempStackNode.bb3;
+                stackNode.bb4 = tempStackNode.bb4;
+                stackNode.bb5 = tempStackNode.bb5;
+                stackNode.bb6 = tempStackNode.bb6;
+                stackNode.bb7 = tempStackNode.bb7;
 
-            stackNode.bounds0 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[0].bounds;
-            stackNode.bounds1 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[1].bounds;
-            stackNode.bounds2 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[2].bounds;
-            stackNode.bounds3 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[3].bounds;
-            stackNode.bounds4 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[4].bounds;
-            stackNode.bounds5 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[5].bounds;
-            stackNode.bounds6 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[6].bounds;
-            stackNode.bounds7 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[7].bounds;
+            }
 
             outNodes[i] = stackNode;
 
             ti += qtyTriangles;
         }
+
+        sceneGeom.boundMin = sceneBounds.min;
+        sceneGeom.boundMax = sceneBounds.max;
 
         sceneGeom.qtyBVHNodes = outNodes.Length;
         sceneGeom.bvhNodes = outNodes;

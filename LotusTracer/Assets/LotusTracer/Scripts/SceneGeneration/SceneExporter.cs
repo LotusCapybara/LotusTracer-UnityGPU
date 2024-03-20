@@ -4,7 +4,6 @@ using System.IO;
 using CapyTracerCore.Core;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 
 public class SceneExporter : MonoBehaviour

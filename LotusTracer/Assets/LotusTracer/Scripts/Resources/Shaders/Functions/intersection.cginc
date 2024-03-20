@@ -1,4 +1,75 @@
 
+
+
+// Compact bits (opposite of Part1By2)
+uint Compact1By2(uint mortonHigh, uint mortonLow, uint shift)
+{
+    uint x = shift == 2 ? mortonHigh : (shift == 1 ? ((mortonHigh << 1) | (mortonLow >> 31)) : mortonLow);
+    
+    x &= 0x09249249; // Mask: binary 1001001001001001001001001
+    x = (x ^ (x >> 2)) & 0x030C30C3; // binary: 11000011000011000011
+    x = (x ^ (x >> 4)) & 0x0300F00F; // binary: 11000000111100000011
+    x = (x ^ (x >> 8)) & 0x030000FF; // binary: 11000000000000000011111111
+    x = (x ^ (x >> 16)) & 0x000FFFFF; // binary: 11111111111111111111
+    
+    return x;
+}
+
+uint3 DecodeMorton3(uint2 morton)
+{
+    uint3 r = uint3(0, 0, 0);
+    
+    r.x = Compact1By2(morton.y, morton.x, 2); // Shift right twice, compact bits for x
+    r.y = Compact1By2(morton.y, morton.x, 1); // Shift right once, compact bits for y
+    r.z = Compact1By2(morton.y, morton.x, 0); // No shift needed, compact bits for z
+    
+    return r;
+}
+
+
+
+    
+
+void Decompress(inout BoundsBox outBounds[8], in BVH4Node node)
+{
+    uint2 mortonMins[8];
+    uint2 mortonMaxs[8];
+        
+    mortonMins[0] = uint2( node.bb0.x , node.bb0.y);
+    mortonMaxs[0] = uint2( node.bb0.z , node.bb0.w);
+
+    mortonMins[1] = uint2( node.bb1.x , node.bb1.y);
+    mortonMaxs[1] = uint2( node.bb1.z , node.bb1.w);
+
+    mortonMins[2] = uint2( node.bb2.x , node.bb2.y);
+    mortonMaxs[2] = uint2( node.bb2.z , node.bb2.w);
+
+    mortonMins[3] = uint2( node.bb3.x , node.bb3.y);
+    mortonMaxs[3] = uint2( node.bb3.z , node.bb3.w);
+
+    mortonMins[4] = uint2( node.bb4.x , node.bb4.y);
+    mortonMaxs[4] = uint2( node.bb4.z , node.bb4.w);
+
+    mortonMins[5] = uint2( node.bb5.x , node.bb5.y);
+    mortonMaxs[5] = uint2( node.bb5.z , node.bb5.w);
+
+    mortonMins[6] = uint2( node.bb6.x , node.bb6.y);
+    mortonMaxs[6] = uint2( node.bb6.z , node.bb6.w);
+
+    mortonMins[7] = uint2( node.bb7.x , node.bb7.y);
+    mortonMaxs[7] = uint2( node.bb7.z , node.bb7.w);
+    
+    
+    for (int i = 0; i < 8; i++)
+    {
+        uint3 qMin = DecodeMorton3(mortonMins[i]);
+        uint3 qMax = DecodeMorton3(mortonMaxs[i]);
+
+        outBounds[i].min = ((float3) qMin / 1023.0 ) * node.extends + node.boundsMin;
+        outBounds[i].max = ((float3) qMax / 1023.0 ) * node.extends + node.boundsMin;
+    }
+}
+
 float RayToSphere(in RenderRay ray, in float3 center, float radius)
 {
     // solutions for t if the ray intersects
@@ -35,78 +106,18 @@ float RayToSphere(in RenderRay ray, in float3 center, float radius)
     return t0; 
 }
 
-float RayDistanceToBounds(in RenderRay ray, in BoundsBox bounds)
-{
-    float tmin = - INFINITY;
-    float tmax = INFINITY;
-
-    float t1;
-    float t2;
-            
-    // x direction
-    if (ray.direction.x != 0)
-    {
-        t1 = (bounds.min.x - ray.origin.x) / ray.direction.x;
-        t2 = (bounds.max.x - ray.origin.x) / ray.direction.x;
-        tmin = max(tmin, min(t1, t2));
-        tmax = min(tmax, max(t1, t2));
-    }
-    else if (ray.origin.x < bounds.min.x || ray.origin.x > bounds.max.x)
-        return -1;
-
-
-    // y direction
-    if (ray.direction.y != 0)
-    {
-        t1 = (bounds.min.y - ray.origin.y) / ray.direction.y;
-        t2 = (bounds.max.y - ray.origin.y) / ray.direction.y;
-        tmin = max(tmin, min(t1, t2));
-        tmax = min(tmax, max(t1, t2));
-    }
-    else if (ray.origin.y < bounds.min.y || ray.origin.y > bounds.max.y)
-        return -1;
-            
-    // z direction
-    if (ray.direction.z != 0)
-    {
-        t1 = (bounds.min.z - ray.origin.z) / ray.direction.z;
-        t2 = (bounds.max.z - ray.origin.z) / ray.direction.z;
-        tmin = max(tmin, min(t1, t2));
-        tmax = min(tmax, max(t1, t2));
-    }
-    else if (ray.origin.z < bounds.min.z || ray.origin.z > bounds.max.z)
-        return -1;
-            
-    if (tmin > tmax)
-        return -1;
-
-    if (tmin < 0)
-        return 0;
-
-    return tmin;
-}
-
 bool DoesRayHitBounds(in RenderRay r, in BoundsBox b, out float dist)
 {
     float3 invDirection = 1.0 / r.direction;
+
+    float3 t1 = (b.min - r.origin) * invDirection;
+    float3 t2 = (b.max - r.origin) * invDirection;
     
-    float tx1 = (b.min.x - r.origin.x) * invDirection.x;
-    float tx2 = (b.max.x - r.origin.x) * invDirection.x;
-
-    float tmin = min(tx1, tx2);
-    float tmax = max(tx1, tx2);
-
-    float ty1 = (b.min.y - r.origin.y) * invDirection.y;
-    float ty2 = (b.max.y - r.origin.y) * invDirection.y;
-
-    tmin = max(tmin, min(ty1, ty2));
-    tmax = min(tmax, max(ty1, ty2));
-
-    float tz1 = (b.min.z - r.origin.z) * invDirection.z;
-    float tz2 = (b.max.z - r.origin.z) * invDirection.z;
-
-    tmin = max(tmin, min(tz1, tz2));
-    tmax = min(tmax, max(tz1, tz2));
+    float3 tmin3 = min(t1, t2);
+    float3 tmax3 = max(t1, t2);
+    
+    float tmin = max(max(tmin3.x, tmin3.y), tmin3.z);
+    float tmax = min(min(tmax3.x, tmax3.y), tmax3.z);
 
     dist = tmin;
     
@@ -246,6 +257,8 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
 
 int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce)
 {
+    float3 invDirection = 1.0 / ray.direction;
+    
     uint shortStack[BVH_STACK_SIZE];
     int stackIndex = 0;
     shortStack[stackIndex] = 0;
@@ -291,32 +304,22 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce)
         }
         else
         {
-            float entryDist = 0.0;
+            BoundsBox childrenBounds[8];
 
-            BoundsBox bounds[8];
-            bounds[0] = node.bounds0;
-            bounds[1] = node.bounds1;
-            bounds[2] = node.bounds2;
-            bounds[3] = node.bounds3;
-            bounds[4] = node.bounds4;
-            bounds[5] = node.bounds5;
-            bounds[6] = node.bounds6;
-            bounds[7] = node.bounds7;
-
-            // float distances[8];
-            // float relativeIndices[8];
+            Decompress(childrenBounds, node);
             
             for(int ch = 0; ch < 8; ch++)
             {
-                bool isTraversable = ((node.data >> (ch + 1)) & 0x1)  == 1;                
-                isTraversable = isTraversable && DoesRayHitBounds(ray, bounds[ch], entryDist);    
-                isTraversable = isTraversable && entryDist < closestDistance;
+                bool isTrasversable =  ((node.data >> (ch + 1)) & 0x1)  == 1;
+
+                float entryDist;
                 
-                if(isTraversable)
+                isTrasversable =DoesRayHitBounds(ray, childrenBounds[ch], entryDist);
+                
+                if(isTrasversable)
                 {
                     shortStack[++stackIndex] = node.startIndex + ch;
                 }
-                    
             }
         }       
     }
