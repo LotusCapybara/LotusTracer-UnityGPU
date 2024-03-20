@@ -75,14 +75,14 @@ public static class SceneExport_GenerateBVH
     
             if (heapNode.children == null || heapNode.children.Count <= 0)
             {
-                stackNode.bb0 = new uint4();
-                stackNode.bb1 = new uint4();
-                stackNode.bb2 = new uint4();
-                stackNode.bb3 = new uint4();
-                stackNode.bb4 = new uint4();
-                stackNode.bb5 = new uint4();
-                stackNode.bb6 = new uint4();
-                stackNode.bb7 = new uint4();
+                stackNode.bb0 = new uint2();
+                stackNode.bb1 = new uint2();
+                stackNode.bb2 = new uint2();
+                stackNode.bb3 = new uint2();
+                stackNode.bb4 = new uint2();
+                stackNode.bb5 = new uint2();
+                stackNode.bb6 = new uint2();
+                stackNode.bb7 = new uint2();
             }
             else
             {
@@ -105,6 +105,17 @@ public static class SceneExport_GenerateBVH
                 stackNode.bb6 = tempStackNode.bb6;
                 stackNode.bb7 = tempStackNode.bb7;
 
+                stackNode.precisionLoss = 0f;
+
+                // I know... this is quite expensive, but I can give me an idea of the precision loss like this
+                // I need to either improve base precision or make this part faster
+                BoundsBox[] decompressedBounds = BVHUtils.Decompress(stackNode);
+
+                for (int ch = 0; ch < 8; ch++)
+                {
+                    stackNode.precisionLoss = math.max(stackNode.precisionLoss, math.distance(heapNode.children[ch].bounds.min, decompressedBounds[ch].min));
+                    stackNode.precisionLoss = math.max(stackNode.precisionLoss, math.distance(heapNode.children[ch].bounds.max, decompressedBounds[ch].max));
+                }
             }
 
             outNodes[i] = stackNode;

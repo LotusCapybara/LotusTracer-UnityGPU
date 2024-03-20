@@ -130,6 +130,8 @@ namespace CapyTracerCore.Core
             writer.Write(node.startIndex);
             writer.Write(node.qtyTriangles);
             
+            writer.Write(node.precisionLoss);
+            
             node.boundsMin.WriteBinary(writer);
             node.extends.WriteBinary(writer);
         

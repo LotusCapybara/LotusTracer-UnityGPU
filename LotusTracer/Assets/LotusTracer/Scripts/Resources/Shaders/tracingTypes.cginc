@@ -102,16 +102,17 @@ struct BVH4Node
     uint data;
     int startIndex;
     int qtyTriangles;
+    float precisionLoss;
     float3 boundsMin;
     float3 extends;        
-    uint4 bb0;
-    uint4 bb1;
-    uint4 bb2;
-    uint4 bb3;
-    uint4 bb4;
-    uint4 bb5;
-    uint4 bb6;
-    uint4 bb7;
+    uint2 bb0;
+    uint2 bb1;
+    uint2 bb2;
+    uint2 bb3;
+    uint2 bb4;
+    uint2 bb5;
+    uint2 bb6;
+    uint2 bb7;
 };
 
 struct TriangleHitInfo

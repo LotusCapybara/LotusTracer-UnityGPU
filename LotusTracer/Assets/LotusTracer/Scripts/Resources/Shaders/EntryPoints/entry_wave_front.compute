@@ -100,7 +100,8 @@ void Kernel_WF_IntersectGeometry (uint3 id : SV_DispatchThreadID)
     if(index >= _BufferSizes[_bounceIndex].qtyRays)
         return;
 
-    int hittingTriangleIndex = GetTriangleHitIndex(_BounceRays[index], INFINITY, _bounceIndex == 0);
+    bool isTriangle;
+    int hittingTriangleIndex = GetTriangleHitIndex(_BounceRays[index], INFINITY, _bounceIndex == 0, isTriangle);
 
     if(hittingTriangleIndex >= 0)
     {

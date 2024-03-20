@@ -1,73 +1,41 @@
 
 
 
-// Compact bits (opposite of Part1By2)
-uint Compact1By2(uint mortonHigh, uint mortonLow, uint shift)
+uint Unpart1by2(uint n)
 {
-    uint x = shift == 2 ? mortonHigh : (shift == 1 ? ((mortonHigh << 1) | (mortonLow >> 31)) : mortonLow);
-    
-    x &= 0x09249249; // Mask: binary 1001001001001001001001001
-    x = (x ^ (x >> 2)) & 0x030C30C3; // binary: 11000011000011000011
-    x = (x ^ (x >> 4)) & 0x0300F00F; // binary: 11000000111100000011
-    x = (x ^ (x >> 8)) & 0x030000FF; // binary: 11000000000000000011111111
-    x = (x ^ (x >> 16)) & 0x000FFFFF; // binary: 11111111111111111111
-    
-    return x;
+    n &= 0x09249249;
+    n = (n ^ (n >> 2)) & 0x030c30c3;
+    n = (n ^ (n >> 4)) & 0x0300f00f;
+    n = (n ^ (n >> 8)) & 0xff0000ff;
+    n = (n ^ (n >> 16)) & 0x000003ff;
+    return n;
 }
 
-uint3 DecodeMorton3(uint2 morton)
+uint3 MortonDecode3(in uint n)
 {
-    uint3 r = uint3(0, 0, 0);
-    
-    r.x = Compact1By2(morton.y, morton.x, 2); // Shift right twice, compact bits for x
-    r.y = Compact1By2(morton.y, morton.x, 1); // Shift right once, compact bits for y
-    r.z = Compact1By2(morton.y, morton.x, 0); // No shift needed, compact bits for z
-    
-    return r;
-}
-
-
-
-    
-
-void Decompress(inout BoundsBox outBounds[8], in BVH4Node node)
-{
-    uint2 mortonMins[8];
-    uint2 mortonMaxs[8];
+    uint3 v;
         
-    mortonMins[0] = uint2( node.bb0.x , node.bb0.y);
-    mortonMaxs[0] = uint2( node.bb0.z , node.bb0.w);
+    v.x = Unpart1by2(n);
+    v.y = Unpart1by2(n >> 1);
+    v.z = Unpart1by2(n >> 2);
 
-    mortonMins[1] = uint2( node.bb1.x , node.bb1.y);
-    mortonMaxs[1] = uint2( node.bb1.z , node.bb1.w);
+    return v;
+}
 
-    mortonMins[2] = uint2( node.bb2.x , node.bb2.y);
-    mortonMaxs[2] = uint2( node.bb2.z , node.bb2.w);
+static float gridScale = 1.0 / 1023.0;
 
-    mortonMins[3] = uint2( node.bb3.x , node.bb3.y);
-    mortonMaxs[3] = uint2( node.bb3.z , node.bb3.w);
+BoundsBox DecompressBounds(in uint2 morton, in BVH4Node node)
+{
+    uint bitMask = 0x3FF;
 
-    mortonMins[4] = uint2( node.bb4.x , node.bb4.y);
-    mortonMaxs[4] = uint2( node.bb4.z , node.bb4.w);
+    uint3 qMin = uint3(             morton.x & bitMask, (morton.x >> 10) & bitMask, (morton.x >> 20) & bitMask);
+            
+    uint3 qMax = uint3(       morton.y & bitMask, (morton.y >> 10) & bitMask, (morton.y >> 20) & bitMask);
 
-    mortonMins[5] = uint2( node.bb5.x , node.bb5.y);
-    mortonMaxs[5] = uint2( node.bb5.z , node.bb5.w);
-
-    mortonMins[6] = uint2( node.bb6.x , node.bb6.y);
-    mortonMaxs[6] = uint2( node.bb6.z , node.bb6.w);
-
-    mortonMins[7] = uint2( node.bb7.x , node.bb7.y);
-    mortonMaxs[7] = uint2( node.bb7.z , node.bb7.w);
-    
-    
-    for (int i = 0; i < 8; i++)
-    {
-        uint3 qMin = DecodeMorton3(mortonMins[i]);
-        uint3 qMax = DecodeMorton3(mortonMaxs[i]);
-
-        outBounds[i].min = ((float3) qMin / 1023.0 ) * node.extends + node.boundsMin;
-        outBounds[i].max = ((float3) qMax / 1023.0 ) * node.extends + node.boundsMin;
-    }
+    BoundsBox outBounds;
+    outBounds.min = ((float3) qMin * gridScale ) * node.extends + node.boundsMin - (float3) node.precisionLoss;
+    outBounds.max = ((float3) qMax * gridScale ) * node.extends + node.boundsMin + (float3) node.precisionLoss;    
+    return outBounds;
 }
 
 float RayToSphere(in RenderRay ray, in float3 center, float radius)
@@ -106,10 +74,8 @@ float RayToSphere(in RenderRay ray, in float3 center, float radius)
     return t0; 
 }
 
-bool DoesRayHitBounds(in RenderRay r, in BoundsBox b, out float dist)
+bool DoesRayHitBounds(in RenderRay r, in BoundsBox b, out float dist, in float3 invDirection)
 {
-    float3 invDirection = 1.0 / r.direction;
-
     float3 t1 = (b.min - r.origin) * invDirection;
     float3 t2 = (b.max - r.origin) * invDirection;
     
@@ -255,7 +221,7 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
     return true;
 }
 
-int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce)
+int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce, out bool isTriangle)
 {
     float3 invDirection = 1.0 / ray.direction;
     
@@ -265,7 +231,6 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce)
     
     float closestDistance = maxDistance;
     int hittingTriangleIndex = -1;
-    int hittingLightIndex = -1;
 
     for(int l = 0; l < qtyDirectLights; l++)
     {
@@ -274,8 +239,9 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce)
             float hitDist = RayToSphere(ray, _Lights[l].position, _Lights[l].radius);
             if(hitDist > 0)
             {
-                hittingLightIndex = l;
+                hittingTriangleIndex = l;
                 closestDistance = hitDist;
+                isTriangle = false;
             }    
         }
     }
@@ -299,27 +265,43 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce)
                 {
                     closestDistance = hitDistance;
                     hittingTriangleIndex = tIndex;
+                    isTriangle = true;
                 }
             }
         }
         else
         {
-            BoundsBox childrenBounds[8];
+            uint2 mortons[8];        
+            mortons[0] = node.bb0;
+            mortons[1] = node.bb1;
+            mortons[2] = node.bb2;
+            mortons[3] = node.bb3;
+            mortons[4] = node.bb4;
+            mortons[5] = node.bb5;
+            mortons[6] = node.bb6;
+            mortons[7] = node.bb7;    
 
-            Decompress(childrenBounds, node);
             
+            [unroll]
             for(int ch = 0; ch < 8; ch++)
             {
                 bool isTrasversable =  ((node.data >> (ch + 1)) & 0x1)  == 1;
 
-                float entryDist;
-                
-                isTrasversable =DoesRayHitBounds(ray, childrenBounds[ch], entryDist);
-                
+                [branch]
                 if(isTrasversable)
                 {
-                    shortStack[++stackIndex] = node.startIndex + ch;
+                    float entryDist;
+
+                    BoundsBox childBounds = DecompressBounds(mortons[ch], node);
+
+                    bool intersects = DoesRayHitBounds(ray, childBounds, entryDist, invDirection);
+                    if(intersects && entryDist < closestDistance)
+                    {
+                        shortStack[++stackIndex] = node.startIndex + ch;
+                    }
                 }
+                
+                
             }
         }       
     }
@@ -329,32 +311,33 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce)
 
 bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDistance, bool isFirstBounce)
 {
-    int hittingTriangleIndex = GetTriangleHitIndex(ray, maxDistance, isFirstBounce);
-
+    bool isTriangle;
+    int hittingTriangleIndex = GetTriangleHitIndex(ray, maxDistance, isFirstBounce, isTriangle);
+    
     [branch]
-    if (hittingTriangleIndex >= 0)
+    if (isTriangle)
     {
         hitInfo.isTriangle = true;
         GetTriangleHitInfo(hittingTriangleIndex, ray, maxDistance, hitInfo);
         return true;        
     }
-
-    // if(hittingLightIndex >= 0)
-    // {
-    //     hitInfo.isTriangle = false;
-    //     hitInfo.isFrontFace = true;
-    //     hitInfo.distance = closestDistance;
-    //     hitInfo.normal = - ray.direction;
-    //     hitInfo.backRayDirection = - ray.direction;
-    //     hitInfo.position = _Lights[hittingLightIndex].position;
-    //
-    //     hitInfo.triangleIndex = - 1;
-    //     hitInfo.materialIndex = hittingLightIndex;
-    //     hitInfo.textureUV = float2(0, 0);
-    //
-    //     CreateCoordinateSystem(hitInfo.normal, hitInfo.tangent, hitInfo.biTangent);
-    //     return true;
-    // }
+    
+    if(hittingTriangleIndex >= 0)
+    {
+        hitInfo.isTriangle = false;
+        hitInfo.isFrontFace = true;
+        hitInfo.distance = maxDistance;
+        hitInfo.normal = - ray.direction;
+        hitInfo.backRayDirection = - ray.direction;
+        hitInfo.position = _Lights[hittingTriangleIndex].position;
+    
+        hitInfo.triangleIndex = - 1;
+        hitInfo.materialIndex = hittingTriangleIndex;
+        hitInfo.textureUV = float2(0, 0);
+    
+        CreateCoordinateSystem(hitInfo.normal, hitInfo.tangent, hitInfo.biTangent);
+        return true;
+    }
     
     return false;
 }
