@@ -132,7 +132,14 @@ namespace CapyTracerCore.Core
             node.startIndex = reader.ReadInt32();
             node.qtyTriangles = reader.ReadInt32();
 
-            node.bounds = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
+            node.bounds0 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
+            node.bounds1 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
+            node.bounds2 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
+            node.bounds3 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
+            node.bounds4 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
+            node.bounds5 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
+            node.bounds6 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
+            node.bounds7 = new BoundsBox(ReadFloat3(reader), ReadFloat3(reader));
 
             return node;
         }

@@ -28,7 +28,7 @@ public class BVHNodeVisualizer : MonoBehaviour
 
         ref StackBVH4Node node = ref BVHVisualizer.s_serializedSceneGeometry.bvhNodes[nodeIndex];
         
-        bounds = node.bounds;
+        // bounds = node.bounds;
         dataBinary = Convert.ToString(node.data, 2);
         isLeaf = (node.data & 0b1) == 1;
 

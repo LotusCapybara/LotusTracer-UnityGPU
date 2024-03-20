@@ -94,7 +94,14 @@ struct BVH4Node
     uint data;
     int startIndex;
     int qtyTriangles;
-    BoundsBox bounds;
+    BoundsBox bounds0;
+    BoundsBox bounds1;
+    BoundsBox bounds2;
+    BoundsBox bounds3;
+    BoundsBox bounds4;
+    BoundsBox bounds5;
+    BoundsBox bounds6;
+    BoundsBox bounds7;
 };
 
 struct TriangleHitInfo

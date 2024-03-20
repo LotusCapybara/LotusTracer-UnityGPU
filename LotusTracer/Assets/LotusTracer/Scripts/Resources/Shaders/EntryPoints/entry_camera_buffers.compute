@@ -44,10 +44,11 @@ float3 Get_BVHDensity (uint3 id)
 
         bool isTraversable =  (node.data & 0x1)  == 1;      
 
-        if(isTraversable && DoesRayHitBounds(pathRay, node.bounds))
-        {
-            qtyHits++;
-        }
+        // float dist;
+        // if(isTraversable && DoesRayHitBounds(pathRay, node.bounds, dist))
+        // {
+        //     qtyHits++;
+        // }
     }
 
     float3 color =  float3(0, 0, 0);

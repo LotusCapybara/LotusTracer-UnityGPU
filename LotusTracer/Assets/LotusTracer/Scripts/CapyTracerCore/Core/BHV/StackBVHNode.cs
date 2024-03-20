@@ -13,6 +13,13 @@ namespace CapyTracerCore.Core
         public uint data;
         public int startIndex;
         public int qtyTriangles;
-        public BoundsBox bounds;
+        public BoundsBox bounds0;
+        public BoundsBox bounds1;
+        public BoundsBox bounds2;
+        public BoundsBox bounds3;
+        public BoundsBox bounds4;
+        public BoundsBox bounds5;
+        public BoundsBox bounds6;
+        public BoundsBox bounds7;
     }
 }

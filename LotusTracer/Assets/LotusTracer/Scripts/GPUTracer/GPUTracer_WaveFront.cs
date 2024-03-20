@@ -6,7 +6,7 @@ using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
 
 // I'd like to implement a Wavefront version of the tracer at some point
-public class GPUTracer_WaveFront : MonoBehaviour
+public class GPUTracer_WaveFront : MonoBehaviour, IGPUTracer
 {
     [Header("Path Tracer")]
     public string sceneName = "Classic-Cornell";

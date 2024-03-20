@@ -36,14 +36,22 @@ public static class SceneExport_GenerateBVH
                 sortedTriangles.Add(originalTIndex);
             }
 
+            
+            
+            // node data bits (from backwards)
+            // 0: is this node leaf?
+            // 1-8: is the children at index traversable?
+            
             uint nodeData = (uint) (heapNode.isLeaf ? 1 : 0);
 
             if (!heapNode.isLeaf)
             {
                 for (byte ch = 0; ch < heapNode.children.Count; ch++)
                 {
-                    if (!heapNode.children[ch].isLeaf ||
-                        (heapNode.children[ch].isLeaf && heapNode.children[ch].triangleIndices.Count > 0))
+                    bool isTraversable = (!heapNode.isLeaf && heapNode.children != null && heapNode.children.Count > 0)
+                                         || (heapNode.isLeaf && heapNode.triangleIndices.Count > 0);
+                    
+                    if(isTraversable)
                         nodeData |= (uint)(0x1 << (ch + 1));
                 }
             }
@@ -52,10 +60,17 @@ public static class SceneExport_GenerateBVH
             {
                 data = nodeData,
                 startIndex = heapNode.isLeaf ? ti : heapNode.firstChildIndex,
-                qtyTriangles = qtyTriangles,
-                // depth = heapNode.depth,
-                bounds = heapNode.bounds
+                qtyTriangles = qtyTriangles
             };
+
+            stackNode.bounds0 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[0].bounds;
+            stackNode.bounds1 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[1].bounds;
+            stackNode.bounds2 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[2].bounds;
+            stackNode.bounds3 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[3].bounds;
+            stackNode.bounds4 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[4].bounds;
+            stackNode.bounds5 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[5].bounds;
+            stackNode.bounds6 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[6].bounds;
+            stackNode.bounds7 = heapNode.isLeaf ? new BoundsBox() : heapNode.children[7].bounds;
 
             outNodes[i] = stackNode;
 

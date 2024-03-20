@@ -86,7 +86,7 @@ float RayDistanceToBounds(in RenderRay ray, in BoundsBox bounds)
     return tmin;
 }
 
-bool DoesRayHitBounds(in RenderRay r, in BoundsBox b)
+bool DoesRayHitBounds(in RenderRay r, in BoundsBox b, out float dist)
 {
     float3 invDirection = 1.0 / r.direction;
     
@@ -107,6 +107,8 @@ bool DoesRayHitBounds(in RenderRay r, in BoundsBox b)
 
     tmin = max(tmin, min(tz1, tz2));
     tmax = min(tmax, max(tz1, tz2));
+
+    dist = tmin;
     
     return tmax >= tmin;
 }
@@ -242,7 +244,7 @@ bool GetTriangleHitInfo(int triIndex, in RenderRay ray, float maxDistance, inout
     return true;
 }
 
-bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDistance, bool isFirstBounce)
+int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce)
 {
     uint shortStack[BVH_STACK_SIZE];
     int stackIndex = 0;
@@ -289,16 +291,42 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
         }
         else
         {
-            for(int ch = 0; ch < 4; ch++)
+            float entryDist = 0.0;
+
+            BoundsBox bounds[8];
+            bounds[0] = node.bounds0;
+            bounds[1] = node.bounds1;
+            bounds[2] = node.bounds2;
+            bounds[3] = node.bounds3;
+            bounds[4] = node.bounds4;
+            bounds[5] = node.bounds5;
+            bounds[6] = node.bounds6;
+            bounds[7] = node.bounds7;
+
+            // float distances[8];
+            // float relativeIndices[8];
+            
+            for(int ch = 0; ch < 8; ch++)
             {
-                bool isTraversable =  ((node.data >> (ch + 1)) & 0x1)  == 1;                
-                isTraversable = isTraversable && DoesRayHitBounds(ray, _AccelTree[node.startIndex + ch].bounds);                    
+                bool isTraversable = ((node.data >> (ch + 1)) & 0x1)  == 1;                
+                isTraversable = isTraversable && DoesRayHitBounds(ray, bounds[ch], entryDist);    
+                isTraversable = isTraversable && entryDist < closestDistance;
                 
                 if(isTraversable)
+                {
                     shortStack[++stackIndex] = node.startIndex + ch;
+                }
+                    
             }
         }       
-    }    
+    }
+
+    return  hittingTriangleIndex;
+}
+
+bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDistance, bool isFirstBounce)
+{
+    int hittingTriangleIndex = GetTriangleHitIndex(ray, maxDistance, isFirstBounce);
 
     [branch]
     if (hittingTriangleIndex >= 0)
@@ -308,22 +336,22 @@ bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDist
         return true;        
     }
 
-    if(hittingLightIndex >= 0)
-    {
-        hitInfo.isTriangle = false;
-        hitInfo.isFrontFace = true;
-        hitInfo.distance = closestDistance;
-        hitInfo.normal = - ray.direction;
-        hitInfo.backRayDirection = - ray.direction;
-        hitInfo.position = _Lights[hittingLightIndex].position;
-
-        hitInfo.triangleIndex = - 1;
-        hitInfo.materialIndex = hittingLightIndex;
-        hitInfo.textureUV = float2(0, 0);
-
-        CreateCoordinateSystem(hitInfo.normal, hitInfo.tangent, hitInfo.biTangent);
-        return true;
-    }
+    // if(hittingLightIndex >= 0)
+    // {
+    //     hitInfo.isTriangle = false;
+    //     hitInfo.isFrontFace = true;
+    //     hitInfo.distance = closestDistance;
+    //     hitInfo.normal = - ray.direction;
+    //     hitInfo.backRayDirection = - ray.direction;
+    //     hitInfo.position = _Lights[hittingLightIndex].position;
+    //
+    //     hitInfo.triangleIndex = - 1;
+    //     hitInfo.materialIndex = hittingLightIndex;
+    //     hitInfo.textureUV = float2(0, 0);
+    //
+    //     CreateCoordinateSystem(hitInfo.normal, hitInfo.tangent, hitInfo.biTangent);
+    //     return true;
+    // }
     
     return false;
 }

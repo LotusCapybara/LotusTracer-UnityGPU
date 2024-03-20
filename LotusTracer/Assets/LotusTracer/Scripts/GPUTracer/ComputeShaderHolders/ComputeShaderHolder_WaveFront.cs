@@ -54,8 +54,8 @@ public class ComputeShaderHolder_WaveFront : ComputeShaderHolder
         _bufferBufferSizes = new ComputeBuffer(30, Marshal.SizeOf<BufferSizes>());
         _bufferBounceRays = new ComputeBuffer(_scene.totalPixels, Marshal.SizeOf<RenderRay>());
         _bufferBounceHits = new ComputeBuffer(_scene.totalPixels, Marshal.SizeOf<BounceHitInfo>());
-        _bufferRadianceAcc = new ComputeBuffer(_scene.totalPixels, Marshal.SizeOf<float3>());
-        _bufferBounceSamples = new ComputeBuffer(_scene.totalPixels, Marshal.SizeOf<BounceSample>());
+        _bufferRadianceAcc = new ComputeBuffer(_scene.totalPixels, Marshal.SizeOf<float4>());
+        _bufferBounceSamples = new ComputeBuffer(_scene.totalPixels, Marshal.SizeOf<RenderRay>());
         _bufferThroughput = new ComputeBuffer(_scene.totalPixels, Marshal.SizeOf<float4>());
         
         InitKernel_InitIteration();
@@ -63,6 +63,16 @@ public class ComputeShaderHolder_WaveFront : ComputeShaderHolder
         InitKernel_IntersectGeometry();
         InitKernel_BounceBsdf();
         InitKernel_AccumulateImageBuffer();
+    }
+
+    public override void Dispose()
+    {
+        _bufferBufferSizes.Dispose();
+        _bufferBounceRays.Dispose();
+        _bufferBounceHits.Dispose();
+        _bufferRadianceAcc.Dispose();
+        _bufferBounceSamples.Dispose();
+        _bufferThroughput.Dispose();
     }
 
     private void InitKernel_InitIteration()
@@ -93,9 +103,6 @@ public class ComputeShaderHolder_WaveFront : ComputeShaderHolder
         SetBuffer(KERNEL_WF_INTERSECT_GEOMETRY, BuffersNames.BVH_TREE);
         SetBuffer(KERNEL_WF_INTERSECT_GEOMETRY, BuffersNames.MATERIALS);
         SetBuffer(KERNEL_WF_INTERSECT_GEOMETRY, BuffersNames.LIGHTS);
-
-        _shader.SetTexture(_kernelIds[KERNEL_WF_INTERSECT_GEOMETRY], "_AtlasesNormal", _scene.textureArrayNormal);
-        SetBuffer(KERNEL_WF_INTERSECT_GEOMETRY, BuffersNames.MAP_DATA_NORMAL);
     }
 
     private void InitKernel_BounceBsdf()
@@ -118,7 +125,13 @@ public class ComputeShaderHolder_WaveFront : ComputeShaderHolder
         
         _shader.SetTexture(_kernelIds[KERNEL_WF_BOUNCE_BSDF], "_AtlasesEmission", _scene.textureArrayEmission);
         SetBuffer(KERNEL_WF_BOUNCE_BSDF, BuffersNames.MAP_DATA_EMISSION);
+
+        _shader.SetTexture(_kernelIds[KERNEL_WF_BOUNCE_BSDF], "_AtlasesNormal", _scene.textureArrayNormal);
+        SetBuffer(KERNEL_WF_BOUNCE_BSDF, BuffersNames.MAP_DATA_NORMAL);
         
+        SetBuffer(KERNEL_WF_BOUNCE_BSDF, BuffersNames.TRIANGLE_VERTICES);
+        SetBuffer(KERNEL_WF_BOUNCE_BSDF, BuffersNames.TRIANGLE_DATAS);
+        SetBuffer(KERNEL_WF_BOUNCE_BSDF, BuffersNames.BVH_TREE);
         SetBuffer(KERNEL_WF_BOUNCE_BSDF, BuffersNames.MATERIALS);
         SetBuffer(KERNEL_WF_BOUNCE_BSDF, BuffersNames.LIGHTS);
     }

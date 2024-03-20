@@ -107,8 +107,30 @@ namespace CapyTracerCore.Core
             writer.Write(node.data);
             writer.Write(node.startIndex);
             writer.Write(node.qtyTriangles);
-            node.bounds.min.WriteBinary(writer);
-            node.bounds.max.WriteBinary(writer);
+            
+            node.bounds0.min.WriteBinary(writer);
+            node.bounds0.max.WriteBinary(writer);
+            
+            node.bounds1.min.WriteBinary(writer);
+            node.bounds1.max.WriteBinary(writer);
+            
+            node.bounds2.min.WriteBinary(writer);
+            node.bounds2.max.WriteBinary(writer);
+            
+            node.bounds3.min.WriteBinary(writer);
+            node.bounds3.max.WriteBinary(writer);
+            
+            node.bounds4.min.WriteBinary(writer);
+            node.bounds4.max.WriteBinary(writer);
+            
+            node.bounds5.min.WriteBinary(writer);
+            node.bounds5.max.WriteBinary(writer);
+            
+            node.bounds6.min.WriteBinary(writer);
+            node.bounds6.max.WriteBinary(writer);
+            
+            node.bounds7.min.WriteBinary(writer);
+            node.bounds7.max.WriteBinary(writer);
         }
     }
 }

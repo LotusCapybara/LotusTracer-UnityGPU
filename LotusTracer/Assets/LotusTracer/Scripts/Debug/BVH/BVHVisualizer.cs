@@ -30,7 +30,7 @@ public class BVHVisualizer : MonoBehaviour
         {
             bool isLeaf = (s_serializedSceneGeometry.bvhNodes[n].data & 0b1) == 1;
             int qtyTriangles = s_serializedSceneGeometry.bvhNodes[n].qtyTriangles;
-            string bounds = s_serializedSceneGeometry.bvhNodes[n].bounds.ToString();
+            string bounds = "";// s_serializedSceneGeometry.bvhNodes[n].bounds.ToString();
             int depth = 0; //s_serializedSceneGeometry.bvhNodes[n].depth;
 
             string padding = "";

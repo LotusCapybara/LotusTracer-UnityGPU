@@ -26,17 +26,9 @@ struct BufferSizes
 
 struct BounceHitInfo
 {
-    int pixelIndex;
-    TriangleHitInfo hitInfo;
+    int triangleIndex;
+    int rayIndex;
 };
-
-struct BounceSample
-{
-    int pixelIndex;
-    float3 sampledDir;
-    float3 sampledPos;
-};
-
 
 int _bounceIndex;
 
@@ -47,9 +39,9 @@ RWStructuredBuffer<RenderRay> _BounceRays;
 int _qtyBounceHits;
 RWStructuredBuffer<BounceHitInfo> _BounceHits;
 
-RWStructuredBuffer<float3> _RadianceAcc;
+RWStructuredBuffer<float4> _RadianceAcc;
 
-RWStructuredBuffer<BounceSample> _BounceSamples;
+RWStructuredBuffer<RenderRay> _BounceSamples;
 RWStructuredBuffer<float4> _Throughput;
 
 
@@ -65,7 +57,7 @@ void Kernel_WF_InitIteration (uint3 id : SV_DispatchThreadID)
 
     for(int p = 0; p < totalSize; p++)
     {
-        _RadianceAcc[p] = float3(0, 0, 0);
+        _RadianceAcc[p] = float4(0, 0, 0, 1.0);
         _BounceSamples[p].pixelIndex = p;
         _Throughput[p] = (float4) 1.0;
     }
@@ -93,8 +85,8 @@ void Kernel_WF_GenerateRays (uint3 id : SV_DispatchThreadID)
 
         RenderRay ray;
         ray.pixelIndex = _BounceSamples[index].pixelIndex;
-        ray.origin = _BounceSamples[index].sampledPos;
-        ray.direction = _BounceSamples[index].sampledDir;
+        ray.origin = _BounceSamples[index].origin;
+        ray.direction = _BounceSamples[index].direction;
         
         _BounceRays[rayIndex] = ray;
     }
@@ -106,21 +98,20 @@ void Kernel_WF_IntersectGeometry (uint3 id : SV_DispatchThreadID)
     int index = id.y * width + id.x;
 
     if(index >= _BufferSizes[_bounceIndex].qtyRays)
-        return;    
-    
-    
-    TriangleHitInfo hitInfo;
-    bool didHit = GetBounceHit(hitInfo, _BounceRays[index], INFINITY, false);
+        return;
 
-    if(didHit)
+    int hittingTriangleIndex = GetTriangleHitIndex(_BounceRays[index], INFINITY, _bounceIndex == 0);
+
+    if(hittingTriangleIndex >= 0)
     {
-        BounceHitInfo bounce_hit_info;
-        bounce_hit_info.pixelIndex = _BounceRays[index].pixelIndex;
-        bounce_hit_info.hitInfo = hitInfo;
-
         int hitIndex;
-        InterlockedAdd(_BufferSizes[_bounceIndex].qtyBounceHits, 1, hitIndex);        
-        _BounceHits[hitIndex] = bounce_hit_info;
+        InterlockedAdd(_BufferSizes[_bounceIndex].qtyBounceHits, 1, hitIndex);
+
+        BounceHitInfo bounceHit;
+        bounceHit.triangleIndex = hittingTriangleIndex;
+        bounceHit.rayIndex = index;
+        
+        _BounceHits[hitIndex] = bounceHit;
     }    
 }
 
@@ -132,13 +123,19 @@ void Kernel_WF_BounceBsdf (uint3 id : SV_DispatchThreadID)
     if(index >= _BufferSizes[_bounceIndex].qtyBounceHits)
         return; 
 
+
+    BounceHitInfo bounceHit = _BounceHits[index];
+    RenderRay renderRay =  _BounceRays[bounceHit.rayIndex];
     
+    TriangleHitInfo hitInfo;
+    hitInfo.isTriangle = true;
+    GetTriangleHitInfo(bounceHit.triangleIndex, renderRay, INFINITY, hitInfo);
     
     uint randState = id.x * someSeed + id.y * someSeed + iteration * someSeed + index;
-    ScatteringData bounceData = MakeScatteringData(randState, _BounceHits[index].hitInfo);
+    ScatteringData bounceData = MakeScatteringData(randState, hitInfo);
 
     
-    int pixelIndex = _BounceHits[index].pixelIndex;
+    int pixelIndex = renderRay.pixelIndex;
     float4 throughput = _Throughput[pixelIndex];
 
     if(bounceData.emissionPower > 0)
@@ -177,14 +174,14 @@ void Kernel_WF_BounceBsdf (uint3 id : SV_DispatchThreadID)
 
     _Throughput[pixelIndex] = throughput;   
 
-    BounceSample bounce_sample;
-    bounce_sample.pixelIndex = pixelIndex;
-    bounce_sample.sampledDir = bounceData.L; 
-    bounce_sample.sampledPos = bounceData.surfacePoint + bounceData.WorldNormal * 2.0 * EPSILON;
+    RenderRay continuationRay;
+    continuationRay.pixelIndex = pixelIndex;
+    continuationRay.direction = bounceData.L;
+    continuationRay.origin = bounceData.surfacePoint + bounceData.WorldNormal * 2.0 * EPSILON;
     
     int sampleIndex;
     InterlockedAdd(_BufferSizes[_bounceIndex + 1].qtyValidSamples, 1, sampleIndex);              
-    _BounceSamples[sampleIndex] = bounce_sample;
+    _BounceSamples[sampleIndex] = continuationRay;
 }
 
 

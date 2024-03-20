@@ -11,10 +11,7 @@ public class RenderRawImage : MonoBehaviour
     private EDebugBufferType _debugBufferType;
     
     [SerializeField]
-    private GPUTracer_Megakernel tracerMegakernel;
-
-    [SerializeField]
-    private GPUTracer_WaveFront tracerWaveFront;
+    private IGPUTracer _gpuTracer;
     
     [SerializeField]
     private RawImage _rawImage;
@@ -22,6 +19,7 @@ public class RenderRawImage : MonoBehaviour
     private void Start()
     {
         _rawImage.color = Color.white;
+        _gpuTracer = GetComponent<IGPUTracer>();
     }
 
     private void Update()
@@ -31,6 +29,6 @@ public class RenderRawImage : MonoBehaviour
         //
         // _rawImage.texture = tracerMegakernel.GetRenderTexture(_textureType);
         
-        _rawImage.texture = tracerWaveFront.GetRenderTexture(_textureType);
+        _rawImage.texture = _gpuTracer.GetRenderTexture(_textureType);
     }
 }

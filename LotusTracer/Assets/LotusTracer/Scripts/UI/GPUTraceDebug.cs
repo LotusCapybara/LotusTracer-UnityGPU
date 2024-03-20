@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -5,10 +6,7 @@ using UnityEngine.Serialization;
 public class GPUTraceDebug : MonoBehaviour
 {
     [SerializeField]
-    private GPUTracer_Megakernel tracerMegakernel;
-    
-    [SerializeField]
-    private GPUTracer_WaveFront tracerWaveFront;
+    private IGPUTracer gpuTracer;
 
     [SerializeField]
     private TextMeshProUGUI _textTotalTime;
@@ -19,10 +17,17 @@ public class GPUTraceDebug : MonoBehaviour
     [SerializeField]
     private TextMeshProUGUI _textAverageTime;
 
+    private void Start()
+    {
+        gpuTracer = GameObject.FindObjectOfType<GPUTracer_WaveFront>(false);
+        if(gpuTracer == null)
+            gpuTracer = GameObject.FindObjectOfType<GPUTracer_Megakernel>(false);
+    }
+
     private void Update()
     {
-        _textTotalTime.text = $"Total Time:  {tracerWaveFront.totalTime:F4}";
-        _textIteration.text = $"Iteration {tracerWaveFront.indirectIteration.ToString()}";
-        _textAverageTime.text = $"Avg Time:  {tracerWaveFront.averageSampleTime:F6}";
+        _textTotalTime.text = $"Total Time:  {gpuTracer.totalTime:F4}";
+        _textIteration.text = $"Iteration {gpuTracer.indirectIteration.ToString()}";
+        _textAverageTime.text = $"Avg Time:  {gpuTracer.averageSampleTime:F6}";
     }
 }
