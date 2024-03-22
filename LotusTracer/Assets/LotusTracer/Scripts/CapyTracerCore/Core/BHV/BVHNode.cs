@@ -5,7 +5,7 @@ namespace CapyTracerCore.Core
 
     public class BVHNode
     {
-        public static readonly int QTY_SPLITS = 3;
+        public static readonly int QTY_SPLITS = 2;
         
         public BoundsBox bounds;
         public List<BVHNode> children;

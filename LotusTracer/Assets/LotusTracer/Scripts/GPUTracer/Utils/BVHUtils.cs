@@ -1,5 +1,4 @@
-﻿using System;
-using CapyTracerCore.Core;
+﻿using CapyTracerCore.Core;
 using Unity.Mathematics;
 
 public static class BVHUtils
@@ -65,9 +64,6 @@ public static class BVHUtils
             float3 maxRatio = ((childBounds[i].max - parentMin) / parentSize) * 1023f;
             uint3 qMax = (uint3)  ( maxRatio);
             
-            // uint min = MortonEncode3(qMin);
-            // uint max = MortonEncode3(qMax);
-            
             uint min = qMin.x & bitMask | (( qMin.y & bitMask) << 10) | (( qMin.z & bitMask) << 20) ;
             uint max = qMax.x & bitMask | (( qMax.y & bitMask) << 10) | (( qMax.z & bitMask) << 20) ;
             
@@ -78,10 +74,6 @@ public static class BVHUtils
         stackNode.bb1 = compressedBounds[1];
         stackNode.bb2 = compressedBounds[2];
         stackNode.bb3 = compressedBounds[3];
-        stackNode.bb4 = compressedBounds[4];
-        stackNode.bb5 = compressedBounds[5];
-        stackNode.bb6 = compressedBounds[6];
-        stackNode.bb7 = compressedBounds[7];
         
         return stackNode;
     }
@@ -96,17 +88,11 @@ public static class BVHUtils
         mortons[1] = node.bb1;
         mortons[2] = node.bb2;
         mortons[3] = node.bb3;
-        mortons[4] = node.bb4;
-        mortons[5] = node.bb5;
-        mortons[6] = node.bb6;
-        mortons[7] = node.bb7;
 
         uint bitMask = 0x3FF;
         
         for (int i = 0; i < 8; i++)
         {
-            // uint3 qMin = MortonDecode3(mortons[i].x);
-            // uint3 qMax = MortonDecode3(mortons[i].y);
             uint3 qMin = new uint3(
                 mortons[i].x & bitMask, (mortons[i].x >> 10) & bitMask, (mortons[i].x >> 20) & bitMask   
             );

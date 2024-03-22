@@ -69,9 +69,9 @@ public class BVHVisualizer : MonoBehaviour
         for (int i = 0; i < 100; i++)
         {
             BoundsBox parentBounds = BoundsBox.AS_SHRINK;;
-            BoundsBox[] bounds8 = new BoundsBox[8];
+            BoundsBox[] bounds4 = new BoundsBox[4];
 
-            for (int b = 0; b < 8; b++)
+            for (int b = 0; b < 4; b++)
             {
                 BoundsBox testBounds = new BoundsBox();
             
@@ -83,28 +83,28 @@ public class BVHVisualizer : MonoBehaviour
 
                 if (b > 0)
                 {
-                    testBounds.min += bounds8[b - 1].max;
-                    testBounds.max += bounds8[b - 1].max;
+                    testBounds.min += bounds4[b - 1].max;
+                    testBounds.max += bounds4[b - 1].max;
                 }
                 
-                bounds8[b] = testBounds;
+                bounds4[b] = testBounds;
                 
                 parentBounds.ExpandWithBounds(testBounds);
             }
 
-            StackBVH4Node compressed = BVHUtils.Compress(bounds8, parentBounds);
+            StackBVH4Node compressed = BVHUtils.Compress(bounds4, parentBounds);
             BoundsBox[] decompressed = BVHUtils.Decompress(compressed);
 
 
             str.Append($"- parent: {parentBounds.ToString()} \n\n");
             
-            for (int b = 0; b < 8; b++)
+            for (int b = 0; b < 4; b++)
             {
-                str.Append($"- before {b}: {bounds8[b].ToString()} \n");
+                str.Append($"- before {b}: {bounds4[b].ToString()} \n");
                 str.Append($"- after {b}: {decompressed[b].ToString()} \n\n");
 
-                maxErrorMin = math.max(maxErrorMin, Vector3.Distance(bounds8[b].min, decompressed[b].min));
-                maxErrorMax = math.max(maxErrorMax, Vector3.Distance(bounds8[b].max, decompressed[b].max));
+                maxErrorMin = math.max(maxErrorMin, Vector3.Distance(bounds4[b].min, decompressed[b].min));
+                maxErrorMax = math.max(maxErrorMax, Vector3.Distance(bounds4[b].max, decompressed[b].max));
             }
 
             str.Append($"--------------------------------\n\n\n\n");

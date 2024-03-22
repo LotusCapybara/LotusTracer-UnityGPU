@@ -69,26 +69,26 @@ public static class SceneExport_GenerateBVH
                 data = nodeData,
                 startIndex = heapNode.isLeaf ? ti : heapNode.firstChildIndex,
                 qtyTriangles = qtyTriangles,
-                boundsMin = heapNode.bounds.min,
-                extends = heapNode.bounds.GetSize()
+                // boundsMin = heapNode.bounds.min,
+                // extends = heapNode.bounds.GetSize()
             };
     
             if (heapNode.children == null || heapNode.children.Count <= 0)
             {
-                stackNode.bb0 = new uint2();
-                stackNode.bb1 = new uint2();
-                stackNode.bb2 = new uint2();
-                stackNode.bb3 = new uint2();
-                stackNode.bb4 = new uint2();
-                stackNode.bb5 = new uint2();
-                stackNode.bb6 = new uint2();
-                stackNode.bb7 = new uint2();
+                // stackNode.bb0 = BoundsBox.AS_SHRINK;
+                // stackNode.bb1 = BoundsBox.AS_SHRINK;
+                // stackNode.bb2 = BoundsBox.AS_SHRINK;
+                // stackNode.bb3 = BoundsBox.AS_SHRINK;
+                // stackNode.bb4 = BoundsBox.AS_SHRINK;
+                // stackNode.bb5 = BoundsBox.AS_SHRINK;
+                // stackNode.bb6 = BoundsBox.AS_SHRINK;
+                // stackNode.bb7 = BoundsBox.AS_SHRINK;
             }
             else
             {
                 heapNode.bounds = new BoundsBox(
-                    heapNode.bounds.min + (F3.ONE * -0.001f),
-                    heapNode.bounds.max + (F3.ONE * 0.001f)); 
+                    heapNode.bounds.min,
+                    heapNode.bounds.max); 
                 
                 StackBVH4Node tempStackNode = BVHUtils.Compress(childrenBounds, heapNode.bounds);
                 
@@ -100,18 +100,14 @@ public static class SceneExport_GenerateBVH
                 stackNode.bb1 = tempStackNode.bb1;
                 stackNode.bb2 = tempStackNode.bb2;
                 stackNode.bb3 = tempStackNode.bb3;
-                stackNode.bb4 = tempStackNode.bb4;
-                stackNode.bb5 = tempStackNode.bb5;
-                stackNode.bb6 = tempStackNode.bb6;
-                stackNode.bb7 = tempStackNode.bb7;
-
+                
                 stackNode.precisionLoss = 0f;
 
                 // I know... this is quite expensive, but I can give me an idea of the precision loss like this
                 // I need to either improve base precision or make this part faster
                 BoundsBox[] decompressedBounds = BVHUtils.Decompress(stackNode);
-
-                for (int ch = 0; ch < 8; ch++)
+                
+                for (int ch = 0; ch < 4; ch++)
                 {
                     stackNode.precisionLoss = math.max(stackNode.precisionLoss, math.distance(heapNode.children[ch].bounds.min, decompressedBounds[ch].min));
                     stackNode.precisionLoss = math.max(stackNode.precisionLoss, math.distance(heapNode.children[ch].bounds.max, decompressedBounds[ch].max));

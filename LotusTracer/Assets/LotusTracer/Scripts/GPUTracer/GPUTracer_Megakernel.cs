@@ -142,6 +142,8 @@ public class GPUTracer_Megakernel : MonoBehaviour, IGPUTracer
         yield return null;
 
         _stopwatch = Stopwatch.StartNew();
+
+        int metrictStartFrame = 20;
         
         while (_indirectIteration < totalIterations)
         {
@@ -171,9 +173,14 @@ public class GPUTracer_Megakernel : MonoBehaviour, IGPUTracer
                 
                 _csPostProcess.ToneMapToLDR();
             
+                
                 _indirectIteration++;
-                totalTime = _stopwatch.Elapsed.TotalSeconds;
-                averageSampleTime = totalTime / indirectIteration;
+
+                if (_indirectIteration > metrictStartFrame)
+                {
+                    totalTime = _stopwatch.Elapsed.TotalSeconds;
+                    averageSampleTime = totalTime / indirectIteration;
+                }
             
                 if(maxTime > 0 && totalTime >= maxTime)
                     break;

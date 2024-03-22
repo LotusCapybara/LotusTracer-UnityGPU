@@ -99,20 +99,18 @@ struct SceneData
 struct BVH4Node
 {
     // bit 1: is Leaf?
+    // bit 2, 3, 4, 5: is children at (b - 1) traversable? 
     uint data;
     int startIndex;
     int qtyTriangles;
     float precisionLoss;
     float3 boundsMin;
-    float3 extends;        
+    float3 extends;
+    
     uint2 bb0;
     uint2 bb1;
     uint2 bb2;
     uint2 bb3;
-    uint2 bb4;
-    uint2 bb5;
-    uint2 bb6;
-    uint2 bb7;
 };
 
 struct TriangleHitInfo

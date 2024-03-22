@@ -18,15 +18,10 @@ namespace CapyTracerCore.Core
         public float precisionLoss;
         public float3 boundsMin;
         public float3 extends;
-
+        
         public uint2 bb0;
         public uint2 bb1;
         public uint2 bb2;
         public uint2 bb3;
-        public uint2 bb4;
-        public uint2 bb5;
-        public uint2 bb6;
-        public uint2 bb7;
-      
     }
 }

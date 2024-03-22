@@ -162,15 +162,11 @@ namespace CapyTracerCore.Core
             node.precisionLoss = reader.ReadSingle();
             node.boundsMin = ReadFloat3(reader);
             node.extends = ReadFloat3(reader);
-        
+            
             node.bb0 = ReadUInt2(reader);
             node.bb1 = ReadUInt2(reader);
             node.bb2 = ReadUInt2(reader);
             node.bb3 = ReadUInt2(reader);
-            node.bb4 = ReadUInt2(reader);
-            node.bb5 = ReadUInt2(reader);
-            node.bb6 = ReadUInt2(reader);
-            node.bb7 = ReadUInt2(reader);
             
             return node;
         }

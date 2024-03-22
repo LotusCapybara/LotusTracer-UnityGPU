@@ -32,9 +32,17 @@ BoundsBox DecompressBounds(in uint2 morton, in BVH4Node node)
             
     uint3 qMax = uint3(       morton.y & bitMask, (morton.y >> 10) & bitMask, (morton.y >> 20) & bitMask);
 
-    BoundsBox outBounds;
-    outBounds.min = ((float3) qMin * gridScale ) * node.extends + node.boundsMin - (float3) node.precisionLoss;
-    outBounds.max = ((float3) qMax * gridScale ) * node.extends + node.boundsMin + (float3) node.precisionLoss;    
+    BoundsBox outBounds;   
+    
+    outBounds.min = ((float3) qMin * gridScale ) * node.extends + node.boundsMin;
+    outBounds.max = ((float3) qMax * gridScale ) * node.extends + node.boundsMin;
+
+    if(node.precisionLoss > 0.005)
+    {
+        outBounds.min -= (float3) node.precisionLoss;
+        outBounds.max += (float3) node.precisionLoss;
+    }
+    
     return outBounds;
 }
 
@@ -265,25 +273,20 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce,
                 {
                     closestDistance = hitDistance;
                     hittingTriangleIndex = tIndex;
-                    isTriangle = true;
+                    isTriangle = true;                    
                 }
             }
         }
         else
         {
-            uint2 mortons[8];        
-            mortons[0] = node.bb0;
-            mortons[1] = node.bb1;
-            mortons[2] = node.bb2;
-            mortons[3] = node.bb3;
-            mortons[4] = node.bb4;
-            mortons[5] = node.bb5;
-            mortons[6] = node.bb6;
-            mortons[7] = node.bb7;    
-
+            uint2 qMinMax[4];        
+            qMinMax[0] = node.bb0;
+            qMinMax[1] = node.bb1;
+            qMinMax[2] = node.bb2;
+            qMinMax[3] = node.bb3;
             
             [unroll]
-            for(int ch = 0; ch < 8; ch++)
+            for(int ch = 0; ch < 4; ch++)
             {
                 bool isTrasversable =  ((node.data >> (ch + 1)) & 0x1)  == 1;
 
@@ -292,9 +295,10 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce,
                 {
                     float entryDist;
 
-                    BoundsBox childBounds = DecompressBounds(mortons[ch], node);
-
+                    BoundsBox childBounds = DecompressBounds(qMinMax[ch], node);
                     bool intersects = DoesRayHitBounds(ray, childBounds, entryDist, invDirection);
+
+                    // bool intersects = DoesRayHitBounds(ray,  childrenBounds[ch], entryDist, invDirection);
                     if(intersects && entryDist < closestDistance)
                     {
                         shortStack[++stackIndex] = node.startIndex + ch;
