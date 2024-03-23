@@ -23,5 +23,9 @@ namespace CapyTracerCore.Core
         public uint2 bb1;
         public uint2 bb2;
         public uint2 bb3;
+        public uint2 bb4;
+        public uint2 bb5;
+        public uint2 bb6;
+        public uint2 bb7;
     }
 }

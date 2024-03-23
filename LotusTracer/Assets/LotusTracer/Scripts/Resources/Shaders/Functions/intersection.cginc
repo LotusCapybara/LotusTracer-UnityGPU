@@ -24,13 +24,13 @@ uint3 MortonDecode3(in uint n)
 
 static float gridScale = 1.0 / 1023.0;
 
-BoundsBox DecompressBounds(in uint2 morton, in BVH4Node node)
+BoundsBox DecompressBounds(in uint2 qMinMax, in BVH4Node node)
 {
     uint bitMask = 0x3FF;
 
-    uint3 qMin = uint3(             morton.x & bitMask, (morton.x >> 10) & bitMask, (morton.x >> 20) & bitMask);
+    uint3 qMin = uint3(             qMinMax.x & bitMask, (qMinMax.x >> 10) & bitMask, (qMinMax.x >> 20) & bitMask);
             
-    uint3 qMax = uint3(       morton.y & bitMask, (morton.y >> 10) & bitMask, (morton.y >> 20) & bitMask);
+    uint3 qMax = uint3(       qMinMax.y & bitMask, (qMinMax.y >> 10) & bitMask, (qMinMax.y >> 20) & bitMask);
 
     BoundsBox outBounds;   
     
@@ -279,14 +279,18 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce,
         }
         else
         {
-            uint2 qMinMax[4];        
+            uint2 qMinMax[8];        
             qMinMax[0] = node.bb0;
             qMinMax[1] = node.bb1;
             qMinMax[2] = node.bb2;
             qMinMax[3] = node.bb3;
+            qMinMax[4] = node.bb4;
+            qMinMax[5] = node.bb5;
+            qMinMax[6] = node.bb6;
+            qMinMax[7] = node.bb7;
             
             [unroll]
-            for(int ch = 0; ch < 4; ch++)
+            for(int ch = 0; ch < 8; ch++)
             {
                 bool isTrasversable =  ((node.data >> (ch + 1)) & 0x1)  == 1;
 

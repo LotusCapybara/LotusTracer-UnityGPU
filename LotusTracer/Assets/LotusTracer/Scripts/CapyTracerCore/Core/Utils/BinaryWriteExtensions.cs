@@ -139,6 +139,10 @@ namespace CapyTracerCore.Core
             node.bb1.WriteBinary(writer);
             node.bb2.WriteBinary(writer);
             node.bb3.WriteBinary(writer);
+            node.bb4.WriteBinary(writer);
+            node.bb5.WriteBinary(writer);
+            node.bb6.WriteBinary(writer);
+            node.bb7.WriteBinary(writer);
         }
     }
 }

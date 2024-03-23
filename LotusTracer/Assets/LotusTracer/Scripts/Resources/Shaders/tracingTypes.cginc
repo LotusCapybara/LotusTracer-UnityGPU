@@ -111,6 +111,10 @@ struct BVH4Node
     uint2 bb1;
     uint2 bb2;
     uint2 bb3;
+    uint2 bb4;
+    uint2 bb5;
+    uint2 bb6;
+    uint2 bb7;
 };
 
 struct TriangleHitInfo
@@ -200,27 +204,4 @@ struct ScatteringData
     int sampledType;
     
     SampleProbabilities probs;
-};
-
-
-struct PathVertexSample
-{
-    uint2 pixelCoords;
-    float3 surfacePoint;
-    float3 wi;
-    float3 throughput;
-};
-
-struct WavefrontVertexHit
-{
-    TriangleHitInfo hitInfo;
-    int sampleIndex;
-};
-
-
-struct WavefrontNEEDirectLight
-{
-    int hitInfoIndex;
-    float distance;
-    int lightIndex;
 };

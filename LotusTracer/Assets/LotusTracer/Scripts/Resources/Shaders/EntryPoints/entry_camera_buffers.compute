@@ -49,6 +49,8 @@ float3 Get_BVHDensity (uint3 id)
         // }
     }
 
+  
+
     float3 color =  float3(0, 0, 0);
     float divisor = 70.0;
     color.x = max(0, qtyHits - divisor) / divisor;

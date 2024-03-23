@@ -142,44 +142,4 @@ public class ComputeShaderHolder_WaveFront : ComputeShaderHolder
         SetTexture(KERNEL_WF_ACCUMULATE_IMAGE_BUFFER, "_SamplingBuffer", ERenderTextureType.SamplerBuffer);
         SetTexture(KERNEL_WF_ACCUMULATE_IMAGE_BUFFER, "_SamplingBufferPrev", ERenderTextureType.SamplerBufferPrev);
     }
-
-    private void Old()
-    {
-
-    // _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_AtlasesAlbedo", _scene.textureArrayAlbedo);
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.MAP_DATA_ALBEDO);
-        //
-        // _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_AtlasesNormal", _scene.textureArrayNormal);
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.MAP_DATA_NORMAL);
-        //
-        // _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_AtlasesRoughness", _scene.textureArrayRoughness);
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.MAP_DATA_ROUGHNESS);
-        //
-        // _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_AtlasesMetallic", _scene.textureArrayMetallic);
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.MAP_DATA_METALLIC);
-        //
-        // _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_AtlasesEmission", _scene.textureArrayEmission);
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.MAP_DATA_EMISSION);
-        //
-        // _shader.SetInt("_HasCubeMap", _scene.cubeMap != null ? 1:0);
-        // _shader.SetInt("_IgnoreCubeInImage", _scene.ignoreCubeInImage ? 1:0);
-        //
-        // if(_scene.cubeMap != null)
-        //     _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_CubeMap", _scene.cubeMap);
-        // else
-        //     _shader.SetTexture(_kernelIds[KERNEL_MEGA_PATH_TRACE], "_CubeMap", new Cubemap(64, TextureFormat.RGB24, 0));
-        //
-        //
-        //
-        // // Mega Kernel
-        // SetTexture(KERNEL_MEGA_PATH_TRACE, "_SamplingBuffer", ERenderTextureType.SamplerBuffer);
-        // SetTexture(KERNEL_MEGA_PATH_TRACE, "_SamplingBufferPrev", ERenderTextureType.SamplerBufferPrev);
-        // SetTexture(KERNEL_MEGA_PATH_TRACE, "_DebugTexture", ERenderTextureType.Debug);
-        //
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.TRIANGLE_VERTICES);
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.TRIANGLE_DATAS);
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.BVH_TREE);
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.MATERIALS);
-        // SetBuffer(KERNEL_MEGA_PATH_TRACE, BuffersNames.LIGHTS);
-    }
 }
