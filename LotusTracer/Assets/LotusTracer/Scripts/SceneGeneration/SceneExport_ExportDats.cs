@@ -31,9 +31,13 @@ public static class SceneExport_ExportDats
                 
                     // ---
                     writer.Write(sceneGeom.qtyBVHNodes);
-                    foreach (var bvhNode in sceneGeom.bvhNodes)
+
+                    if (sceneGeom.bvhNodes != null)
                     {
-                        bvhNode.WriteBinary(writer);
+                        foreach (var bvhNode in sceneGeom.bvhNodes)
+                        {
+                            bvhNode.WriteBinary(writer);
+                        }    
                     }
                 }
             }

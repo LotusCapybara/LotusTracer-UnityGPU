@@ -18,15 +18,12 @@ public static class SceneExport_GatherTriangles
         MeshRenderer[] meshes = sceneContainer.transform.GetComponentsInChildren<MeshRenderer>();
         
 
-        BoundsBox sceneBounds = new BoundsBox();
+        BoundsBox sceneBounds = BoundsBox.AS_SHRINK;
 
         List<Task<List<RenderTriangle>>> allTasks = new List<Task<List<RenderTriangle>>>();
         
         for(int m = 0; m < meshes.Length; m++)
         {
-            sceneBounds.ExpandWithPoint(meshes[m].bounds.min);
-            sceneBounds.ExpandWithPoint(meshes[m].bounds.max);
-            
             foreach (var meshRendererMaterial in meshes[m].sharedMaterials)
             {
                 if (!outUnityMaterials.Any( m => m.name == meshRendererMaterial.name))
@@ -70,6 +67,11 @@ public static class SceneExport_GatherTriangles
         foreach (var allTask in allTasks)
         {
             allTriangles.AddRange(allTask.Result);
+
+            foreach (var t in allTriangles)
+            {
+                sceneBounds.ExpandWithTriangle(t);    
+            }
         }
         
         s_gatheredTriangles = allTriangles.ToArray();

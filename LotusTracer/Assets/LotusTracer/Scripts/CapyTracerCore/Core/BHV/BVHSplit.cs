@@ -9,144 +9,239 @@ namespace CapyTracerCore.Core
 {
     public static class BVHSplit
     {
-        public static void SplitNode(BVHNode node, int maxDepth, int maxNodeTriangles, RenderTriangle[] triangles)
+        public static void SplitNode(BinaryNode node, RenderTriangle[] triangles)
         {
-            Stack<BVHNode> stackNodes = new Stack<BVHNode>();
+            node.isLeaf = triangles.Length <= 1;
+            
+            Stack<BinaryNode> stackNodes = new Stack<BinaryNode>();
             stackNodes.Push(node);
 
+            bool useThreads = true;
+            
             while (stackNodes.Count > 0)
             {
-                List<BVHNode> currentNodes = new List<BVHNode>();
+                List<BinaryNode> currentNodes = new List<BinaryNode>();
                 int qtyToPop = stackNodes.Count;
 
                 List<Task> splitTasks = new List<Task>();
                 
                 for(int i = 0; i < qtyToPop; i++)
                 {
-                    BVHNode thisNode = stackNodes.Pop();
-                    currentNodes.Add(thisNode);
-                    
-                    // avoid pretty small partitions
+                    BinaryNode thisNode = stackNodes.Pop();
 
-                    bool isLeaf = thisNode.triangleIndices.Count <= maxNodeTriangles ||
-                                  thisNode.depth >= maxDepth || thisNode.triangleIndices.Count == 0;
-                    
-                    // avoid to create a task and run it if the node is a terminal leaf node
-                    if (isLeaf)
+                    if (!thisNode.isLeaf)
                     {
-                        thisNode.isLeaf = true;
-                        thisNode.children = null;
-                        continue;
-                    }
+                        currentNodes.Add(thisNode);
                     
-                    // SplitDepthNode(thisNode, triangles);
-                    splitTasks.Add( Task.Run(() => SplitDepthNode(thisNode, triangles)) );
+                        if(useThreads)
+                            splitTasks.Add( Task.Run(() => SplitDepthNode(thisNode, triangles)) );   
+                        else
+                            SplitDepthNode(thisNode, triangles);
+                    }
                 }
 
-                if(splitTasks.Count > 0)
+                if(useThreads && splitTasks.Count > 0)
                     Task.WaitAll(splitTasks.ToArray());
                 
                 foreach (var currentNode in currentNodes)
                 {
-                    if (currentNode.children != null)
+                    // if(currentNode.depth >= 4096)
+                    //     continue;
+                    
+                    if (!currentNode.isLeaf)
                     {
-                        for(int ch = 0; ch < currentNode.children.Count; ch++)
-                            stackNodes.Push(currentNode.children[ch]);
+                        if(!currentNode.left.isLeaf)
+                            stackNodes.Push(currentNode.left);
+                        
+                        if(!currentNode.right.isLeaf)
+                            stackNodes.Push(currentNode.right);
                     }
                 }
             }
-            
-            node.FinishGeneration(triangles);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SplitDepthNode(BVHNode currentNode, RenderTriangle[] triangles)
+        private static void SplitDepthNode(BinaryNode currentNode, RenderTriangle[] triangles)
         {
-            List<BVHNode> newNodes = new List<BVHNode>();
-            newNodes.Add(currentNode);
-            List<BVHNode> tempNodes = new List<BVHNode>(newNodes);
-        
-            for (int i = 0; i < BVHNode.QTY_SPLITS; i++)
+            float3 minCentroid = F3.INFINITY; 
+            float3 maxCentroid = F3.INFINITY_INV;
+
+            if (currentNode.triangleIndices.Count > 1)
             {
-                tempNodes.Clear();
-                tempNodes.AddRange(newNodes);
-                newNodes.Clear();
-            
-                foreach (var tempNode in tempNodes)
+                foreach (var tIndex in currentNode.triangleIndices)
                 {
-                    float3 minCentroid = F3.INFINITY; 
-                    float3 maxCentroid = F3.INFINITY_INV;
-            
-                    foreach (var tIndex in tempNode.triangleIndices)
-                    {
-                        minCentroid = math.min(minCentroid, triangles[tIndex].centerPos);
-                        maxCentroid = math.max(maxCentroid, triangles[tIndex].centerPos);
-                    }
-                    
-                    // the total volume surface area of this node is used in the sah to calculate the cost
-                    // of the candidate partitions
-                    float volumeSurfaceArea = (maxCentroid[0] - minCentroid[0]) * 
-                                              (maxCentroid[1] - minCentroid[1]) * 
-                                              (maxCentroid[2] - minCentroid[2]);
-
-                    (int, float) splitInfo = (1, 0.5f);
-
-                    volumeSurfaceArea = math.max(volumeSurfaceArea, 0.001f);
-                    
-                    // this only happens if all the triangles have their centroid exactly in the same place
-                    // It could happen in some geometries, we can't assume they are well made
-                    // I'm not using 0, because very tiny volume surfaces algo mess up the calculation of sah
-                    // if (volumeSurfaceArea > 0.0001f)
-                    // {
-                    //     splitInfo = GetAxisSplitScore(minCentroid, maxCentroid, volumeSurfaceArea, triangles, tempNode.triangleIndices);
-                    // }
-                    splitInfo = GetAxisSplitScore(minCentroid, maxCentroid, volumeSurfaceArea, triangles, tempNode.triangleIndices);
-                    
-
-                    // Debug.Log($"axis :{splitInfo.Item1}   ratio: {splitInfo.Item2}");
-                    //
-                    if (splitInfo.Item1 < 0 || splitInfo.Item1 > 2)
-                    {
-                        Debug.LogError($"no axis selected? triangles: {tempNode.triangleIndices.Count}, best score: {splitInfo.Item2}");
-                        continue;
-                    }
-
-                    float splitPos = math.lerp(minCentroid[splitInfo.Item1], maxCentroid[splitInfo.Item1], splitInfo.Item2);
-                    // float splitPos = minCentroid[splitInfo.Item1] +
-                    //                  (maxCentroid[splitInfo.Item1] - minCentroid[splitInfo.Item1]) * splitInfo.Item2;
-                    
-                    // Debug.Log($"axis: {splitInfo.Item1}  pos: {splitInfo.Item2}");
-                    
-                    BoundsBox boundsA = tempNode.bounds;
-                    BoundsBox boundsB = tempNode.bounds;
-                    BVHNode nodeA = new BVHNode(boundsA, 0);
-                    BVHNode nodeB = new BVHNode(boundsB, 0);
-
-                    boundsA.max[splitInfo.Item1] = splitPos;
-                    boundsB.min[splitInfo.Item1] = splitPos;
-                
-                    foreach (var tIndex in tempNode.triangleIndices)
-                    {
-                        if (triangles[tIndex].centerPos[splitInfo.Item1] < boundsA.max[splitInfo.Item1])
-                            nodeA.triangleIndices.Add(tIndex);
-                        else
-                            nodeB.triangleIndices.Add(tIndex);
-                    }
-                    
-                    newNodes.Add(nodeA);
-                    newNodes.Add(nodeB);
-                }
+                    minCentroid = math.min(minCentroid, triangles[tIndex].centerPos);
+                    maxCentroid = math.max(maxCentroid, triangles[tIndex].centerPos);
+                }    
             }
-
-            currentNode.children = newNodes;
-
-            for (int i = 0; i < currentNode.children.Count; i++)
+            else
             {
-                currentNode.children[i].depth = currentNode.depth + 1;
+                minCentroid = currentNode.bounds.min;
+                maxCentroid = currentNode.bounds.max;
+            }
+                    
+            // the total volume surface area of this node is used in the sah to calculate the cost
+            // of the candidate partitions
+            float volumeSurfaceArea = (maxCentroid[0] - minCentroid[0]) * 
+                                      (maxCentroid[1] - minCentroid[1]) * 
+                                      (maxCentroid[2] - minCentroid[2]);
+
+            volumeSurfaceArea = math.max(volumeSurfaceArea, 0.001f);
+            
+            (int, float) splitInfo = GetAxisSplitScore(minCentroid, maxCentroid, volumeSurfaceArea, triangles, currentNode.triangleIndices);
+
+            if (splitInfo.Item1 < 0 || splitInfo.Item1 > 2)
+            {
+                if (currentNode.triangleIndices.Count > 1)
+                    throw new Exception($"no axis selected? triangles: {currentNode.triangleIndices.Count}, best score: {splitInfo.Item2}");
+                
+                currentNode.isLeaf = true;
+                return;
+            }
+                
+            
+            if(splitInfo.Item2 <= 0 || splitInfo.Item2 >= 1)
+                throw new Exception($"not properly split? {currentNode.triangleIndices.Count}, best score: {splitInfo.Item2}");
+            
+            if(currentNode.triangleIndices.Count == 2 && Math.Abs(splitInfo.Item2 - 0.5f) > 0.000001f)
+                throw new Exception($"malformed data?");
+
+            int splitAxis = splitInfo.Item1;
+            float splitPos = math.lerp(minCentroid[splitInfo.Item1], maxCentroid[splitInfo.Item1], splitInfo.Item2);
+            
+            BoundsBox boundsA = currentNode.bounds;
+            BoundsBox boundsB = currentNode.bounds;
+            BinaryNode nodeA = new BinaryNode(boundsA, 0);
+            BinaryNode nodeB = new BinaryNode(boundsB, 0);
+
+            boundsA.max[splitInfo.Item1] = splitPos;
+            boundsB.min[splitInfo.Item1] = splitPos;
+       
+            BoundsBox tightBoundsA = BoundsBox.AS_SHRINK;
+            BoundsBox tightBoundsB = BoundsBox.AS_SHRINK;
+
+            if (currentNode.triangleIndices.Count == 1)
+            {
+                int tIndex = currentNode.triangleIndices[0];
+                
+                nodeA.triangleIndices.Add(tIndex);
+                nodeB.triangleIndices.Add(tIndex);
+
+                float3[] vertices = new float3[3];
+                vertices[0] = triangles[tIndex].posA;
+                vertices[1] = triangles[tIndex].posA + triangles[tIndex].p0p1;
+                vertices[2] = triangles[tIndex].posA + triangles[tIndex].p0p2;
+                
+                int ortAxis = splitAxis == 0 ? 2 : (splitAxis == 1 ? 0 : 1);
+                float3 planeNormal = float3.zero;
+                planeNormal[ortAxis] = 1.0f;
+
+                Plane splitPlane = new Plane(planeNormal, splitPos);
+
+                float3[] midIntersects;
+                HitsTriangleWithPlane(splitAxis, vertices, splitPlane, out midIntersects);
+
+                for (int i = 0; i < 2; i++)
+                {
+                    tightBoundsA.ExpandWithPoint(midIntersects[i]);
+                    tightBoundsB.ExpandWithPoint(midIntersects[i]);
+                }
+
+                splitPlane.distance = boundsA.min[splitAxis];
+                float3[] leftIntersects;
+                int leftQty = HitsTriangleWithPlane(splitAxis, vertices, splitPlane, out leftIntersects);
+                
+                for (int i = 0; i < leftQty; i++)
+                {
+                    tightBoundsA.ExpandWithPoint(leftIntersects[i]);
+                }
+                
+                splitPlane.distance = boundsB.max[splitAxis];
+                float3[] rightIntersects;
+                int rightQty = HitsTriangleWithPlane(splitAxis, vertices, splitPlane, out rightIntersects);
+                
+                for (int i = 0; i < rightQty; i++)
+                {
+                    tightBoundsB.ExpandWithPoint(rightIntersects[i]);
+                }
+                
+                nodeA.bounds = tightBoundsA;
+                nodeB.bounds = tightBoundsB;
+                nodeA.objectSplitDepth = currentNode.objectSplitDepth + 1;
+                nodeB.objectSplitDepth = currentNode.objectSplitDepth + 1;
+            }
+            else
+            {
+                
+                foreach (var tIndex in currentNode.triangleIndices)
+                {
+                    if (triangles[tIndex].centerPos[splitInfo.Item1] < boundsA.max[splitInfo.Item1])
+                    {
+                        nodeA.triangleIndices.Add(tIndex);
+                        tightBoundsA.ExpandWithTriangle(triangles[tIndex]);
+                    }
+
+                    else
+                    {
+                        nodeB.triangleIndices.Add(tIndex);
+                        tightBoundsB.ExpandWithTriangle(triangles[tIndex]);
+                    }
+                }
+                
+                
+                nodeA.bounds = tightBoundsA;
+                nodeB.bounds = tightBoundsB;
             }
 
-            currentNode.triangleIndices.Clear();
+            
+            SetNodeIfLeaf(nodeA);
+            SetNodeIfLeaf(nodeB);
+            
+            currentNode.left = nodeA;
+            currentNode.right = nodeB;
+            currentNode.left.depth = currentNode.depth + 1;
+            currentNode.right.depth = currentNode.depth + 1;
+            currentNode.subTreeTrianglesQty = currentNode.triangleIndices.Count;
             currentNode.isLeaf = false;
+            
+            if( currentNode.triangleIndices.Count > 2 && ( nodeA.triangleIndices.Count == 0 || nodeB.triangleIndices.Count == 0))
+                Debug.Log("LALLAL");
+
+            if (currentNode.triangleIndices.Count == 2)
+            {
+                if (currentNode.left.triangleIndices.Count > 1 || currentNode.right.triangleIndices.Count > 1)
+                    throw new Exception("bad-formation in split generation");
+            }
+
+            if ((nodeA.triangleIndices.Count == 1 && !nodeA.isLeaf) ||
+                (nodeB.triangleIndices.Count == 1 && !nodeB.isLeaf))
+            {
+                Debug.Log("pepe");
+            }
+            
+            
+            currentNode.triangleIndices.Clear();
+        }
+
+        private static void SetNodeIfLeaf(BinaryNode node)
+        {
+            if (node.triangleIndices.Count > 1)
+            {
+                node.isLeaf = false;
+                return;
+            }
+
+            if (node.triangleIndices.Count == 0)
+            {
+                node.isLeaf = true;
+                return;
+            }
+
+            // the following part results in the same triangle being added to multiple children and having
+            // more nodes, but it also means compacting the total size. 
+            float3 boundSize = node.bounds.GetSize();
+            float maxSize = math.max(boundSize.x, math.max(boundSize.y, boundSize.z));
+            node.isLeaf = maxSize < 0.5f || node.objectSplitDepth >= 5;
         }
 
         // splitting by using SAH: surface area heuristic
@@ -161,6 +256,33 @@ namespace CapyTracerCore.Core
             float bestScore = Mathf.Infinity;
             float bestRatio = 0f;
             int bestAxis = -1;
+
+            if (tIndices.Count <= 0)
+                throw new Exception("wtf is wrong with you bro?");
+            
+            // for the case in which we divide either 2 triangles or a single triangle
+            // we divide by the widest axis instead of using SAH
+            if (tIndices.Count == 2 || tIndices.Count == 1)
+            {
+                float maxAxisSize = -1f;
+                
+                for (int axis = 0; axis < 3; axis++)
+                {
+                    float axisSize = maxCentroid[axis] - minCentroid[axis];
+
+                    if (axisSize > maxAxisSize)
+                    {
+                        maxAxisSize = axisSize;
+                        bestAxis = axis;
+                    }
+                }
+
+                if (bestAxis >= 0)
+                    return (bestAxis, 0.5f);
+
+                throw new Exception("no axis could be selected. maybe it's worth merging these vertices?");
+            }
+            
             int qtySplits = math.min(10,  10 + ( allTriangles.Length / 1000));
 
             BoundsBox bbA;
@@ -171,6 +293,9 @@ namespace CapyTracerCore.Core
             for (int axis = 0; axis < 3; axis++)
             {
                 float axisSize = maxCentroid[axis] - minCentroid[axis];
+
+                if (axisSize < 0.0001f)
+                    continue;
                 
                 for (int i = 1; i < qtySplits ; i++)
                 {
@@ -231,6 +356,81 @@ namespace CapyTracerCore.Core
             }
             
             return (bestAxis, bestRatio);
+        }
+
+        private static int HitsTriangleWithPlane(int axis, in float3[] vertices, in Plane plane, out float3[] intersects)
+        {
+            int ortAxis = axis == 0 ? 2 : (axis == 1 ? 0 : 1);
+            
+            float3[] intersections = new float3[2];
+            bool[] directions = new bool[4];
+            int qtyIntersections = 0;
+
+            // Calculate distances for each vertex
+            float dA = vertices[0][axis] - plane.distance;
+            float dB = vertices[1][axis] - plane.distance;
+            float dC = vertices[2][axis] - plane.distance;
+
+            // Check if there is an intersection between each edge and the plane
+            if (dA * dB < 0) // A and B are on opposite sides
+            {
+                float t = dA / (dA - dB);
+                float3 intersection = vertices[0] + t * (vertices[1] - vertices[0]);
+
+                bool aIsLeft = vertices[0][ortAxis] < vertices[1][ortAxis];
+                bool aIsUp = vertices[0][axis] > vertices[1][axis];
+
+                if (aIsLeft)
+                    directions[qtyIntersections] = !aIsUp;
+                else
+                    directions[qtyIntersections] = aIsUp;
+                
+                intersections[qtyIntersections++] = intersection;
+            }
+
+            if (dA * dC < 0) // A and C are on opposite sides
+            {
+                float t = dA / (dA - dC);
+                float3 intersection = vertices[0] + t * (vertices[2] - vertices[0]);
+                
+                bool aIsLeft = vertices[0][ortAxis] < vertices[2][ortAxis];
+                bool aIsUp = vertices[0][axis] > vertices[2][axis];
+
+                if (aIsLeft)
+                    directions[qtyIntersections] = !aIsUp;
+                else
+                    directions[qtyIntersections] = aIsUp;
+                
+                intersections[qtyIntersections++] = intersection;
+            }
+
+            if (dB * dC < 0) // B and C are on opposite sides
+            {
+                float t = dB / (dB - dC);
+                float3 intersection = vertices[1] + t * (vertices[2] - vertices[1]);
+                
+                bool bIsLeft = vertices[1][ortAxis] < vertices[2][ortAxis];
+                bool bIsUp = vertices[1][axis] > vertices[2][axis];
+
+                if (bIsLeft)
+                    directions[qtyIntersections] = !bIsUp;
+                else
+                    directions[qtyIntersections] = bIsUp;
+                
+                intersections[qtyIntersections++] = intersection;
+            }
+
+            // Handle cases where triangle vertices lie exactly on the plane
+            if (qtyIntersections < 2 && math.abs(dA) < 0.001f) 
+                intersections[qtyIntersections++] = vertices[0];
+            if (qtyIntersections < 2 && math.abs(dB) < 0.001f) 
+                intersections[qtyIntersections++] = vertices[1];
+            if (qtyIntersections < 2 && math.abs(dC) < 0.001f) 
+                intersections[qtyIntersections++] = vertices[2];
+
+            intersects = intersections;
+            
+            return qtyIntersections;
         }
     }
 }

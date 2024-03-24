@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -18,14 +19,13 @@ public class SceneExporter : MonoBehaviour
     public static string SCENES_PATH_BASE;
     public static string SCENE_NAME;
     public static bool s_ignoreReCreateTextures;
-    
-    public int bvhMaxDepth = 60;
-    public int bvhMaxNodeTriangles = 3;
 
     public bool generateDebugInfo;
     
     public bool ignoreCreateTextures;
     public bool ignoreCreateGeometry;
+
+    private List<BinaryNode> _justGeneratedHeadNodes = new List<BinaryNode>();
     
     private void CreateSceneAsset()
     {
@@ -67,13 +67,13 @@ public class SceneExporter : MonoBehaviour
         
         if (!ignoreCreateGeometry)
         {
-            var heapNodes = SceneExport_GenerateBVH.GenerateHeapNodes(bvhMaxDepth, bvhMaxNodeTriangles);
+            _justGeneratedHeadNodes = SceneExport_GenerateBVH.GenerateBinaryHeapNodes();
         
             sw.Stop();
             Debug.Log($"GenerateBVH Heap: {sw.Elapsed.TotalSeconds}");
             sw.Restart();
         
-            SceneExport_GenerateBVH.Export(heapNodes);
+            // SceneExport_GenerateBVH.Export(heapNodes);
         
             sw.Stop();
             Debug.Log($"Parse Stack BVH: {sw.Elapsed.TotalSeconds}");
@@ -162,5 +162,17 @@ public class SceneExporter : MonoBehaviour
         }
 
         return (sceneData, sceneGeom);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        foreach (var justGeneratedHeadNode in _justGeneratedHeadNodes)
+        {
+            if (justGeneratedHeadNode.isLeaf && justGeneratedHeadNode.triangleIndices.Count == 1)
+            {
+                Gizmos.DrawSphere( justGeneratedHeadNode.bounds.GetCenter(), 0.01f);
+                Gizmos.DrawWireCube( justGeneratedHeadNode.bounds.GetCenter(), justGeneratedHeadNode.bounds.GetSize());
+            }
+        }
     }
 }
