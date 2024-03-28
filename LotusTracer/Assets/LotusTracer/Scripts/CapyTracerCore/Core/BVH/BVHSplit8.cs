@@ -180,7 +180,7 @@ namespace CapyTracerCore.Core
             float bestScore = Mathf.Infinity;
             float bestRatio = 0f;
             int bestAxis = -1;
-            int qtySplits = 5;
+            int qtySplits = 15;
 
             BoundsBox bbA;
             BoundsBox bbB;
@@ -218,13 +218,8 @@ namespace CapyTracerCore.Core
                         }
                     }
 
-                    // the other axies that are not the one being evaluated, so we can calculate the
-                    // surface area that this axis would intersect
-                    int axis1 = axis == 0 ? 1 : 0;
-                    int axis2 = axis == 2 ? 1 : 2;
-
-                    float areaA = (bbA.max[axis1] - bbA.min[axis1]) * (bbA.max[axis2] - bbA.min[axis2]);
-                    float areaB = (bbB.max[axis1] - bbB.min[axis1]) * (bbB.max[axis2] - bbB.min[axis2]);
+                    float areaA = (bbA.max[0] - bbA.min[0]) * (bbA.max[1] - bbA.min[1]) * (bbA.max[2] - bbA.min[2]);
+                    float areaB = (bbB.max[0] - bbB.min[0]) * (bbB.max[1] - bbB.min[1]) * (bbB.max[2] - bbB.min[2]);
 
                     if (float.IsInfinity(areaA))
                         areaA = 0;
@@ -233,7 +228,7 @@ namespace CapyTracerCore.Core
                         areaB = 0;
                     
                     float ct = 1f;
-                    float ci = 1f;
+                    float ci = 2f;
                     float score = ct + ci * qty1 * (areaA/volumeSA) + ci * qty2 * (areaB/volumeSA) ;
                     if(float.IsNaN(score))
                         throw new Exception($"nan score. volumeSA: { volumeSA }. aA {areaA} aB {areaB}");

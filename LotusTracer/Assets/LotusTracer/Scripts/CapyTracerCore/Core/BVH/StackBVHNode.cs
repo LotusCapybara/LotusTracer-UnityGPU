@@ -12,6 +12,8 @@ namespace CapyTracerCore.Core
         // they are not navigable if they are leaf with 0 triangleIndices
         // bits 9-12: bits for integer [0, 15] = amount of children (either tris or nodes)
         
+        // bits 13-20: are children leaves? 
+        
         
         public uint data;
         

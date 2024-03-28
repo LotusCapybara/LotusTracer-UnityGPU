@@ -90,7 +90,7 @@ public class SceneExporter : MonoBehaviour
             sw.Restart();
 
             BoundsBox sceneBounds = new BoundsBox(s_sceneGeom.boundMin, s_sceneGeom.boundMax);
-            HeapWideNode rootHeapWideNode = BVHSplit8.GetTreeRoot(4, sceneBounds, _geoBoxes);
+            HeapWideNode rootHeapWideNode = BVHSplit8.GetTreeRoot(15, sceneBounds, _geoBoxes);
             
             _heapWideNodes = new List<HeapWideNode>();
             _heapWideNodes.Add(rootHeapWideNode);

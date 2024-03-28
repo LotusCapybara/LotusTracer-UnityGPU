@@ -28,20 +28,20 @@ BoundsBox DecompressBounds(in uint2 qMinMax, in BVH4Node node)
 {
     uint bitMask = 0x3FF;
 
-    uint3 qMin = uint3(             qMinMax.x & bitMask, (qMinMax.x >> 10) & bitMask, (qMinMax.x >> 20) & bitMask);
+    uint3 qMin = uint3( qMinMax.x & bitMask, (qMinMax.x >> 10) & bitMask, (qMinMax.x >> 20) & bitMask);
             
-    uint3 qMax = uint3(       qMinMax.y & bitMask, (qMinMax.y >> 10) & bitMask, (qMinMax.y >> 20) & bitMask);
+    uint3 qMax = uint3( qMinMax.y & bitMask, (qMinMax.y >> 10) & bitMask, (qMinMax.y >> 20) & bitMask);
 
     BoundsBox outBounds;   
     
     outBounds.min = ((float3) qMin * gridScale ) * node.extends + node.boundsMin;
     outBounds.max = ((float3) qMax * gridScale ) * node.extends + node.boundsMin;
 
-    if(node.precisionLoss > 0.005)
-    {
-        outBounds.min -= (float3) node.precisionLoss;
-        outBounds.max += (float3) node.precisionLoss;
-    }
+    // if(node.precisionLoss > 0.005)
+    // {
+    //     outBounds.min -= (float3) node.precisionLoss;
+    //     outBounds.max += (float3) node.precisionLoss;
+    // }
     
     return outBounds;
 }
@@ -285,24 +285,11 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce,
 
             const BVH4Node childNode = _AccelTree[chIndex];
 
-            bool isLeaf = (childNode.data & 0x1) == 1;
-            int qtyElements = (childNode.data >> 9) & 0xf;
+            int qtyElements = (childNode.data >> 9) & 0xf;             
+            int childLeavesMask = (childNode.data >> 13) & 0xff;
+            int leavesHitMask = 0;
 
-            if(isLeaf)
-            {
-                for (int tIndex = childNode.firstElementIndex; tIndex < (childNode.firstElementIndex + qtyElements); tIndex++)
-                {
-                    float hitDistance = FastIntersectRayWithTriangle( tIndex, ray, closestDistance, isFirstBounce);
-                    
-                    if (hitDistance > 0 &&  hitDistance < closestDistance)
-                    {
-                        closestDistance = hitDistance;
-                        hittingTriangleIndex = tIndex;
-                        isTriangle = true;
-                    }
-                } 
-            }
-            else
+            if(qtyElements > 0)
             {
                 uint2 qMinMax[8];
                 qMinMax[0] = childNode.bb0;
@@ -327,9 +314,18 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce,
                         BoundsBox childBounds = DecompressBounds(qMinMax[ch], childNode);
                         bool intersects = DoesRayHitBounds(ray, childBounds, entryDist, invDirection);
                 
-                        if(intersects) // && entryDist < closestDistance)
+                        if(intersects && entryDist < closestDistance)
                         {
-                            hitMask = hitMask | (1 << ch);
+                            bool isLeaf = ((childLeavesMask >> ch) & 0x1) == 1;
+
+                            if(isLeaf)
+                            {
+                                leavesHitMask |= (1 << ch);
+                            }
+                            else
+                            {                            
+                                hitMask = hitMask | (1 << ch);                               
+                            }
                         }
                     }
                 }            
@@ -340,7 +336,29 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce,
                 {
                     shortStack[++stackIndex] = uint2((uint) chIndex, hitMask);
                 }       
-            }            
+            }
+
+            for(int ch = 0; ch < qtyElements; ch++)
+            {
+                if( (leavesHitMask >> ch) & 1 )
+                {
+                    int childIndex = childNode.firstElementIndex + ch;
+                
+                    BVH4Node leafNode = _AccelTree[childIndex];
+                    int qtyTriangles = (leafNode.data >> 9) & 0xf;
+                    for (int tIndex = leafNode.firstElementIndex; tIndex < (leafNode.firstElementIndex + qtyTriangles); tIndex++)
+                    {
+                        float hitDistance = FastIntersectRayWithTriangle( tIndex, ray, closestDistance, isFirstBounce);
+        
+                        if (hitDistance > 0 &&  hitDistance < closestDistance)
+                        {
+                            closestDistance = hitDistance;
+                            hittingTriangleIndex = tIndex;
+                            isTriangle = true;                    
+                        }
+                    }
+                }                
+            }      
         }
     }
 
@@ -376,29 +394,13 @@ int GetTriangleHitIndex2(in RenderRay ray, float maxDistance, bool isFirstBounce
     {
         int ptr = shortStack[stackIndex--];
     
-        BVH4Node node = _AccelTree[ptr];
+        BVH4Node node = _AccelTree[ptr];        
+
+        int qtyElements = (node.data >> 9) & 0xf;        
         
-        bool isLeaf = (node.data & 0x1) == 1;
-        int qtyElements = (node.data >> 9) & 0xf;
-
-        [branch]
-        if(isLeaf)
-        {
-            for (int tIndex = node.firstElementIndex; tIndex < (node.firstElementIndex + qtyElements); tIndex++)
-            {
-                float hitDistance = FastIntersectRayWithTriangle( tIndex, ray, closestDistance, isFirstBounce);
-                
-                if (hitDistance > 0 &&  hitDistance < closestDistance)
-                {
-                    closestDistance = hitDistance;
-                    hittingTriangleIndex = tIndex;
-                    isTriangle = true;                    
-                }
-            }
-
-            continue;
-        }
-
+        int childLeavesMask = (node.data >> 13) & 0xff;
+        int leavesHitMask = 0;
+        
         [branch]
         if (qtyElements > 0)
         {
@@ -414,23 +416,48 @@ int GetTriangleHitIndex2(in RenderRay ray, float maxDistance, bool isFirstBounce
             
             for(int ch = 0; ch < qtyElements; ch++)
             {
-                bool isTrasversable =  ((node.data >> (ch + 1)) & 0x1)  == 1;
+                float entryDist;
 
-                [branch]
-                if(isTrasversable)
+                BoundsBox childBounds = DecompressBounds(qMinMax[ch], node);
+                bool intersects = DoesRayHitBounds(ray, childBounds, entryDist, invDirection);
+
+                int childIndex = node.firstElementIndex + ch;
+
+                if(intersects && entryDist < closestDistance)
                 {
-                    float entryDist;
-
-                    BoundsBox childBounds = DecompressBounds(qMinMax[ch], node);
-                    bool intersects = DoesRayHitBounds(ray, childBounds, entryDist, invDirection);
-
-                    if(intersects && entryDist < closestDistance)
+                    bool isLeaf = ((childLeavesMask >> ch) & 0x1) == 1;
+                        
+                    if(!isLeaf)
                     {
-                        shortStack[++stackIndex] = node.firstElementIndex + ch;
+                        shortStack[++stackIndex] =  childIndex;
+                    }
+                    else
+                    {
+                        leavesHitMask |= (1 << ch);
                     }
                 }
+            }
+
+            for(int ch = 0; ch < qtyElements; ch++)
+            {
+                if( (leavesHitMask >> ch) & 1 )
+                {
+                    int childIndex = node.firstElementIndex + ch;
                 
-                
+                    BVH4Node leafNode = _AccelTree[childIndex];
+                    int qtyTriangles = (leafNode.data >> 9) & 0xf;
+                    for (int tIndex = leafNode.firstElementIndex; tIndex < (leafNode.firstElementIndex + qtyTriangles); tIndex++)
+                    {
+                        float hitDistance = FastIntersectRayWithTriangle( tIndex, ray, closestDistance, isFirstBounce);
+        
+                        if (hitDistance > 0 &&  hitDistance < closestDistance)
+                        {
+                            closestDistance = hitDistance;
+                            hittingTriangleIndex = tIndex;
+                            isTriangle = true;                    
+                        }
+                    }
+                }                
             }
         }       
     }
@@ -442,7 +469,7 @@ int GetTriangleHitIndex2(in RenderRay ray, float maxDistance, bool isFirstBounce
 bool GetBounceHit(inout TriangleHitInfo hitInfo, in RenderRay ray, float maxDistance, bool isFirstBounce)
 {
     bool isTriangle;
-    int hittingTriangleIndex = GetTriangleHitIndex2(ray, maxDistance, isFirstBounce, isTriangle);
+    int hittingTriangleIndex = GetTriangleHitIndex(ray, maxDistance, isFirstBounce, isTriangle);
     
     [branch]
     if (isTriangle)

@@ -68,6 +68,14 @@ public static class SceneExport_GenerateBVH
             int qtyElements = hWideNode.isLeaf ? nodeSortedTriangles.Count : hWideNode.children.Count;
 
             nodeData |= ( (uint)qtyElements & 0b1111) << 9;
+
+            uint childLeavesMask = 0;            
+            for (byte ch = 0; ch < hWideNode.children.Count; ch++)
+            {
+                childLeavesMask |= (uint)( (hWideNode.children[ch].isLeaf ? 1 : 0)  << ch);
+            }
+
+            nodeData |= ((uint)childLeavesMask & 0xff) << 13;
             
             StackBVH4Node stackNode = new StackBVH4Node
             {
