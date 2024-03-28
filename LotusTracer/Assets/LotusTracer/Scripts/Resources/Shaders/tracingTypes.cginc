@@ -101,10 +101,7 @@ struct BVH4Node
     // bit 1: is Leaf?
     // bit 2, 3, 4, 5: is children at (b - 1) traversable? 
     uint data;
-    int childQty;
-    int childFirstIndex;
-    int qtyTriangles;
-    int triangleFirstIndex;
+    int firstElementIndex;
     float precisionLoss;
     float3 boundsMin;
     float3 extends;

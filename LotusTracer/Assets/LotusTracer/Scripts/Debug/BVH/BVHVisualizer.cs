@@ -44,8 +44,9 @@ public class BVHVisualizer : MonoBehaviour
         {
             var stackNode = s_serializedSceneGeometry.bvhNodes[n];
             bool isLeaf = (stackNode.data & 0b1) == 1;
-            int qtyTriangles = stackNode.qtyTriangles;
-            int qtyChildren = stackNode.childQty;
+            uint qtyElements = (stackNode.data >> 9) & 0b11111;
+            uint qtyTriangles = isLeaf ? qtyElements : 0;
+            uint qtyChildren = isLeaf ? 0 : qtyElements;
 
             BoundsBox[] decompressedBounds = new BoundsBox[qtyChildren];
 
@@ -69,7 +70,7 @@ public class BVHVisualizer : MonoBehaviour
 
             str.Append($"n:{n}");
             string leafTag = isLeaf ? "leaf" : "node";
-            str.Append($" - {leafTag} tris: {qtyTriangles} ch: {qtyChildren}  start at: {stackNode.childFirstIndex}\n");
+            str.Append($" - {leafTag} tris: {qtyTriangles} ch: {qtyChildren}  start at: {stackNode.firstElementIndex}\n");
 
             for (int ch = 0; ch < qtyChildren; ch++)
                 str.Append($"      - {decompressedBounds[ch].ToString()}\n");

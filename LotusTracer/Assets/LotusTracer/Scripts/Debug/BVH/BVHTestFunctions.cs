@@ -93,82 +93,82 @@ namespace LotusTracer.Scripts.Debug.BVH
             shortStack[stackIndex] = new uint2 (0, startMask); // change the y mask based on the amount of children    
 
             
-            while (stackIndex >= 0)
-            {
-                uint2 nodeGroup = shortStack[stackIndex--];
-
-                // if there are still children to be visit in this node group
-                if((nodeGroup.y & 0xff) != 0)
-                {
-                    int chBit = firstbitlow(nodeGroup.y);
-
-                    nodeGroup.y &= (uint) ~(1<<chBit);
-
-                    if( (nodeGroup.y & 0xff) != 0)
-                    {
-                        shortStack[++stackIndex] = nodeGroup;
-                    }            
-                    
-                    int chIndex = sceneGeometry.bvhNodes[nodeGroup.x].childFirstIndex + chBit;
-
-                    StackBVH4Node childNode = sceneGeometry.bvhNodes[chIndex];
-
-                    if(childNode.qtyTriangles > 0)
-                    {
-                        for (int tIndex = childNode.triangleFirstIndex; tIndex < (childNode.triangleFirstIndex + childNode.qtyTriangles); tIndex++)
-                        {
-                            float hitDistance = FastIntersectRayWithTriangle( sceneGeometry.triangleVertices[tIndex], ray, closestDistance, false);
-                            
-                            if (hitDistance > 0 &&  hitDistance < closestDistance)
-                            {
-                                closestDistance = hitDistance;
-                                hittingTriangleIndex = tIndex;
-                            }
-                            int temp = 0;
-                        }    
-                    }
-                    
-                    if(childNode.childFirstIndex < 0)
-                        continue;
-
-                    uint2[] qMinMax = new uint2[8];
-                    qMinMax[0] = childNode.bb0;
-                    qMinMax[1] = childNode.bb1;
-                    qMinMax[2] = childNode.bb2;
-                    qMinMax[3] = childNode.bb3;
-                    qMinMax[4] = childNode.bb4;
-                    qMinMax[5] = childNode.bb5;
-                    qMinMax[6] = childNode.bb6;
-                    qMinMax[7] = childNode.bb7;
-
-                    int hitMask = 0;
-                        
-                    for(int ch = 0; ch < childNode.childQty; ch++)
-                    {
-                        bool isTrasversable =  ((childNode.data >> (ch + 1)) & 0x1)  == 1;
-
-                        if(isTrasversable)
-                        {
-                            float entryDist;
-                            BoundsBox childBounds = BVHUtils.Decompress(qMinMax[ch], childNode.boundsMin, childNode.extends, childNode.precisionLoss);
-                            bool intersects = DoesRayHitBounds(ray, childBounds, out entryDist, invDirection);
-                        
-                            // bool intersects = DoesRayHitBounds(ray,  childrenBounds[ch], entryDist, invDirection);
-                            if(intersects) // && entryDist < closestDistance)
-                            {
-                                hitMask = hitMask | (1 << ch);
-                            }
-                        }
-                    }            
-                        
-                    // if the ray hit against any of the children of this child,
-                    // we should add to the stack this child as a new group 
-                    if(hitMask != 0)
-                    {
-                        shortStack[++stackIndex] = new uint2((uint)chIndex, (uint)hitMask);
-                    }       
-                }
-            }
+            // while (stackIndex >= 0)
+            // {
+            //     uint2 nodeGroup = shortStack[stackIndex--];
+            //
+            //     // if there are still children to be visit in this node group
+            //     if((nodeGroup.y & 0xff) != 0)
+            //     {
+            //         int chBit = firstbitlow(nodeGroup.y);
+            //
+            //         nodeGroup.y &= (uint) ~(1<<chBit);
+            //
+            //         if( (nodeGroup.y & 0xff) != 0)
+            //         {
+            //             shortStack[++stackIndex] = nodeGroup;
+            //         }            
+            //         
+            //         int chIndex = sceneGeometry.bvhNodes[nodeGroup.x].childFirstIndex + chBit;
+            //
+            //         StackBVH4Node childNode = sceneGeometry.bvhNodes[chIndex];
+            //
+            //         if(childNode.qtyTriangles > 0)
+            //         {
+            //             for (int tIndex = childNode.triangleFirstIndex; tIndex < (childNode.triangleFirstIndex + childNode.qtyTriangles); tIndex++)
+            //             {
+            //                 float hitDistance = FastIntersectRayWithTriangle( sceneGeometry.triangleVertices[tIndex], ray, closestDistance, false);
+            //                 
+            //                 if (hitDistance > 0 &&  hitDistance < closestDistance)
+            //                 {
+            //                     closestDistance = hitDistance;
+            //                     hittingTriangleIndex = tIndex;
+            //                 }
+            //                 int temp = 0;
+            //             }    
+            //         }
+            //         
+            //         if(childNode.childFirstIndex < 0)
+            //             continue;
+            //
+            //         uint2[] qMinMax = new uint2[8];
+            //         qMinMax[0] = childNode.bb0;
+            //         qMinMax[1] = childNode.bb1;
+            //         qMinMax[2] = childNode.bb2;
+            //         qMinMax[3] = childNode.bb3;
+            //         qMinMax[4] = childNode.bb4;
+            //         qMinMax[5] = childNode.bb5;
+            //         qMinMax[6] = childNode.bb6;
+            //         qMinMax[7] = childNode.bb7;
+            //
+            //         int hitMask = 0;
+            //             
+            //         for(int ch = 0; ch < childNode.childQty; ch++)
+            //         {
+            //             bool isTrasversable =  ((childNode.data >> (ch + 1)) & 0x1)  == 1;
+            //
+            //             if(isTrasversable)
+            //             {
+            //                 float entryDist;
+            //                 BoundsBox childBounds = BVHUtils.Decompress(qMinMax[ch], childNode.boundsMin, childNode.extends, childNode.precisionLoss);
+            //                 bool intersects = DoesRayHitBounds(ray, childBounds, out entryDist, invDirection);
+            //             
+            //                 // bool intersects = DoesRayHitBounds(ray,  childrenBounds[ch], entryDist, invDirection);
+            //                 if(intersects) // && entryDist < closestDistance)
+            //                 {
+            //                     hitMask = hitMask | (1 << ch);
+            //                 }
+            //             }
+            //         }            
+            //             
+            //         // if the ray hit against any of the children of this child,
+            //         // we should add to the stack this child as a new group 
+            //         if(hitMask != 0)
+            //         {
+            //             shortStack[++stackIndex] = new uint2((uint)chIndex, (uint)hitMask);
+            //         }       
+            //     }
+            // }
 
             UnityEngine.Debug.LogError($"index {hittingTriangleIndex}");
             return hittingTriangleIndex;

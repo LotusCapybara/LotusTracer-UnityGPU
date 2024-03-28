@@ -7,15 +7,16 @@ namespace CapyTracerCore.Core
     public struct StackBVH4Node
     {
         // 32 bits of data
-        // bit 1: is leaf
-        // bit 2,3,4,5: are children navigable? 
+        // bit 0: is leaf
+        // bit 1-8: are children navigable? 
         // they are not navigable if they are leaf with 0 triangleIndices
+        // bits 9-12: bits for integer [0, 15] = amount of children (either tris or nodes)
+        
         
         public uint data;
-        public int childQty;
-        public int childFirstIndex;
-        public int qtyTriangles;
-        public int triangleFirstIndex;
+        
+        // leaf: triangle  inner: inner nodes
+        public int firstElementIndex;
 
         public float precisionLoss;
         public float3 boundsMin;

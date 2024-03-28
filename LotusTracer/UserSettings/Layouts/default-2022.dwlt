@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 2544
     height: 1341
   m_ShowMode: 4
-  m_Title: Inspector
+  m_Title: Game
   m_RootView: {fileID: 2}
   m_MinSize: {x: 875, y: 321}
   m_MaxSize: {x: 10000, y: 10000}
@@ -239,8 +239,8 @@ MonoBehaviour:
     y: 0
     width: 1331
     height: 944
-  m_MinSize: {x: 200, y: 200}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 202, y: 221}
+  m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 17}
   m_Panes:
   - {fileID: 17}
@@ -272,7 +272,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 56
+  controlID: 94
 --- !u!114 &12
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -2681,9 +2681,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 314.6321, y: -14.284081, z: -14.786524}
+    m_Target: {x: -0.15099221, y: -1.3696258, z: -2.1192873}
     speed: 2
-    m_Value: {x: 314.6321, y: -14.284081, z: -14.786524}
+    m_Value: {x: -0.15099221, y: -1.3696258, z: -2.1192873}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -2729,20 +2729,20 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: 0.019137051, y: 0.72034895, z: -0.022413453, w: 0.69403327}
+    m_Target: {x: -0.03241084, y: 0.9372703, z: -0.33917323, w: -0.08330349}
     speed: 2
-    m_Value: {x: 0.01912316, y: 0.71982604, z: -0.022397183, w: 0.6935294}
+    m_Value: {x: -0.032386497, y: 0.93656623, z: -0.33891845, w: -0.08324091}
   m_Size:
-    m_Target: 159.43306
+    m_Target: 2.681587
     speed: 2
-    m_Value: 159.43306
+    m_Value: 2.681587
   m_Ortho:
     m_Target: 0
     speed: 2
     m_Value: 0
   m_CameraSettings:
-    m_Speed: 1.4825995
-    m_SpeedNormalized: 0.7399998
+    m_Speed: 1.5422995
+    m_SpeedNormalized: 0.76999974
     m_SpeedMin: 0.01
     m_SpeedMax: 2
     m_EasingEnabled: 1
@@ -2798,9 +2798,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 4aa40000
-      m_LastClickedID: 42058
-      m_ExpandedIDs: 1cfbffff4aa40000
+      m_SelectedIDs: 7c780000
+      m_LastClickedID: 30844
+      m_ExpandedIDs: 2eedfcffe02cfdff901cfffff021ffffa039ffff005dffff365dffff545dffff6e5dffffaa5dffffd25dfffffe5dffff185effff1e5effff28fbffff2afbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -2905,7 +2905,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/LotusTracer/Scripts/SceneGeneration
+    - Assets/LotusTracer/Scripts/Resources/Shaders/EntryPoints
     m_Globs: []
     m_OriginalText: 
     m_ImportLogFlags: 0
@@ -2913,16 +2913,16 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 16
   m_LastFolders:
-  - Assets/LotusTracer/Scripts/SceneGeneration
+  - Assets/LotusTracer/Scripts/Resources/Shaders/EntryPoints
   m_LastFoldersGridSize: 16
   m_LastProjectPath: E:\Lotus\LotusTracer-UnityGPU\LotusTracer
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 222}
-    m_SelectedIDs: e0ca0000
-    m_LastClickedID: 51936
-    m_ExpandedIDs: 000000002eca000030ca000032ca000034ca000036ca000038ca00003aca00003cca00003eca000040ca000042ca000044ca000046ca000048ca00004aca00004cca00004eca000050ca000052ca000054ca000056ca000058ca00005aca00005cca00005eca000060ca000062ca000064ca000066ca000068ca0000d6ca000000ca9a3b
+    scrollPos: {x: 0, y: 254}
+    m_SelectedIDs: 2ccb0000
+    m_LastClickedID: 52012
+    m_ExpandedIDs: 000000005cca00005eca000060ca000062ca000064ca000066ca000068ca00006aca00006cca00006eca000070ca000072ca000074ca000076ca000078ca00007aca00007cca00007eca000080ca000082ca000084ca000086ca000088ca00008aca00008cca00008eca000090ca000092ca000094ca000096ca000004cb000022cb000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2950,7 +2950,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 000000002eca000030ca000032ca000034ca000036ca000038ca00003aca00003cca00003eca000040ca000042ca000044ca000046ca000048ca00004aca00004cca00004eca000050ca000052ca000054ca000056ca000058ca00005aca00005cca00005eca000060ca000062ca000064ca000066ca000068ca0000
+    m_ExpandedIDs: 000000005cca00005eca000060ca000062ca000064ca000066ca000068ca00006aca00006cca00006eca000070ca000072ca000074ca000076ca000078ca00007aca00007cca00007eca000080ca000082ca000084ca000086ca000088ca00008aca00008cca00008eca000090ca000092ca000094ca000096ca0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2977,7 +2977,7 @@ MonoBehaviour:
   m_ListAreaState:
     m_SelectedInstanceIDs: 
     m_LastClickedInstanceID: 0
-    m_HadKeyboardFocusLastEvent: 0
+    m_HadKeyboardFocusLastEvent: 1
     m_ExpandedInstanceIDs: c6230000b87b000018770000307300009808020050ce0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0

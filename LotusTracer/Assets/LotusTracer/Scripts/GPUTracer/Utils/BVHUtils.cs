@@ -76,23 +76,27 @@ public static class BVHUtils
 
     public static BoundsBox[] DecompressAll(in StackBVH4Node stackNode)
     {
-        BoundsBox[] bbs = new BoundsBox[stackNode.childQty];
+        bool isLeaf = (stackNode.data & 0b1) == 1;
+        uint qtyElements = (stackNode.data >> 9) & 0b1111;
+        uint qtyChildren = isLeaf ? 0 : qtyElements;
+        
+        BoundsBox[] bbs = new BoundsBox[qtyChildren];
 
-        if (stackNode.childQty > 0)
+        if (qtyChildren > 0)
             bbs[0] = Decompress(stackNode.bb0, stackNode.boundsMin, stackNode.extends, 0);
-        if (stackNode.childQty > 1)
+        if (qtyChildren > 1)
             bbs[1] = Decompress(stackNode.bb1, stackNode.boundsMin, stackNode.extends, 0);
-        if (stackNode.childQty > 2)
+        if (qtyChildren > 2)
             bbs[2] = Decompress(stackNode.bb2, stackNode.boundsMin, stackNode.extends, 0);
-        if (stackNode.childQty > 3)
+        if (qtyChildren > 3)
             bbs[3] = Decompress(stackNode.bb3, stackNode.boundsMin, stackNode.extends, 0);
-        if (stackNode.childQty > 4)
+        if (qtyChildren > 4)
             bbs[4] = Decompress(stackNode.bb4, stackNode.boundsMin, stackNode.extends, 0);
-        if (stackNode.childQty > 5)
+        if (qtyChildren > 5)
             bbs[5] = Decompress(stackNode.bb5, stackNode.boundsMin, stackNode.extends, 0);
-        if (stackNode.childQty > 6)
+        if (qtyChildren > 6)
             bbs[6] = Decompress(stackNode.bb6, stackNode.boundsMin, stackNode.extends, 0);
-        if (stackNode.childQty > 7)
+        if (qtyChildren > 7)
             bbs[7] = Decompress(stackNode.bb7, stackNode.boundsMin, stackNode.extends, 0);
 
         return bbs;

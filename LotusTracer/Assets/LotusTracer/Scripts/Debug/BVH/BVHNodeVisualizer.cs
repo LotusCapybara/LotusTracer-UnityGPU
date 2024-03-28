@@ -32,12 +32,13 @@ public class BVHNodeVisualizer : MonoBehaviour
         dataBinary = Convert.ToString(node.data, 2);
         isLeaf = (node.data & 0b1) == 1;
 
-        triangles = node.qtyTriangles;
+        uint qtyChildren = (node.data >> 9) & 0b11111;
 
-
+        triangles = (int)(isLeaf ? qtyChildren : 0);
+        int childQty = (int)(isLeaf ? 0 : qtyChildren);
         children = new List<BVHNodeVisualizer>();
 
-        gameObject.name = $"Node-{depth}-ch: {node.childQty}  -t: {node.qtyTriangles}";
+        gameObject.name = $"Node-{depth}-ch: {childQty}  -t: {triangles}";
         
         if(isLeaf)
             return;
@@ -48,13 +49,12 @@ public class BVHNodeVisualizer : MonoBehaviour
         BoundsBox[] decompressedBounds = BVHUtils.DecompressAll(node);
         
         
-        for (int i = 0; i < node.childQty; i++)
+        for (int i = 0; i < childQty; i++)
         {
             BVHNodeVisualizer nodeVisualizer = Instantiate(this);
 
             BoundsBox childBounds = decompressedBounds[i];
-
-            nodeVisualizer.SetNode(node.childFirstIndex + i, depth + 1, childBounds);
+            nodeVisualizer.SetNode(node.firstElementIndex + i, depth + 1, childBounds);
             children.Add(nodeVisualizer);
 
             var boundMeshFilter = nodeVisualizer.gameObject.AddComponent<MeshFilter>();
@@ -118,7 +118,7 @@ public class BVHNodeVisualizer : MonoBehaviour
             return;
         
         ref StackBVH4Node node = ref BVHVisualizer.s_serializedSceneGeometry.bvhNodes[nodeIndex];
-        if (isLeaf && node.qtyTriangles > 0)
+        if (isLeaf && triangles > 0)
         {
             Color defaultColor = Gizmos.color;
             

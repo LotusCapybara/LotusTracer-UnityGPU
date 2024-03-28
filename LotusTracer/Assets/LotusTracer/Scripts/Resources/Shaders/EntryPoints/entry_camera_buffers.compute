@@ -42,6 +42,13 @@ float3 Get_BVHDensity (uint3 id)
     {
         BVH4Node node = _AccelTree[i];
 
+        bool isLeaf = (node.data & 0x1) == 1;
+
+        if(isLeaf)
+            continue;
+        
+        int qtyElements = (node.data >> 9) & 0xf;
+
         uint2 qMinMax[8];
         qMinMax[0] = node.bb0;
         qMinMax[1] = node.bb1;
@@ -52,8 +59,9 @@ float3 Get_BVHDensity (uint3 id)
         qMinMax[6] = node.bb6;
         qMinMax[7] = node.bb7;
 
+        
         float entryDist;
-        for(int ch = 0; ch < node.childQty; ch++)
+        for(int ch = 0; ch < qtyElements; ch++)
         {
             BoundsBox childBounds = DecompressBounds(qMinMax[ch], node);
             bool intersects = DoesRayHitBounds(pathRay, childBounds, entryDist, (float3)1.0 / pathRay.direction);

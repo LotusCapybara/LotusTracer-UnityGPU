@@ -156,11 +156,7 @@ namespace CapyTracerCore.Core
             StackBVH4Node node = new StackBVH4Node();
 
             node.data = reader.ReadUInt32();
-            node.childQty = reader.ReadInt32();
-            node.childFirstIndex = reader.ReadInt32();
-            node.qtyTriangles = reader.ReadInt32();
-            node.triangleFirstIndex = reader.ReadInt32();
-
+            node.firstElementIndex = reader.ReadInt32();
             node.precisionLoss = reader.ReadSingle();
             node.boundsMin = ReadFloat3(reader);
             node.extends = ReadFloat3(reader);

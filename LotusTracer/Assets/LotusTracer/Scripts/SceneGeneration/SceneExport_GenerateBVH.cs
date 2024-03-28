@@ -64,14 +64,15 @@ public static class SceneExport_GenerateBVH
                 nodeData |= (uint)(0x1 << (ch + 1));
                 childrenBounds[ch] = hWideNode.children[ch].bounds;
             }
+
+            int qtyElements = hWideNode.isLeaf ? nodeSortedTriangles.Count : hWideNode.children.Count;
+
+            nodeData |= ( (uint)qtyElements & 0b1111) << 9;
             
             StackBVH4Node stackNode = new StackBVH4Node
             {
                 data = nodeData,
-                childQty = hWideNode.children.Count,
-                childFirstIndex = hWideNode.indexFirstChild,
-                qtyTriangles = nodeSortedTriangles.Count,
-                triangleFirstIndex = sortedTriangles.Count - nodeSortedTriangles.Count,
+                firstElementIndex =  hWideNode.isLeaf ? (sortedTriangles.Count - nodeSortedTriangles.Count) : hWideNode.indexFirstChild,
                 boundsMin = hWideNode.bounds.min,
                 extends = hWideNode.bounds.GetSize()
             };
