@@ -12,8 +12,7 @@
 
 #define BOUNCES_LIMIT 30
 
-#define BVH_NODE_CHILDREN_QTY 4
-#define BVH_STACK_SIZE 64
+#define BVH_STACK_SIZE 32
 
 #define LIGHT_SPOT 0
 #define LIGHT_DIRECTIONAL 1

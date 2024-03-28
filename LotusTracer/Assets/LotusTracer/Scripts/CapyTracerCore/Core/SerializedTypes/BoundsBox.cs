@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 
 namespace CapyTracerCore.Core
@@ -15,12 +16,6 @@ namespace CapyTracerCore.Core
             min = boundMin;
             max = boundMax;
         }
-
-        public float GetArea()
-        {
-            float3 e = max - min; 
-            return e.x * e.y + e.y * e.z + e.z * e.x;
-        }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3 GetSize()
@@ -30,26 +25,25 @@ namespace CapyTracerCore.Core
 
         public void ExpandWithBounds(in BoundsBox other)
         {
-            ExpandWithPoint(other.min);
-            ExpandWithPoint(other.max);
+            min = math.min(min, other.min);
+            max = math.max(max, other.max);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExpandWithTriangle(in RenderTriangle triangle)
         {
-            ExpandWithPoint(triangle.posA);
-            ExpandWithPoint(triangle.posA + triangle.p0p1);
-            ExpandWithPoint(triangle.posA + triangle.p0p2);
+            float3 posB = triangle.posA + triangle.p0p1;
+            float3 posC = triangle.posA + triangle.p0p2;
+            
+            min = math.min(min, math.min(  triangle.posA, math.min(posB, posC)));
+            max = math.max(max, math.max(triangle.posA, math.max(posB, posC)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExpandWithPoint(float3 p)
         {
-            for (int i = 0; i < 3; i++)
-            {
-                min[i] = math.min(min[i], p[i]);
-                max[i] = math.max(max[i], p[i]);
-            }
+            min = math.min(min, p);
+            max = math.max(max, p);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,6 +54,12 @@ namespace CapyTracerCore.Core
                 min.y + GetSize().y * 0.5f,
                 min.z + GetSize().z * 0.5f
             );
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool isWithin(BoundsBox other)
+        {
+            return other.IsPointInside(min) && other.IsPointInside(max);
         }
 
         public bool IsPointInside(float3 point)
@@ -74,39 +74,6 @@ namespace CapyTracerCore.Core
                 return false;
 
             return true;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float SquaredDistToPoint( in float3 p)
-        {
-            float Check(float pn, float  bmin, float bmax )
-            {
-                float result = 0;
-                float  v = pn;
- 
-                if ( v < bmin ) 
-                {             
-                    float val = (bmin - v);             
-                    result += val * val;         
-                }         
-         
-                if ( v > bmax )
-                {
-                    float val = (v - bmax);
-                    result += val * val;
-                }
-
-                return result;
-            };
- 
-            // Squared distance
-            float sq = 0f;
- 
-            sq += Check( p.x, min.x, max.x );
-            sq += Check( p.y, min.y, max.y );
-            sq += Check( p.z, min.z, max.z );
- 
-            return sq;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

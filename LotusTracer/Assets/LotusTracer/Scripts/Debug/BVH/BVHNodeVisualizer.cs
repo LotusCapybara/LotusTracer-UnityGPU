@@ -32,56 +32,29 @@ public class BVHNodeVisualizer : MonoBehaviour
         dataBinary = Convert.ToString(node.data, 2);
         isLeaf = (node.data & 0b1) == 1;
 
-        triangles = 0;
+        triangles = node.qtyTriangles;
 
-        if (isLeaf)
-        {
-            triangles = node.qtyTriangles;
-            gameObject.name = $"Leaf-{depth}:" + triangles.ToString();
-            return;
-        }
 
         children = new List<BVHNodeVisualizer>();
 
-        gameObject.name = $"Inner-" + depth;
+        gameObject.name = $"Node-{depth}-ch: {node.childQty}  -t: {node.qtyTriangles}";
         
-        int startChildIndex = node.startIndex;
+        if(isLeaf)
+            return;
         
-        for (int i = 0; i < 8; i++)
+        if(depth > 6)
+            return;
+        
+        BoundsBox[] decompressedBounds = BVHUtils.DecompressAll(node);
+        
+        
+        for (int i = 0; i < node.childQty; i++)
         {
             BVHNodeVisualizer nodeVisualizer = Instantiate(this);
 
-            BoundsBox childBounds = BoundsBox.AS_SHRINK;
+            BoundsBox childBounds = decompressedBounds[i];
 
-            // switch (i)
-            // {
-            //     case 0:
-            //         childBounds = BVHUtils.Decompress(node.bounds1, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
-            //         break;
-            //     case 1:
-            //         childBounds = BVHUtils.Decompress(node.bounds2, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
-            //         break;
-            //     case 2:
-            //         childBounds = BVHUtils.Decompress(node.bounds3, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
-            //         break;
-            //     case 3:
-            //         childBounds = BVHUtils.Decompress(node.bounds4, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
-            //         break;
-            //     case 4:
-            //         childBounds = BVHUtils.Decompress(node.bounds5, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
-            //         break;
-            //     case 5:
-            //         childBounds = BVHUtils.Decompress(node.bounds6, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
-            //         break;
-            //     case 6:
-            //         childBounds = BVHUtils.Decompress(node.bounds7, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
-            //         break;
-            //     case 7:
-            //         childBounds = BVHUtils.Decompress(node.bounds8, BVHVisualizer.s_sceneBounds,  BVHVisualizer.s_sceneBounds.GetSize());
-            //         break;
-            // }
-            //
-            nodeVisualizer.SetNode(startChildIndex + i, depth + 1, childBounds);
+            nodeVisualizer.SetNode(node.childFirstIndex + i, depth + 1, childBounds);
             children.Add(nodeVisualizer);
 
             var boundMeshFilter = nodeVisualizer.gameObject.AddComponent<MeshFilter>();
@@ -89,19 +62,11 @@ public class BVHNodeVisualizer : MonoBehaviour
             // boundMesh.enabled = false;
 
             boundMeshFilter.sharedMesh = prefabBounds.GetComponent<MeshFilter>().sharedMesh;
+
             boundMesh.sharedMaterial = prefabBounds.GetComponent<MeshRenderer>().sharedMaterial;
 
-            if (!nodeVisualizer.isLeaf || nodeVisualizer.triangles > 0)
-            {
-                nodeVisualizer.transform.position = nodeVisualizer.bounds.GetCenter();
-                nodeVisualizer.transform.localScale = nodeVisualizer.bounds.GetSize();    
-            }
-            else
-            {
-                nodeVisualizer.transform.position = Vector3.zero;
-                nodeVisualizer.transform.localScale = Vector3.zero;
-                nodeVisualizer.gameObject.SetActive(false);
-            }
+            nodeVisualizer.transform.position = nodeVisualizer.bounds.GetCenter();
+            nodeVisualizer.transform.localScale = nodeVisualizer.bounds.GetSize();
         }
     }
 
@@ -157,13 +122,13 @@ public class BVHNodeVisualizer : MonoBehaviour
         {
             Color defaultColor = Gizmos.color;
             
-            for(int tIndex = node.startIndex; tIndex < node.startIndex + node.qtyTriangles; tIndex++)
-            {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA, gizmoSize);
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p1, gizmoSize);
-                Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p2, gizmoSize);
-            }
+            // for(int tIndex = node.startIndex; tIndex < node.startIndex + node.qtyTriangles; tIndex++)
+            // {
+            //     Gizmos.color = Color.yellow;
+            //     Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA, gizmoSize);
+            //     Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p1, gizmoSize);
+            //     Gizmos.DrawSphere(BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].posA + BVHVisualizer.s_serializedSceneGeometry.triangleVertices[tIndex].p0p2, gizmoSize);
+            // }
 
             Gizmos.color = defaultColor;
         }

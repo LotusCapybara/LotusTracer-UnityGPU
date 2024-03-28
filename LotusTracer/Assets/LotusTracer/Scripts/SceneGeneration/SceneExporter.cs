@@ -25,7 +25,14 @@ public class SceneExporter : MonoBehaviour
     public bool ignoreCreateTextures;
     public bool ignoreCreateGeometry;
 
-    private List<BinaryNode> _justGeneratedHeadNodes = new List<BinaryNode>();
+
+    [Header("Gizmos")]
+    public bool showGeoBoxes;
+    public bool showWideTree;
+
+    // private List<BinaryNode> _justGeneratedHeadNodes = new List<BinaryNode>();
+    private List<HeapWideNode> _heapWideNodes = new List<HeapWideNode>();
+    private List<GeoBox> _geoBoxes = new List<GeoBox>();
     
     private void CreateSceneAsset()
     {
@@ -67,16 +74,36 @@ public class SceneExporter : MonoBehaviour
         
         if (!ignoreCreateGeometry)
         {
-            _justGeneratedHeadNodes = SceneExport_GenerateBVH.GenerateBinaryHeapNodes();
-        
+            // _justGeneratedHeadNodes = SceneExport_GenerateBVH.GenerateBinaryHeapNodes();
+            //
+            // sw.Stop();
+            // Debug.Log($"Generated Binary Tree: {sw.Elapsed.TotalSeconds}. Nodes: {_justGeneratedHeadNodes.Count}");
+            // sw.Restart();
+            //
+            //
+            // var rootHeapWideNode = HeapWideNode.BuildFromBinaryNodes(_justGeneratedHeadNodes[0], 0);
+
+
+            _geoBoxes = GeoBox.CollectGeoBoxes(SceneExport_GatherTriangles.s_gatheredTriangles);
             sw.Stop();
-            Debug.Log($"GenerateBVH Heap: {sw.Elapsed.TotalSeconds}");
+            Debug.Log($"Generated GeoBox: {sw.Elapsed.TotalSeconds}.");
             sw.Restart();
-        
-            // SceneExport_GenerateBVH.Export(heapNodes);
+
+            BoundsBox sceneBounds = new BoundsBox(s_sceneGeom.boundMin, s_sceneGeom.boundMax);
+            HeapWideNode rootHeapWideNode = BVHSplit8.GetTreeRoot(4, sceneBounds, _geoBoxes);
+            
+            _heapWideNodes = new List<HeapWideNode>();
+            _heapWideNodes.Add(rootHeapWideNode);
+            HeapWideNode.SortWideNodes(_heapWideNodes, rootHeapWideNode, _geoBoxes);
+            
+            sw.Stop();
+            Debug.Log($"Generated Wide Tree: {sw.Elapsed.TotalSeconds}. Nodes {_heapWideNodes.Count}");
+            sw.Restart();
+     
+            SceneExport_GenerateBVH.Export(_heapWideNodes, _geoBoxes);
         
             sw.Stop();
-            Debug.Log($"Parse Stack BVH: {sw.Elapsed.TotalSeconds}");
+            Debug.Log($"Generated Stack BVH: {sw.Elapsed.TotalSeconds}");
             sw.Restart();
         }
         
@@ -166,13 +193,35 @@ public class SceneExporter : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        foreach (var justGeneratedHeadNode in _justGeneratedHeadNodes)
+        if (showGeoBoxes)
         {
-            if (justGeneratedHeadNode.isLeaf && justGeneratedHeadNode.triangleIndices.Count == 1)
+            int qty = 0;
+            foreach (var geoBox in _geoBoxes)
             {
-                Gizmos.DrawSphere( justGeneratedHeadNode.bounds.GetCenter(), 0.01f);
-                Gizmos.DrawWireCube( justGeneratedHeadNode.bounds.GetCenter(), justGeneratedHeadNode.bounds.GetSize());
-            }
+                // Gizmos.DrawSphere( justGeneratedHeadNode.bounds.GetCenter(), 0.01f);
+                Gizmos.DrawWireCube( geoBox.bounds.GetCenter(), geoBox.size);
+                qty++;
+                
+                if(qty > 2000000)
+                    break;   
+            }   
+        }
+
+        if (showWideTree)
+        {
+            int qty = 0;
+            foreach (var wideNode in _heapWideNodes)
+            {
+                if (wideNode.isLeaf && wideNode.geoBoxes.Count > 0)
+                {
+                    Gizmos.color = Color.cyan;
+                    Gizmos.DrawWireCube( wideNode.bounds.GetCenter(), wideNode.bounds.GetSize());
+                    qty++;
+                
+                    if(qty > 2000000)
+                        break;                              
+                }
+            }   
         }
     }
 }

@@ -12,8 +12,10 @@ namespace CapyTracerCore.Core
         // they are not navigable if they are leaf with 0 triangleIndices
         
         public uint data;
-        public int startIndex;
+        public int childQty;
+        public int childFirstIndex;
         public int qtyTriangles;
+        public int triangleFirstIndex;
 
         public float precisionLoss;
         public float3 boundsMin;

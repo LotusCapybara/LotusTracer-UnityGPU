@@ -9,6 +9,7 @@ using UnityEngine;
 public static class SceneExport_GatherTriangles
 {
     public static RenderTriangle[] s_gatheredTriangles;
+    public static BoundsBox[] s_triangleBounds;
     
     public static void Export(GameObject sceneContainer, List<Material> outUnityMaterials)
     {
@@ -60,22 +61,34 @@ public static class SceneExport_GatherTriangles
                     ));
             }
         }
-        
-        
-        List<RenderTriangle> allTriangles = new List<RenderTriangle>();
+
+
         Task.WaitAll(allTasks.ToArray());
+        
+        List<BoundsBox> triangleBounds = new List<BoundsBox>();
+
+        int totalTriangles = 0;
+
+        foreach (var allTask in allTasks)
+            totalTriangles += allTask.Result.Count;
+
+        s_gatheredTriangles = new RenderTriangle[totalTriangles];
+
+        int tIndex = 0;
         foreach (var allTask in allTasks)
         {
-            allTriangles.AddRange(allTask.Result);
-
-            foreach (var t in allTriangles)
+            for (int t = 0; t < allTask.Result.Count; t++)
             {
-                sceneBounds.ExpandWithTriangle(t);    
+                s_gatheredTriangles[tIndex] = allTask.Result[t];
+                
+                sceneBounds.ExpandWithBounds(s_gatheredTriangles[tIndex].bounds);
+                
+                tIndex++;
             }
         }
-        
-        s_gatheredTriangles = allTriangles.ToArray();
-        sceneGeom.qtyTriangles = allTriangles.Count;
+
+        s_triangleBounds = triangleBounds.ToArray();
+        sceneGeom.qtyTriangles = totalTriangles;
         sceneGeom.boundMin = sceneBounds.min;
         sceneGeom.boundMax = sceneBounds.max;
     }
@@ -86,9 +99,10 @@ public static class SceneExport_GatherTriangles
         int materialIndex, bool isInvisibleLightBouncer, bool usesVertexColor)
     {
         List<RenderTriangle> allTriangles = new List<RenderTriangle>();
+        allTriangles.Capacity = triangles.Length;
         
         int t = 0;
-
+        
         for (int st = 0; st < triangles.Length; st += 3)
         {
             RenderTriangle newTriangle = new RenderTriangle();
@@ -102,6 +116,9 @@ public static class SceneExport_GatherTriangles
             // copy position from unity triangle
             // copy normals from unity triangle
             newTriangle.centerPos = float3.zero;
+
+            float3 bMin = F3.INFINITY;
+            float3 bMax = F3.INFINITY_INV;
 
             for (int i = 0; i < 3; i++)
             {
@@ -139,7 +156,9 @@ public static class SceneExport_GatherTriangles
                     newTriangle.SetTextureUV(i, uvs[triangles[st + i]]);
                 else
                     newTriangle.SetTextureUV(i, new float2());
-                
+
+                bMin = math.min(pos, bMin);
+                bMax = math.max(pos, bMax);
             }
             
             
@@ -149,6 +168,8 @@ public static class SceneExport_GatherTriangles
             {
                 newTriangle.vertexColor *= 0.33333f;
             }
+
+            newTriangle.bounds = new BoundsBox(bMin, bMax);
 
             // just for testing stuff, some scenes will look fine even without good tangents
             // ValidateIsOrthogonal(newTriangle.normalA, newTriangle.tangentA, "NormalA", "TangentA");

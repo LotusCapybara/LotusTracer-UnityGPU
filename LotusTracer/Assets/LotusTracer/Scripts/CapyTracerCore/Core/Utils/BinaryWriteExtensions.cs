@@ -127,8 +127,11 @@ namespace CapyTracerCore.Core
         public static void WriteBinary(this StackBVH4Node node, BinaryWriter writer)
         {
             writer.Write(node.data);
-            writer.Write(node.startIndex);
+            
+            writer.Write(node.childQty);
+            writer.Write(node.childFirstIndex);
             writer.Write(node.qtyTriangles);
+            writer.Write(node.triangleFirstIndex);
             
             writer.Write(node.precisionLoss);
             

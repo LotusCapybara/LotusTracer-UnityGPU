@@ -48,6 +48,7 @@ namespace CapyTracerCore.Core
         public float3 tangentA;
         public float3 tangentB;
         public float3 tangentC;
+        public BoundsBox bounds;
         
         // decided to recalculate this in runtime 
         // public float3 biTangentA;

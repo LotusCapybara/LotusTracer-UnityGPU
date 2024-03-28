@@ -1,5 +1,6 @@
 ﻿using CapyTracerCore.Core;
 using Unity.Mathematics;
+using UnityEngine;
 
 public static class BVHUtils
 {
@@ -43,7 +44,7 @@ public static class BVHUtils
     }
     
     
-    public static StackBVH4Node Compress(in BoundsBox[] childBounds, in BoundsBox parentBoundsBox)
+    public static uint2[] Compress(in BoundsBox[] childBounds, in BoundsBox parentBoundsBox)
     {
         float3 parentMin = parentBoundsBox.min;
         float3 parentSize = parentBoundsBox.GetSize();
@@ -52,11 +53,11 @@ public static class BVHUtils
         stackNode.boundsMin = parentMin;
         stackNode.extends = parentSize;
         
-        uint2[] compressedBounds = new uint2[8];
+        uint2[] compressedBounds = new uint2[childBounds.Length];
 
         uint bitMask = 0x3FF;
         
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < childBounds.Length; i++)
         {
             float3 minRatio = ((childBounds[i].min - parentMin) / parentSize)  * 1023f;
             uint3 qMin = (uint3)  (minRatio);
@@ -70,51 +71,48 @@ public static class BVHUtils
             compressedBounds[i] = new uint2(min, max);
         }
 
-        stackNode.bb0 = compressedBounds[0];
-        stackNode.bb1 = compressedBounds[1];
-        stackNode.bb2 = compressedBounds[2];
-        stackNode.bb3 = compressedBounds[3];
-        stackNode.bb4 = compressedBounds[4];
-        stackNode.bb5 = compressedBounds[5];
-        stackNode.bb6 = compressedBounds[6];
-        stackNode.bb7 = compressedBounds[7];
-        
-        return stackNode;
+        return compressedBounds;
     }
-    
-    public static BoundsBox[] Decompress(in StackBVH4Node node)
+
+    public static BoundsBox[] DecompressAll(in StackBVH4Node stackNode)
     {
-        BoundsBox[] bounds = new BoundsBox[8];
+        BoundsBox[] bbs = new BoundsBox[stackNode.childQty];
 
-        uint2[] qMinMax = new uint2[8];
+        if (stackNode.childQty > 0)
+            bbs[0] = Decompress(stackNode.bb0, stackNode.boundsMin, stackNode.extends, 0);
+        if (stackNode.childQty > 1)
+            bbs[1] = Decompress(stackNode.bb1, stackNode.boundsMin, stackNode.extends, 0);
+        if (stackNode.childQty > 2)
+            bbs[2] = Decompress(stackNode.bb2, stackNode.boundsMin, stackNode.extends, 0);
+        if (stackNode.childQty > 3)
+            bbs[3] = Decompress(stackNode.bb3, stackNode.boundsMin, stackNode.extends, 0);
+        if (stackNode.childQty > 4)
+            bbs[4] = Decompress(stackNode.bb4, stackNode.boundsMin, stackNode.extends, 0);
+        if (stackNode.childQty > 5)
+            bbs[5] = Decompress(stackNode.bb5, stackNode.boundsMin, stackNode.extends, 0);
+        if (stackNode.childQty > 6)
+            bbs[6] = Decompress(stackNode.bb6, stackNode.boundsMin, stackNode.extends, 0);
+        if (stackNode.childQty > 7)
+            bbs[7] = Decompress(stackNode.bb7, stackNode.boundsMin, stackNode.extends, 0);
 
-        qMinMax[0] = node.bb0;
-        qMinMax[1] = node.bb1;
-        qMinMax[2] = node.bb2;
-        qMinMax[3] = node.bb3;
-        qMinMax[4] = node.bb4;
-        qMinMax[5] = node.bb5;
-        qMinMax[6] = node.bb6;
-        qMinMax[7] = node.bb7;
+        return bbs;
+    }
 
+    public static BoundsBox Decompress(in uint2 qMinMax, in float3 parentMin, in float3 parentExtends, float precisionLoss)
+    {
         uint bitMask = 0x3FF;
         
-        for (int i = 0; i < 8; i++)
-        {
-            uint3 qMin = new uint3(
-                qMinMax[i].x & bitMask, (qMinMax[i].x >> 10) & bitMask, (qMinMax[i].x >> 20) & bitMask   
-            );
+        uint3 qMin = new uint3(
+            qMinMax.x & bitMask, (qMinMax.x >> 10) & bitMask, (qMinMax.x >> 20) & bitMask   
+        );
             
-            uint3 qMax = new uint3(
-                qMinMax[i].y & bitMask, (qMinMax[i].y >> 10) & bitMask, (qMinMax[i].y >> 20) & bitMask   
-            );
+        uint3 qMax = new uint3(
+            qMinMax.y & bitMask, (qMinMax.y >> 10) & bitMask, (qMinMax.y >> 20) & bitMask   
+        );
             
-            bounds[i] = new BoundsBox( 
-                ((float3) qMin / 1023f ) * node.extends + node.boundsMin - (F3.ONE * node.precisionLoss),
-                ((float3) qMax / 1023f ) * node.extends + node.boundsMin + (F3.ONE * node.precisionLoss));
-        }
-        
-        return bounds;
+        return new BoundsBox( 
+            ((float3) qMin / 1023f ) * parentExtends + parentMin - (F3.ONE * precisionLoss),
+            ((float3) qMax / 1023f ) * parentExtends + parentMin + (F3.ONE * precisionLoss));
     }
     
 }

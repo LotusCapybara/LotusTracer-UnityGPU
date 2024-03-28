@@ -30,6 +30,11 @@ public class BVHVisualizerEditor : Editor
         {
             visualizer.TestCompression();
         }
+        
+        if (GUILayout.Button("Test Ray"))
+        {
+            visualizer.TestRay();
+        }
     }
 }
 #endif

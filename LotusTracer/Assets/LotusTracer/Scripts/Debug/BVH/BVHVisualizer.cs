@@ -1,8 +1,10 @@
+using System;
 using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using CapyTracerCore.Core;
+using LotusTracer.Scripts.Debug.BVH;
 using Unity.Mathematics;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -20,6 +22,11 @@ public class BVHVisualizer : MonoBehaviour
 
     public BVHNodeVisualizer prefabNodeVisualizer;
 
+    public RenderRay renderRay;
+
+    private int _hittingIndex = -1;
+    private Vector3 _hitPoint;
+
     public void GenerateDebugFile()
     {
         string sceneDataPath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.dat");
@@ -33,21 +40,42 @@ public class BVHVisualizer : MonoBehaviour
 
         Debug.LogError($"bounds: {sceneBounds.ToString()}  extends: {sceneBounds.GetSize().ToString()}");
         
-        // for (int n = 0; n < s_serializedSceneGeometry.qtyBVHNodes; n++)
-        // {
-        //     bool isLeaf = (s_serializedSceneGeometry.bvhNodes[n].data & 0b1) == 1;
-        //     int qtyTriangles = s_serializedSceneGeometry.bvhNodes[n].qtyTriangles;
-        //     string bounds = BVHUtils.Decompress(s_serializedSceneGeometry.bvhNodes[n].qBounds, sceneBounds, sceneBounds.GetSize()).ToString();
-        //     int depth = 0; //s_serializedSceneGeometry.bvhNodes[n].depth;
-        //
-        //     string padding = "";
-        //     for (int d = 0; d < depth; d++)
-        //         padding += "  ";
-        //
-        //     string leafTag = isLeaf ? "leaf" : "node";
-        //     
-        //     str.Append($"{padding} -{depth} - {leafTag} tris: {qtyTriangles}   bounds: {bounds}\n");
-        // }
+        for (int n = 0; n < s_serializedSceneGeometry.qtyBVHNodes; n++)
+        {
+            var stackNode = s_serializedSceneGeometry.bvhNodes[n];
+            bool isLeaf = (stackNode.data & 0b1) == 1;
+            int qtyTriangles = stackNode.qtyTriangles;
+            int qtyChildren = stackNode.childQty;
+
+            BoundsBox[] decompressedBounds = new BoundsBox[qtyChildren];
+
+            if (qtyChildren > 0)
+                decompressedBounds[0] = BVHUtils.Decompress(stackNode.bb0, stackNode.boundsMin, stackNode.extends, 0);
+            if (qtyChildren > 1)
+                decompressedBounds[1] = BVHUtils.Decompress(stackNode.bb1, stackNode.boundsMin, stackNode.extends, 0);
+            if (qtyChildren > 2)
+                decompressedBounds[2] = BVHUtils.Decompress(stackNode.bb2, stackNode.boundsMin, stackNode.extends, 0);
+            if (qtyChildren > 3)
+                decompressedBounds[3] = BVHUtils.Decompress(stackNode.bb3, stackNode.boundsMin, stackNode.extends, 0);
+            if (qtyChildren > 4)
+                decompressedBounds[4] = BVHUtils.Decompress(stackNode.bb4, stackNode.boundsMin, stackNode.extends, 0);
+            if (qtyChildren > 5)
+                decompressedBounds[5] = BVHUtils.Decompress(stackNode.bb5, stackNode.boundsMin, stackNode.extends, 0);
+            if (qtyChildren > 6)
+                decompressedBounds[6] = BVHUtils.Decompress(stackNode.bb6, stackNode.boundsMin, stackNode.extends, 0);
+            if (qtyChildren > 7)
+                decompressedBounds[7] = BVHUtils.Decompress(stackNode.bb7, stackNode.boundsMin, stackNode.extends, 0);
+
+
+            str.Append($"n:{n}");
+            string leafTag = isLeaf ? "leaf" : "node";
+            str.Append($" - {leafTag} tris: {qtyTriangles} ch: {qtyChildren}  start at: {stackNode.childFirstIndex}\n");
+
+            for (int ch = 0; ch < qtyChildren; ch++)
+                str.Append($"      - {decompressedBounds[ch].ToString()}\n");
+
+            str.Append("\n\n\n");
+        }
 
         string filepath = Application.dataPath + "/DebugTemp/bvh_debug.txt";
         File.WriteAllText(filepath, str.ToString());
@@ -92,8 +120,11 @@ public class BVHVisualizer : MonoBehaviour
                 parentBounds.ExpandWithBounds(testBounds);
             }
 
-            StackBVH4Node compressed = BVHUtils.Compress(bounds4, parentBounds);
-            BoundsBox[] decompressed = BVHUtils.Decompress(compressed);
+            var compressed = BVHUtils.Compress(bounds4, parentBounds);
+            BoundsBox[] decompressed = new BoundsBox[bounds4.Length];
+                
+            for(int c = 0; c < decompressed.Length; c++)
+                decompressed[c] = BVHUtils.Decompress(compressed[c], parentBounds.min, parentBounds.GetSize(), 0);
 
 
             str.Append($"- parent: {parentBounds.ToString()} \n\n");
@@ -114,6 +145,17 @@ public class BVHVisualizer : MonoBehaviour
         
         string filepath = Application.dataPath + "/DebugTemp/bvh_compression_test.txt";
         File.WriteAllText(filepath, str.ToString());
+    }
+
+    public void TestRay()
+    {
+        string sceneDataPath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.dat");
+        string sceneGeometryPath = Path.Combine(Application.dataPath, $"Resources/RenderScenes/{sceneName}/{sceneName}.geom");
+        (s_serializedSceneData, s_serializedSceneGeometry)
+            = SceneExporter.DeserializeScene(sceneDataPath, sceneGeometryPath);;
+
+        _hittingIndex = BVHTestFunctions.TestRay(renderRay, s_serializedSceneGeometry);
+        
     }
     
     
@@ -157,5 +199,22 @@ public class BVHVisualizer : MonoBehaviour
         nodeVisualizer.ReOrderHierarchy();
         
         Debug.Log("Finished Visualizer");
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.DrawLine(renderRay.origin, renderRay.origin + renderRay.direction * 40f);
+
+        if (_hittingIndex >= 0)
+        {
+            Gizmos.color = Color.green;
+
+            var tri = s_serializedSceneGeometry.triangleVertices[_hittingIndex];
+            
+            Gizmos.DrawLine(tri.posA, tri.posA + tri.p0p1);
+            Gizmos.DrawLine(tri.posA, tri.posA + tri.p0p2);
+            Gizmos.DrawLine(tri.posA + tri.p0p1, tri.posA + tri.p0p2);
+
+        }
     }
 }
