@@ -44,7 +44,7 @@ public static class BVHUtils
     }
     
     
-    public static uint2[] Compress(in BoundsBox[] childBounds, in BoundsBox parentBoundsBox)
+    public static uint4[] Compress(in BoundsBox[] childBounds, in BoundsBox parentBoundsBox)
     {
         float3 parentMin = parentBoundsBox.min;
         float3 parentSize = parentBoundsBox.GetSize();
@@ -52,26 +52,42 @@ public static class BVHUtils
         StackBVH4Node stackNode = new StackBVH4Node();
         stackNode.boundsMin = parentMin;
         stackNode.extends = parentSize;
-        
-        uint2[] compressedBounds = new uint2[childBounds.Length];
 
-        uint bitMask = 0x3FF;
+        int chQty = childBounds.Length;
+
+        uint2 bb0 = chQty > 0 ? CompressSingleBounds(childBounds[0], parentMin, parentSize) : new uint2();
+        uint2 bb1 = chQty > 1 ? CompressSingleBounds(childBounds[1], parentMin, parentSize) : new uint2();
+        uint2 bb2 = chQty > 2 ? CompressSingleBounds(childBounds[2], parentMin, parentSize) : new uint2();
+        uint2 bb3 = chQty > 3 ? CompressSingleBounds(childBounds[3], parentMin, parentSize) : new uint2();
+        uint2 bb4 = chQty > 4 ? CompressSingleBounds(childBounds[4], parentMin, parentSize) : new uint2();
+        uint2 bb5 = chQty > 5 ? CompressSingleBounds(childBounds[5], parentMin, parentSize) : new uint2();
+        uint2 bb6 = chQty > 6 ? CompressSingleBounds(childBounds[6], parentMin, parentSize) : new uint2();
+        uint2 bb7 = chQty > 7 ? CompressSingleBounds(childBounds[7], parentMin, parentSize) : new uint2();
         
-        for (int i = 0; i < childBounds.Length; i++)
-        {
-            float3 minRatio = ((childBounds[i].min - parentMin) / parentSize)  * 1023f;
-            uint3 qMin = (uint3)  (minRatio);
-            
-            float3 maxRatio = ((childBounds[i].max - parentMin) / parentSize) * 1023f;
-            uint3 qMax = (uint3)  ( maxRatio);
-            
-            uint min = qMin.x & bitMask | (( qMin.y & bitMask) << 10) | (( qMin.z & bitMask) << 20) ;
-            uint max = qMax.x & bitMask | (( qMax.y & bitMask) << 10) | (( qMax.z & bitMask) << 20) ;
-            
-            compressedBounds[i] = new uint2(min, max);
-        }
+        uint4[] compressedBounds = new uint4[8];
+
+        compressedBounds[0] = new uint4(bb0.x, bb0.y, bb1.x, bb1.y);
+        compressedBounds[1] = new uint4(bb2.x, bb2.y, bb3.x, bb3.y);
+        compressedBounds[2] = new uint4(bb4.x, bb4.y, bb5.x, bb5.y);
+        compressedBounds[3] = new uint4(bb6.x, bb6.y, bb7.x, bb7.y);
 
         return compressedBounds;
+    }
+
+    private static uint2 CompressSingleBounds(in BoundsBox box, float3 parentMin, float3 parentSize)
+    {
+        uint bitMask = 0x3FF;
+        
+        float3 minRatio = ((box.min - parentMin) / parentSize)  * 1023f;
+        uint3 qMin = (uint3)  (minRatio);
+            
+        float3 maxRatio = ((box.max - parentMin) / parentSize) * 1023f;
+        uint3 qMax = (uint3)  ( maxRatio);
+            
+        uint min = qMin.x & bitMask | (( qMin.y & bitMask) << 10) | (( qMin.z & bitMask) << 20) ;
+        uint max = qMax.x & bitMask | (( qMax.y & bitMask) << 10) | (( qMax.z & bitMask) << 20) ;
+            
+        return new uint2(min, max);
     }
 
     public static BoundsBox[] DecompressAll(in StackBVH4Node stackNode)
@@ -83,21 +99,21 @@ public static class BVHUtils
         BoundsBox[] bbs = new BoundsBox[qtyChildren];
 
         if (qtyChildren > 0)
-            bbs[0] = Decompress(stackNode.bb0, stackNode.boundsMin, stackNode.extends, 0);
+            bbs[0] = Decompress(stackNode.bb01.xy, stackNode.boundsMin, stackNode.extends, 0);
         if (qtyChildren > 1)
-            bbs[1] = Decompress(stackNode.bb1, stackNode.boundsMin, stackNode.extends, 0);
+            bbs[1] = Decompress(stackNode.bb01.zw, stackNode.boundsMin, stackNode.extends, 0);
         if (qtyChildren > 2)
-            bbs[2] = Decompress(stackNode.bb2, stackNode.boundsMin, stackNode.extends, 0);
+            bbs[2] = Decompress(stackNode.bb23.xy, stackNode.boundsMin, stackNode.extends, 0);
         if (qtyChildren > 3)
-            bbs[3] = Decompress(stackNode.bb3, stackNode.boundsMin, stackNode.extends, 0);
+            bbs[3] = Decompress(stackNode.bb23.zw, stackNode.boundsMin, stackNode.extends, 0);
         if (qtyChildren > 4)
-            bbs[4] = Decompress(stackNode.bb4, stackNode.boundsMin, stackNode.extends, 0);
+            bbs[4] = Decompress(stackNode.bb45.xy, stackNode.boundsMin, stackNode.extends, 0);
         if (qtyChildren > 5)
-            bbs[5] = Decompress(stackNode.bb5, stackNode.boundsMin, stackNode.extends, 0);
+            bbs[5] = Decompress(stackNode.bb45.zw, stackNode.boundsMin, stackNode.extends, 0);
         if (qtyChildren > 6)
-            bbs[6] = Decompress(stackNode.bb6, stackNode.boundsMin, stackNode.extends, 0);
+            bbs[6] = Decompress(stackNode.bb67.xy, stackNode.boundsMin, stackNode.extends, 0);
         if (qtyChildren > 7)
-            bbs[7] = Decompress(stackNode.bb7, stackNode.boundsMin, stackNode.extends, 0);
+            bbs[7] = Decompress(stackNode.bb67.zw, stackNode.boundsMin, stackNode.extends, 0);
 
         return bbs;
     }

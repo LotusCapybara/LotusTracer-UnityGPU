@@ -85,15 +85,11 @@ public static class SceneExport_GenerateBVH
                 extends = hWideNode.bounds.GetSize()
             };
         
-            var compressedBounds = BVHUtils.Compress(childrenBounds, hWideNode.bounds);
-            stackNode.bb0 = compressedBounds.Length > 0 ? compressedBounds[0] : new uint2();
-            stackNode.bb1 = compressedBounds.Length > 1 ? compressedBounds[1] : new uint2();
-            stackNode.bb2 = compressedBounds.Length > 2 ? compressedBounds[2] : new uint2();
-            stackNode.bb3 = compressedBounds.Length > 3 ? compressedBounds[3] : new uint2();
-            stackNode.bb4 = compressedBounds.Length > 4 ? compressedBounds[4] : new uint2();
-            stackNode.bb5 = compressedBounds.Length > 5 ? compressedBounds[5] : new uint2();
-            stackNode.bb6 = compressedBounds.Length > 6 ? compressedBounds[6] : new uint2();
-            stackNode.bb7 = compressedBounds.Length > 7 ? compressedBounds[7] : new uint2();
+            uint4[] compressedBounds = BVHUtils.Compress(childrenBounds, hWideNode.bounds);
+            stackNode.bb01 = compressedBounds[0];
+            stackNode.bb23 = compressedBounds[1];
+            stackNode.bb45 = compressedBounds[2];
+            stackNode.bb67 = compressedBounds[3];
                 
             stackNode.precisionLoss = 0f;
         

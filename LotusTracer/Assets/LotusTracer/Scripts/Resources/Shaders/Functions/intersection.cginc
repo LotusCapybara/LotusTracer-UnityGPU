@@ -37,11 +37,11 @@ BoundsBox DecompressBounds(in uint2 qMinMax, in BVH4Node node)
     outBounds.min = ((float3) qMin * gridScale ) * node.extends + node.boundsMin;
     outBounds.max = ((float3) qMax * gridScale ) * node.extends + node.boundsMin;
 
-    // if(node.precisionLoss > 0.005)
-    // {
-    //     outBounds.min -= (float3) node.precisionLoss;
-    //     outBounds.max += (float3) node.precisionLoss;
-    // }
+    if(node.precisionLoss > 0.005)
+    {
+        outBounds.min -= (float3) node.precisionLoss;
+        outBounds.max += (float3) node.precisionLoss;
+    }
     
     return outBounds;
 }
@@ -291,15 +291,25 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce,
 
             if(qtyElements > 0)
             {
-                uint2 qMinMax[8];
-                qMinMax[0] = childNode.bb0;
-                qMinMax[1] = childNode.bb1;
-                qMinMax[2] = childNode.bb2;
-                qMinMax[3] = childNode.bb3;
-                qMinMax[4] = childNode.bb4;
-                qMinMax[5] = childNode.bb5;
-                qMinMax[6] = childNode.bb6;
-                qMinMax[7] = childNode.bb7;
+                // uint2 qMinMax[8];
+                // qMinMax[0] = childNode.bb01.xy;
+                // qMinMax[1] = childNode.bb01.zw;
+                // qMinMax[2] = childNode.bb23.xy;
+                // qMinMax[3] = childNode.bb23.zw;
+                // qMinMax[4] = childNode.bb45.xy;
+                // qMinMax[5] = childNode.bb45.zw;
+                // qMinMax[6] = childNode.bb67.xy;
+                // qMinMax[7] = childNode.bb67.zw;
+
+                BoundsBox bb[8];
+                bb[0] =  DecompressBounds(childNode.bb01.xy, childNode);
+                bb[1] =  DecompressBounds(childNode.bb01.zw, childNode);
+                bb[2] =  DecompressBounds(childNode.bb23.xy, childNode);
+                bb[3] =  DecompressBounds(childNode.bb23.zw, childNode);
+                bb[4] =  DecompressBounds(childNode.bb45.xy, childNode);
+                bb[5] =  DecompressBounds(childNode.bb45.zw, childNode);
+                bb[6] =  DecompressBounds(childNode.bb67.xy, childNode);
+                bb[7] =  DecompressBounds(childNode.bb67.zw, childNode);
 
                 uint hitMask = 0;
                 
@@ -311,8 +321,7 @@ int GetTriangleHitIndex(in RenderRay ray, float maxDistance, bool isFirstBounce,
                     if(isTrasversable)
                     {
                         float entryDist;
-                        BoundsBox childBounds = DecompressBounds(qMinMax[ch], childNode);
-                        bool intersects = DoesRayHitBounds(ray, childBounds, entryDist, invDirection);
+                        bool intersects = DoesRayHitBounds(ray, bb[ch], entryDist, invDirection);
                 
                         if(intersects && entryDist < closestDistance)
                         {
@@ -405,14 +414,14 @@ int GetTriangleHitIndex2(in RenderRay ray, float maxDistance, bool isFirstBounce
         if (qtyElements > 0)
         {
             uint2 qMinMax[8];        
-            qMinMax[0] = node.bb0;
-            qMinMax[1] = node.bb1;
-            qMinMax[2] = node.bb2;
-            qMinMax[3] = node.bb3;
-            qMinMax[4] = node.bb4;
-            qMinMax[5] = node.bb5;
-            qMinMax[6] = node.bb6;
-            qMinMax[7] = node.bb7;
+            qMinMax[0] = node.bb01.xy;
+            qMinMax[1] = node.bb01.zw;
+            qMinMax[2] = node.bb23.xy;
+            qMinMax[3] = node.bb23.zw;
+            qMinMax[4] = node.bb45.xy;
+            qMinMax[5] = node.bb45.zw;
+            qMinMax[6] = node.bb67.xy;
+            qMinMax[7] = node.bb67.zw;
             
             for(int ch = 0; ch < qtyElements; ch++)
             {

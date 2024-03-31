@@ -48,24 +48,24 @@ public class BVHVisualizer : MonoBehaviour
             uint qtyTriangles = isLeaf ? qtyElements : 0;
             uint qtyChildren = isLeaf ? 0 : qtyElements;
 
-            BoundsBox[] decompressedBounds = new BoundsBox[qtyChildren];
+            BoundsBox[] bbs = new BoundsBox[qtyChildren];
 
             if (qtyChildren > 0)
-                decompressedBounds[0] = BVHUtils.Decompress(stackNode.bb0, stackNode.boundsMin, stackNode.extends, 0);
+                bbs[0] = BVHUtils.Decompress(stackNode.bb01.xy, stackNode.boundsMin, stackNode.extends, 0);
             if (qtyChildren > 1)
-                decompressedBounds[1] = BVHUtils.Decompress(stackNode.bb1, stackNode.boundsMin, stackNode.extends, 0);
+                bbs[1] = BVHUtils.Decompress(stackNode.bb01.zw, stackNode.boundsMin, stackNode.extends, 0);
             if (qtyChildren > 2)
-                decompressedBounds[2] = BVHUtils.Decompress(stackNode.bb2, stackNode.boundsMin, stackNode.extends, 0);
+                bbs[2] = BVHUtils.Decompress(stackNode.bb23.xy, stackNode.boundsMin, stackNode.extends, 0);
             if (qtyChildren > 3)
-                decompressedBounds[3] = BVHUtils.Decompress(stackNode.bb3, stackNode.boundsMin, stackNode.extends, 0);
+                bbs[3] = BVHUtils.Decompress(stackNode.bb23.zw, stackNode.boundsMin, stackNode.extends, 0);
             if (qtyChildren > 4)
-                decompressedBounds[4] = BVHUtils.Decompress(stackNode.bb4, stackNode.boundsMin, stackNode.extends, 0);
+                bbs[4] = BVHUtils.Decompress(stackNode.bb45.xy, stackNode.boundsMin, stackNode.extends, 0);
             if (qtyChildren > 5)
-                decompressedBounds[5] = BVHUtils.Decompress(stackNode.bb5, stackNode.boundsMin, stackNode.extends, 0);
+                bbs[5] = BVHUtils.Decompress(stackNode.bb45.zw, stackNode.boundsMin, stackNode.extends, 0);
             if (qtyChildren > 6)
-                decompressedBounds[6] = BVHUtils.Decompress(stackNode.bb6, stackNode.boundsMin, stackNode.extends, 0);
+                bbs[6] = BVHUtils.Decompress(stackNode.bb67.xy, stackNode.boundsMin, stackNode.extends, 0);
             if (qtyChildren > 7)
-                decompressedBounds[7] = BVHUtils.Decompress(stackNode.bb7, stackNode.boundsMin, stackNode.extends, 0);
+                bbs[7] = BVHUtils.Decompress(stackNode.bb67.zw, stackNode.boundsMin, stackNode.extends, 0);
 
 
             str.Append($"n:{n}");
@@ -73,7 +73,7 @@ public class BVHVisualizer : MonoBehaviour
             str.Append($" - {leafTag} tris: {qtyTriangles} ch: {qtyChildren}  start at: {stackNode.firstElementIndex}\n");
 
             for (int ch = 0; ch < qtyChildren; ch++)
-                str.Append($"      - {decompressedBounds[ch].ToString()}\n");
+                str.Append($"      - {bbs[ch].ToString()}\n");
 
             str.Append("\n\n\n");
         }
@@ -121,11 +121,11 @@ public class BVHVisualizer : MonoBehaviour
                 parentBounds.ExpandWithBounds(testBounds);
             }
 
-            var compressed = BVHUtils.Compress(bounds4, parentBounds);
+            uint4[] compressed = BVHUtils.Compress(bounds4, parentBounds);
             BoundsBox[] decompressed = new BoundsBox[bounds4.Length];
                 
-            for(int c = 0; c < decompressed.Length; c++)
-                decompressed[c] = BVHUtils.Decompress(compressed[c], parentBounds.min, parentBounds.GetSize(), 0);
+            // for(int c = 0; c < decompressed.Length; c++)
+            //     decompressed[c] = BVHUtils.Decompress(compressed[c], parentBounds.min, parentBounds.GetSize(), 0);
 
 
             str.Append($"- parent: {parentBounds.ToString()} \n\n");

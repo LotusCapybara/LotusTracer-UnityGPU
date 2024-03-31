@@ -161,14 +161,10 @@ namespace CapyTracerCore.Core
             node.boundsMin = ReadFloat3(reader);
             node.extends = ReadFloat3(reader);
             
-            node.bb0 = ReadUInt2(reader);
-            node.bb1 = ReadUInt2(reader);
-            node.bb2 = ReadUInt2(reader);
-            node.bb3 = ReadUInt2(reader);
-            node.bb4 = ReadUInt2(reader);
-            node.bb5 = ReadUInt2(reader);
-            node.bb6 = ReadUInt2(reader);
-            node.bb7 = ReadUInt2(reader);
+            node.bb01 = ReadUInt4(reader);
+            node.bb23 = ReadUInt4(reader);
+            node.bb45 = ReadUInt4(reader);
+            node.bb67 = ReadUInt4(reader);
             
             return node;
         }

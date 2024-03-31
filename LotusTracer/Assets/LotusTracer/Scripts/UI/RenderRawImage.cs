@@ -24,10 +24,8 @@ public class RenderRawImage : MonoBehaviour
 
     private void Update()
     {
-        // tracerMegakernel.isRenderingDebug = _textureType == ERenderTextureType.Debug;
-        // tracerMegakernel.debugType = _debugBufferType;
-        //
-        // _rawImage.texture = tracerMegakernel.GetRenderTexture(_textureType);
+        _gpuTracer.isRenderingDebug = _textureType == ERenderTextureType.Debug;
+        _gpuTracer.debugType = _debugBufferType;
         
         _rawImage.texture = _gpuTracer.GetRenderTexture(_textureType);
     }

@@ -134,14 +134,10 @@ namespace CapyTracerCore.Core
             node.boundsMin.WriteBinary(writer);
             node.extends.WriteBinary(writer);
             
-            node.bb0.WriteBinary(writer);
-            node.bb1.WriteBinary(writer);
-            node.bb2.WriteBinary(writer);
-            node.bb3.WriteBinary(writer);
-            node.bb4.WriteBinary(writer);
-            node.bb5.WriteBinary(writer);
-            node.bb6.WriteBinary(writer);
-            node.bb7.WriteBinary(writer);
+            node.bb01.WriteBinary(writer);
+            node.bb23.WriteBinary(writer);
+            node.bb45.WriteBinary(writer);
+            node.bb67.WriteBinary(writer);
         }
     }
 }

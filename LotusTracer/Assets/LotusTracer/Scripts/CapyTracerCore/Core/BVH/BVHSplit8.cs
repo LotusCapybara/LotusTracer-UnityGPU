@@ -106,7 +106,7 @@ namespace CapyTracerCore.Core
 
                     volumeSurfaceArea = math.max(volumeSurfaceArea, 0.001f);
                     
-                    (int , float) splitInfo = GetAxisSplitScore(minCentroid, maxCentroid, volumeSurfaceArea, allGeoBounds, tempNode.geoBoxes);
+                    (int , float) splitInfo = GetAxisSplitScore(currentNode.depth, minCentroid, maxCentroid, volumeSurfaceArea, allGeoBounds, tempNode.geoBoxes);
 
                     if (splitInfo.Item1 < 0 || splitInfo.Item1 > 2)
                     {
@@ -175,12 +175,12 @@ namespace CapyTracerCore.Core
         // (int, float) = (bestAxis, positionInAxis)   score is the score for this axis, with the bestRatio (at what position of the axis should be split)
         // then outside this function, you check what axis had the best score, and use that one, with the given split position (the ratio)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static (int, float) GetAxisSplitScore(in float3 minCentroid, in float3 maxCentroid, float volumeSA, List<GeoBox> allBoxes, in List<int> bIndices)
+        private static (int, float) GetAxisSplitScore(int depth, in float3 minCentroid, in float3 maxCentroid, float volumeSA, List<GeoBox> allBoxes, in List<int> bIndices)
         {
             float bestScore = Mathf.Infinity;
             float bestRatio = 0f;
             int bestAxis = -1;
-            int qtySplits = 15;
+            int qtySplits = (int)math.lerp(15, 3, (float)depth / 10);
 
             BoundsBox bbA;
             BoundsBox bbB;

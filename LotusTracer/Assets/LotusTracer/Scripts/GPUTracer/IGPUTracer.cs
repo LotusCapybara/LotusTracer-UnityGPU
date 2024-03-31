@@ -6,7 +6,9 @@ public interface IGPUTracer
 {
     RenderTexture GetRenderTexture(ERenderTextureType textureType);
     
-    double totalTime { get; }
-    int indirectIteration { get; }
-    double averageSampleTime { get; }
+    public double totalTime { get; }
+    public int indirectIteration { get; }
+    public double averageSampleTime { get; }
+    public EDebugBufferType debugType { get; set; }
+    public bool isRenderingDebug { get; set; }
 }

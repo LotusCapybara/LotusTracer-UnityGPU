@@ -30,12 +30,8 @@
 uint _debugBufferType;
 RWTexture2D<float4> _TextureDebugBuffer;
 
-float3 Get_BVHDensity (uint3 id)
+float3 Get_BVHDensity (RenderRay pathRay)
 {
-    int index = id.y * width + id.x;
-    uint rand = 0;
-    RenderRay pathRay = GetCameraRay(id, rand);
-
     float qtyHits = 0;
     
     for(int i = 0; i < treeNodesQty; i++)
@@ -49,22 +45,21 @@ float3 Get_BVHDensity (uint3 id)
         
         int qtyElements = (node.data >> 9) & 0xf;
 
-        uint2 qMinMax[8];
-        qMinMax[0] = node.bb0;
-        qMinMax[1] = node.bb1;
-        qMinMax[2] = node.bb2;
-        qMinMax[3] = node.bb3;
-        qMinMax[4] = node.bb4;
-        qMinMax[5] = node.bb5;
-        qMinMax[6] = node.bb6;
-        qMinMax[7] = node.bb7;
+        BoundsBox bb[8];
+        bb[0] =  DecompressBounds(node.bb01.xy, node);
+        bb[1] =  DecompressBounds(node.bb01.zw, node);
+        bb[2] =  DecompressBounds(node.bb23.xy, node);
+        bb[3] =  DecompressBounds(node.bb23.zw, node);
+        bb[4] =  DecompressBounds(node.bb45.xy, node);
+        bb[5] =  DecompressBounds(node.bb45.zw, node);
+        bb[6] =  DecompressBounds(node.bb67.xy, node);
+        bb[7] =  DecompressBounds(node.bb67.zw, node);
 
         
         float entryDist;
         for(int ch = 0; ch < qtyElements; ch++)
         {
-            BoundsBox childBounds = DecompressBounds(qMinMax[ch], node);
-            bool intersects = DoesRayHitBounds(pathRay, childBounds, entryDist, (float3)1.0 / pathRay.direction);
+            bool intersects = DoesRayHitBounds(pathRay, bb[ch], entryDist, (float3)1.0 / pathRay.direction);
 
             if(intersects)
             {
@@ -73,16 +68,24 @@ float3 Get_BVHDensity (uint3 id)
         }            
     }
 
-  
+    float3 colorA = float3(0, 0, 0);       // 0 - 100
+    float3 colorB = float3(0.4, 0.4, 0.4); // 101-200
+    float3 colorC = float3(0.8, 0.8, 0.0); // 201-300
+    float3 colorD = float3(0.8, 0.0, 0.8); // 301-400
+    float3 colorE = float3(0.9, 0.9, 0.9); // 401-1000
 
-    float3 color =  float3(0, 0, 0);
-    float divisor = 70.0;
-    color.x = max(0, qtyHits - divisor) / divisor;
-    qtyHits -= divisor;
-    color.y = max(0, qtyHits - divisor) / divisor;
-    qtyHits -= divisor;
-    color.z = max(0, qtyHits) / divisor;
-    
+    float3 color;
+
+    if(qtyHits <= 100)
+        color = lerp(colorA, colorB,  qtyHits * 0.01);
+    else if(qtyHits <= 200)
+        color = lerp(colorB, colorC,  (qtyHits - 100.0) * 0.01);
+    else if(qtyHits <= 300)
+        color = lerp(colorC, colorD,  (qtyHits - 200.0) * 0.01);
+    else 
+        color = lerp(colorD, colorE,  (qtyHits - 300.0) * 0.005);
+        
+   
     return color;
 }
 
@@ -157,7 +160,7 @@ void Kernel_CameraDebugTextures (uint3 id : SV_DispatchThreadID)
             break;
             
             case DEBUG_TYPE_BVH_DENSITY:
-                finalColor = Get_BVHDensity(id);
+                finalColor = Get_BVHDensity(pathRay);
             break;
 
             case DEBUG_TYPE_Dist_D:
