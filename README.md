@@ -12,7 +12,7 @@
 ## Images
 Example images. Assets were taken from Sketchfab, please follow these amazing creators.
 
-![Image](https://i.gyazo.com/38410bf230a6c959e83f7db609b77d04.jpg)
+![Image](https://i.gyazo.com/e9c05f5d889de62d63dc34dfc88335c4.jpg)
 Asset courtesy of [Adrian Carter](https://sketchfab.com/Adrian.Carter3D).
 Original art from Square (Chronno Trigger)
 
