@@ -29,6 +29,12 @@ namespace CapyTracerCore.Core
                 {
                     SortWideNodes(allWideNodes, nextNodeChild, allBoxes);
                 }
+                
+                BoundsBox bounds = BoundsBox.AS_SHRINK;
+                foreach (var child in nextNode.children)
+                {
+                    bounds.ExpandWithBounds(child.bounds);
+                }
             }
         }
     }

@@ -29,6 +29,8 @@ public class SceneExporter : MonoBehaviour
     [Header("Gizmos")]
     public bool showGeoBoxes;
     public bool showWideTree;
+    public bool wideDisplayOnlyLeaves = false;
+    public int wideDisplayingDepth = 0;
 
     // private List<BinaryNode> _justGeneratedHeadNodes = new List<BinaryNode>();
     private List<HeapWideNode> _heapWideNodes = new List<HeapWideNode>();
@@ -90,7 +92,7 @@ public class SceneExporter : MonoBehaviour
             sw.Restart();
 
             BoundsBox sceneBounds = new BoundsBox(s_sceneGeom.boundMin, s_sceneGeom.boundMax);
-            HeapWideNode rootHeapWideNode = BVHSplit8.GetTreeRoot(4, sceneBounds, _geoBoxes);
+            HeapWideNode rootHeapWideNode = BVHSplit8.GetTreeRoot(8, sceneBounds, _geoBoxes);
             
             _heapWideNodes = new List<HeapWideNode>();
             _heapWideNodes.Add(rootHeapWideNode);
@@ -212,7 +214,11 @@ public class SceneExporter : MonoBehaviour
             int qty = 0;
             foreach (var wideNode in _heapWideNodes)
             {
-                if (wideNode.isLeaf && wideNode.geoBoxes.Count > 0)
+                bool shouldShow = wideDisplayOnlyLeaves
+                    ? (wideNode.isLeaf && wideNode.geoBoxes.Count > 0)
+                    : wideNode.depth == wideDisplayingDepth;
+                
+                if (shouldShow)
                 {
                     Gizmos.color = Color.cyan;
                     Gizmos.DrawWireCube( wideNode.bounds.GetCenter(), wideNode.bounds.GetSize());

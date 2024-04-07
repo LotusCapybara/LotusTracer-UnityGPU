@@ -91,18 +91,22 @@ namespace CapyTracerCore.Core
                     
                     float3 minCentroid = F3.INFINITY; 
                     float3 maxCentroid = F3.INFINITY_INV;
-            
+                    
                     foreach (var bIndex in tempNode.geoBoxes)
                     {
                         minCentroid = math.min(minCentroid, allGeoBounds[bIndex].tCentroid);
                         maxCentroid = math.max(maxCentroid, allGeoBounds[bIndex].tCentroid);
                     }
+                    //
+                    // // the total volume surface area of this node is used in the sah to calculate the cost
+                    // // of the candidate partitions
+                    // float volumeSurfaceArea = (maxCentroid[0] - minCentroid[0]) * 
+                    //                           (maxCentroid[1] - minCentroid[1]) * 
+                    //                           (maxCentroid[2] - minCentroid[2]);
                     
-                    // the total volume surface area of this node is used in the sah to calculate the cost
-                    // of the candidate partitions
-                    float volumeSurfaceArea = (maxCentroid[0] - minCentroid[0]) * 
-                                              (maxCentroid[1] - minCentroid[1]) * 
-                                              (maxCentroid[2] - minCentroid[2]);
+                    float3 nodeSize = tempNode.bounds.GetSize();
+                    float volumeSurfaceArea = 2.0f * ((nodeSize.x * nodeSize.y) + (nodeSize.x * nodeSize.z) + (nodeSize.y * nodeSize.z));
+                    
 
                     volumeSurfaceArea = math.max(volumeSurfaceArea, 0.001f);
                     
@@ -180,7 +184,7 @@ namespace CapyTracerCore.Core
             float bestScore = Mathf.Infinity;
             float bestRatio = 0f;
             int bestAxis = -1;
-            int qtySplits = (int)math.lerp(15, 3, (float)depth / 10);
+            int qtySplits = (int)math.lerp(20, 5, (float)depth / 10);
 
             BoundsBox bbA;
             BoundsBox bbB;
@@ -218,8 +222,10 @@ namespace CapyTracerCore.Core
                         }
                     }
 
-                    float areaA = (bbA.max[0] - bbA.min[0]) * (bbA.max[1] - bbA.min[1]) * (bbA.max[2] - bbA.min[2]);
-                    float areaB = (bbB.max[0] - bbB.min[0]) * (bbB.max[1] - bbB.min[1]) * (bbB.max[2] - bbB.min[2]);
+                    float3 sizesA = bbA.GetSize();
+                    float3 sizesB = bbB.GetSize();
+                    float areaA = 2.0f * ((sizesA.x * sizesA.y) + (sizesA.x * sizesA.z) + (sizesA.y * sizesA.z)); 
+                    float areaB = 2.0f * ((sizesB.x * sizesB.y) + (sizesB.x * sizesB.z) + (sizesB.y * sizesB.z));
 
                     if (float.IsInfinity(areaA))
                         areaA = 0;
